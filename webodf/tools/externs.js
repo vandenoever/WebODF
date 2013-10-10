@@ -615,3 +615,14 @@ Range.END_TO_END = 2;
  * @type {!number}
  */
 Range.END_TO_START = 3;
+
+/**
+ * @param {!Document} doc
+ * @return {undefined}
+ */
+XSLTProcessor.prototype.importStylesheet = function (doc) {"use strict"; };
+/**
+ * @param {!Node} node
+ * @return {Document}
+ */
+XSLTProcessor.prototype.transformToDocument = function (node) {"use strict"; };

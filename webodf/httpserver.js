@@ -40,6 +40,7 @@ var http = require("http"),
     url = require("url"),
     path = require("path"),
     fs = require("fs"),
+    child_process = require("child_process"),
     lookForIndexHtml = true,
     ipaddress = "127.0.0.1",
     port = 8124;
@@ -94,6 +95,35 @@ http.createServer(function (request, response) {
             });
         });
     }
+    function post() {
+        var contentlength = parseInt(request.headers["content-length"], 10),
+            alldata = new Buffer(contentlength),
+            sum = 0;
+        request.on("data", function (data) {
+            data.copy(alldata, sum, 0);
+            sum += data.length;
+        });
+        request.on("end", function () {
+            fs.writeFile(filename, alldata, "binary", function (err) {
+                if (err) {
+                    response.writeHead(500);
+                    response.write(err);
+                } else {
+                    response.writeHead(200);
+                }
+                child_process.exec("xslfo2pdf/renderx/xep -fo in.fo -pdf out.pdf", function (error, stdout, stderr) {
+                    console.log(error);
+                    console.log(stdout);
+                    console.log(stderr);
+                    response.end();
+                });
+            });
+        });
+    }
+    if (request.method === "POST") {
+        post(request, response);
+        return;
+    }
     if (request.method === "PUT") {
         put(request, response);
         return;
@@ -146,6 +176,8 @@ http.createServer(function (request, response) {
                     head["Content-Type"] = "application/x-font-ttf";
                 } else if (filename.substr(-4) === ".png") {
                     head["Content-Type"] = "image/png";
+                } else if (filename.substr(-4) === ".pdf") {
+                    head["Content-Type"] = "application/pdf";
                 }
                 response.writeHead(200, head);
                 if (request.method !== "HEAD") {
@@ -222,6 +254,6 @@ http.createServer(function (request, response) {
     fs.stat(filename, function (err, stats) {
         handleStat(err, stats, lookForIndexHtml);
     });
-}).listen(port, ipaddress);
+}).listen(port); //, ipaddress);
 
 console.log('Server running at http://' + ipaddress + ':' + port + '/');
