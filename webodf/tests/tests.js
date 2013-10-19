@@ -33,7 +33,7 @@
  * @source: http://www.webodf.org/
  * @source: https://github.com/kogmbh/WebODF/
  */
-/*global window, runtime, Runtime, core, gui, xmldom, RuntimeTests, odf, ops, webodf_css: true*/
+/*global window, runtime, Runtime, core, gui, xmldom, xmled, RuntimeTests, odf, ops, webodf_css: true*/
 
 runtime.loadClass("core.Base64Tests");
 runtime.loadClass("core.DomUtilsTests");
@@ -61,6 +61,7 @@ runtime.loadClass("odf.StyleInfoTests");
 runtime.loadClass("odf.TextStyleApplicatorTests");
 runtime.loadClass("xmldom.LSSerializerTests");
 runtime.loadClass("xmldom.XPathTests");
+runtime.loadClass("xmled.ValidationModelTests");
 
 // qtjsruntimetest tests break if OdfCanvas is allowed to insert a dynamic <link/> element.
 // If a dynamic link is inserted, subsequent dynamic style sheets (document.createElement(...)) fail to result in
@@ -99,6 +100,7 @@ if (runtime.getDOMImplementation() && runtime.parseXML("<a/>").createRange) {
     tests.push(ops.OdtDocumentTests);
     tests.push(ops.StepsTranslatorTests);
     tests.push(ops.TransformerTests);
+    tests.push(xmled.ValidationModelTests);
 }
 // add tests depending on browser runtime
 if (runtime.type() === "BrowserRuntime") {
