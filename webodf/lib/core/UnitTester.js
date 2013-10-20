@@ -228,14 +228,32 @@ core.UnitTestRunner = function UnitTestRunner() {
         }
         runtime.assert(atype === Node.ELEMENT_NODE,
             "Only textnodes and elements supported.");
+        if (a.nodeType === Node.DOCUMENT_FRAGMENT_NODE) {
+            while (an) {
+                if (!bn) {
+                    testFailed("Number of children is not equal.");
+                    return false;
+                }
+                if (!areNodesEqual(an, bn)) {
+                    return false;
+                }
+                an = an.nextSibling;
+                bn = bn.nextSibling;
+            }
+            if (bn) {
+                testFailed("Number of children is not equal.");
+                return false;
+            }
+            return true;
+        }
+        runtime.assert(a.nodeType === Node.ELEMENT_NODE, "Only textnodes, elements and documentFragments are supported.");
         if (a.namespaceURI !== b.namespaceURI) {
             testFailed("namespace '" + a.namespaceURI + "' should be '"
                     + b.namespaceURI + "'");
             return false;
         }
         if (a.localName !== b.localName) {
-            testFailed("localName '" + a.localName + "' should be '"
-                    + b.localName + "'");
+            testFailed("localName '" + a.localName + "' should be '" + b.localName + "'");
             return false;
         }
         if (!areAttributesEqual(/**@type{!Element}*/(a),
