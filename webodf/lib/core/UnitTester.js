@@ -524,6 +524,17 @@ core.UnitTester = function UnitTester() {
             t = todo[0].f;
             var fname = todo[0].name;
             runtime.log("Running " + fname);
+            tname = t.name;
+            if (testNames.length && testNames.indexOf(tname) === -1) {
+                return runAsyncTests(todo.slice(1));
+            }
+            if (inBrowser) {
+                runtime.log("<span>Running "
+                    + link(fname, "runTest(\"" + testName + "\",\""
+                                  + fname + "\")") + "</span>");
+            } else {
+                runtime.log("Running " + fname);
+            }
             lastFailCount = runner.countFailedTests();
             test.setUp();
             t(function () {
