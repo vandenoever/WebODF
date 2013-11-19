@@ -136,6 +136,28 @@ if (Java_JAVA_EXECUTABLE)
          webodf.css.js-target
   )
   add_custom_target(webodf.js-target DEPENDS webodf.js)
+ 
+  set(XMLJSFILES lib/packages.js lib/runtime.js lib/xmled/XsdChecker.js lib/xmled/ValidationModel.js
+  )
+  foreach(JSFILE ${XMLJSFILES})
+    set(XML_CLOSURE_ARGS ${XML_CLOSURE_ARGS}
+        --js ${CMAKE_CURRENT_SOURCE_DIR}/${JSFILE})
+  endforeach(JSFILE ${TESTJSFILES})
+  add_custom_command(
+      OUTPUT xml.js
+      COMMAND ${Java_JAVA_EXECUTABLE}
+      ARGS -jar ${CLOSURE_JAR}
+         --define IS_COMPILED_CODE=true
+         ${SHARED_CLOSURE_ARGS} ${XML_CLOSURE_ARGS}
+         --compilation_level SIMPLE_OPTIMIZATIONS
+         --formatting PRINT_INPUT_DELIMITER
+         --externs ${CMAKE_CURRENT_SOURCE_DIR}/tools/externs.js
+         --js_output_file xml.js-
+      COMMAND ${CMAKE_COMMAND} ARGS -E rename xml.js- xml.js
+      DEPENDS ClosureCompiler ${XMLJSFILES} tools/externs.js
+         webodf.css.js-target tools/css2js.js jslintcheck
+  )
+  add_custom_target(xml.js-target DEPENDS xml.js)
 
   # check types on the js files that are listed in TYPEDLIBJSFILES
   add_custom_command(
