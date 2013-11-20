@@ -36,39 +36,43 @@
  * @source: https://github.com/kogmbh/WebODF/
  */
 
-/*global ops*/
-/*jslint emptyblock: true, unparam: true*/
-
+/*global xmled */
 /**
- * An operation that can be performed on a document.
- * @interface
+ * A document that keeps all data related to the mapped document.
+ * @constructor
+ * @implements ops.Document
+ * @param {!Element} documentElement
  */
-ops.Operation = function Operation() {
+xmled.XmlDocument = function XmlDocument(documentElement) {
     "use strict";
+    /**
+     * @return {!Array.<!ops.OdtCursor>}
+     */
+    this.getCursors = function () {
+        return [];
+    };
+    /**
+     * @param {!string} memberid
+     * @return {!boolean}
+     */
+    this.removeCursor = function (memberid) {
+        if (memberid) {
+            return false;
+        }
+        return false;
+    };
+    /**
+     * @return {!Element}
+     */
+    this.getDocumentElement = function () {
+        return documentElement;
+    };
+    /**
+     * @param {!Element} element
+     * @return {undefined}
+     */
+    this.setDocumentElement = function (element) {
+        documentElement = element;
+    };
 };
 
-/**
- * @param {?} data
- * @return {undefined}
- */
-ops.Operation.prototype.init = function (data) {"use strict"; };
-
-/**
- * This is meant to indicate whether
- * the operation is an 'edit', i.e.
- * causes any changes that would make
- * it into the saved ODF.
- * @type {!boolean}
- */
-ops.Operation.prototype.isEdit;
-
-/**
- * @param {!ops.Document} document
- * @return {!boolean}
- */
-ops.Operation.prototype.execute = function (document) {"use strict"; };
-
-/**
- * @return {!{optype,memberid,timestamp}}
- */
-ops.Operation.prototype.spec = function () {"use strict"; };

@@ -51,6 +51,7 @@ runtime.loadClass("ops.Member");
 /**
  * A document that keeps all data related to the mapped document.
  * @constructor
+ * @implements ops.Document
  * @param {!odf.OdfCanvas} odfCanvas
  */
 ops.OdtDocument = function OdtDocument(odfCanvas) {
@@ -517,7 +518,7 @@ ops.OdtDocument = function OdtDocument(odfCanvas) {
         var rootConstrainedFilter = new core.PositionFilterChain();
         rootConstrainedFilter.addFilter('BaseFilter', filter);
 
-        Object.keys(cursors).forEach(function(memberId) {
+        Object.keys(cursors).forEach(function (memberId) {
             var cursor = cursors[memberId],
                 stepCounter = cursor.getStepCounter(),
                 stepsSelectionLength,
@@ -613,7 +614,7 @@ ops.OdtDocument = function OdtDocument(odfCanvas) {
      * @param {!string} memberid
      * @returns {{position: !number, length: !number}}
      */
-    this.getCursorSelection = function(memberid) {
+    this.getCursorSelection = function (memberid) {
         var cursor = cursors[memberid],
             focusPosition = 0,
             anchorPosition = 0;
@@ -720,6 +721,43 @@ ops.OdtDocument = function OdtDocument(odfCanvas) {
             return true;
         }
         return false;
+    };
+
+    /**
+     * @return {!Element}
+     */
+    this.getDocumentElement = function () {
+        return odfCanvas.odfContainer().rootElement;
+    };
+
+    /**
+     * @param {!Element} rootElement
+     * @return {undefined}
+     */
+    this.setDocumentElement = function (rootElement) {
+        var odfContainer = odfCanvas.odfContainer();
+        odfContainer.setRootElement(rootElement);
+        odfCanvas.setOdfContainer(odfContainer, true);
+    };
+
+    /**
+     * @param {!string} metadataId
+     * @return {?string}
+     */
+    this.getMetaData = function (metadataId) {
+        var node = odfCanvas.odfContainer().rootElement.firstChild;
+        while (node && node.localName !== "meta") {
+            node = node.nextSibling;
+        }
+        node = node && node.firstChild;
+        while (node && node.localName !== metadataId) {
+            node = node.nextSibling;
+        }
+        node = node && node.firstChild;
+        while (node && node.nodeType !== Node.TEXT_NODE) {
+            node = node.nextSibling;
+        }
+        return node ? node.data : null;
     };
 
     /**

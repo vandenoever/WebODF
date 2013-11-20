@@ -170,7 +170,7 @@ xmled.ValidationModelTests = function ValidationModelTests(runner) {
     /**
      * @param {!string} xsdfile
      * @param {!string} xmlfile
-     * @return {!function(!function():undefined):undefined} callback
+     * @return {!{f:function(!function():undefined):undefined,name:string}} callback
      */
     function testValidation(xsdfile, xmlfile) {
         var f = function (callback) {
@@ -192,8 +192,7 @@ xmled.ValidationModelTests = function ValidationModelTests(runner) {
                 });
             });
         };
-        f.functionName = "validation-" + xsdfile + "-" + xmlfile;
-        return f;
+        return {f: f, name: "validation-" + xsdfile + "-" + xmlfile};
     }
 
     function testRoot(xsd, replacementIds) {
@@ -208,8 +207,7 @@ xmled.ValidationModelTests = function ValidationModelTests(runner) {
                 });
             });
         };
-        f.functionName = "init-" + xsd;
-        return f;
+        return {f: f, name: "init-" + xsd};
     }
 
     /**
@@ -278,7 +276,7 @@ xmled.ValidationModelTests = function ValidationModelTests(runner) {
      * @param {!Array.<!number>} start
      * @param {!Array.<!number>} end
      * @param {!Array.<!number>} replacementIds
-     * @return {!function(!function():undefined):undefined} callback
+     * @return {!{f:function(!function():undefined):undefined,name:string}} callback
      */
     function testReplace(xsd, initId, start, end, replacementIds) {
         var f = function (callback) {
@@ -303,8 +301,7 @@ xmled.ValidationModelTests = function ValidationModelTests(runner) {
                 });
             });
         };
-        f.functionName = "replace-" + xsd + "-" + initId;
-        return f;
+        return {f: f, name: "replace-" + xsd + "-" + initId};
     }
 
     this.setUp = function () {
@@ -341,5 +338,5 @@ xmled.ValidationModelTests.prototype.description = function () {
 };
 (function () {
     "use strict";
-    return xmled.ValidationModelTests; 
+    return xmled.ValidationModelTests;
 }());

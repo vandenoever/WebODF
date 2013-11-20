@@ -65,6 +65,8 @@ gui.TrivialUndoManagerTests = function TrivialUndoManagerTests(runner) {
         function returnThis() { return self; }
         this.rootElement = rootElement;
 
+        this.getDocumentElement = function () { return rootElement; };
+        this.setDocumentElement = function (e) { rootElement = e; };
         this.getOdfCanvas = returnThis;
         this.odfContainer = returnThis;
         this.getAnnotationViewManager = returnThis;
@@ -85,7 +87,7 @@ gui.TrivialUndoManagerTests = function TrivialUndoManagerTests(runner) {
             mock : new AdaptiveMock(testarea),
             ops : []
         };
-        t.manager.setOdtDocument(t.mock);
+        t.manager.setDocument(t.mock);
         t.manager.setPlaybackFunction(function (op) {t.ops.push(op.spec().timestamp); });
     };
     this.tearDown = function () {

@@ -226,8 +226,9 @@ core.UnitTestRunner = function UnitTestRunner() {
                        +  "' should be '" + /**@type{!Text}*/(b).data + "'");
             return false;
         }
-        runtime.assert(atype === Node.ELEMENT_NODE,
-            "Only textnodes and elements supported.");
+        runtime.assert(atype === Node.ELEMENT_NODE
+                || atype === Node.DOCUMENT_FRAGMENT_NODE,
+            "Only textnodes, elements and fragments supported.");
         if (a.nodeType === Node.DOCUMENT_FRAGMENT_NODE) {
             while (an) {
                 if (!bn) {

@@ -1,7 +1,5 @@
 /**
- * @license
- * Copyright (C) 2012-2013 KO GmbH <copyright@kogmbh.com>
- *
+ * Copyright (C) 2013 KO GmbH <jos.van.den.oever@kogmbh.com>
  * @licstart
  * The JavaScript code in this page is free software: you can redistribute it
  * and/or modify it under the terms of the GNU Affero General Public License
@@ -35,40 +33,65 @@
  * @source: http://www.webodf.org/
  * @source: https://github.com/kogmbh/WebODF/
  */
-
-/*global ops*/
-/*jslint emptyblock: true, unparam: true*/
-
+/*global runtime, core, xmled*/
+runtime.loadClass("xmled.XmlDocument");
 /**
- * An operation that can be performed on a document.
- * @interface
+ * @constructor
+ * @param {core.UnitTestRunner} runner
+ * @implements {core.UnitTest}
  */
-ops.Operation = function Operation() {
+xmled.XmlDocumentTests = function XmlDocumentTests(runner) {
     "use strict";
+    var r = runner,
+        t,
+        testarea;
+
+    function createXmlDocument(xml) {
+        var domDocument = testarea.ownerDocument,
+            doc = runtime.parseXML(xml),
+            node = /**@type{!Element}*/(domDocument.importNode(doc.documentElement, true));
+
+        testarea.appendChild(node);
+
+        t.root = node;
+        t.xmlDocument = new xmled.XmlDocument(node);
+        t.range = t.root.ownerDocument.createRange();
+        return node;
+    }
+
+    function testCountLinesStepsDown_FromParagraphStart() {
+        createXmlDocument("<p>ABCD</p><p>FGHIJ</p>");
+        r.shouldBeNonNull(t, "t.root");
+    }
+
+    this.setUp = function () {
+        var doc;
+        testarea = core.UnitTest.provideTestAreaDiv();
+        doc = testarea.ownerDocument;
+        t = {
+            doc: doc
+        };
+    };
+    this.tearDown = function () {
+        core.UnitTest.cleanupTestAreaDiv();
+        t = {};
+    };
+
+    this.tests = function () {
+        return r.name([
+            testCountLinesStepsDown_FromParagraphStart
+        ]);
+    };
+    this.asyncTests = function () {
+        return [
+        ];
+    };
 };
-
-/**
- * @param {?} data
- * @return {undefined}
- */
-ops.Operation.prototype.init = function (data) {"use strict"; };
-
-/**
- * This is meant to indicate whether
- * the operation is an 'edit', i.e.
- * causes any changes that would make
- * it into the saved ODF.
- * @type {!boolean}
- */
-ops.Operation.prototype.isEdit;
-
-/**
- * @param {!ops.Document} document
- * @return {!boolean}
- */
-ops.Operation.prototype.execute = function (document) {"use strict"; };
-
-/**
- * @return {!{optype,memberid,timestamp}}
- */
-ops.Operation.prototype.spec = function () {"use strict"; };
+xmled.XmlDocumentTests.prototype.description = function () {
+    "use strict";
+    return "Test the XmlDocument class.";
+};
+(function () {
+    "use strict";
+    return xmled.XmlDocumentTests;
+}());

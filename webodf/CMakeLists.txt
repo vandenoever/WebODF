@@ -32,6 +32,7 @@ set(TESTJSFILES tests/core/ZipTests.js
     tests/xmldom/LSSerializerTests.js
     tests/xmldom/XPathTests.js
     tests/xmled/ValidationModelTests.js
+    tests/xmled/XmlDocumentTests.js
     tests/tests.js
 )
 

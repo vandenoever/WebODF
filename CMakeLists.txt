@@ -346,16 +346,10 @@ set(UNTYPEDLIBJSFILES
     lib/ops/TrivialOperationRouter.js
     lib/gui/EditInfoMarker.js
     lib/gui/PlainTextPasteboard.js
-    lib/gui/SelectionView.js
-    lib/gui/SelectionViewManager.js
+    lib/gui/SessionView.js
+    lib/gui/CaretManager.js
+    lib/gui/UndoStateRules.js
     lib/gui/TrivialUndoManager.js
-    lib/ops/Session.js
-    lib/gui/AnnotationController.js
-    lib/gui/DirectParagraphStyler.js
-    lib/gui/DirectTextStyler.js
-    lib/gui/ImageManager.js
-    lib/gui/TextManipulator.js
-    lib/gui/SessionController.js
     lib/gui/CaretManager.js
     lib/gui/SessionView.js
 )

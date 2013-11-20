@@ -1,5 +1,4 @@
 /**
- * @license
  * Copyright (C) 2012-2013 KO GmbH <copyright@kogmbh.com>
  *
  * @licstart
@@ -36,39 +35,68 @@
  * @source: https://github.com/kogmbh/WebODF/
  */
 
-/*global ops*/
-/*jslint emptyblock: true, unparam: true*/
+/*global xmled, gui, runtime */
+
+runtime.loadClass("gui.UndoManager");
 
 /**
- * An operation that can be performed on a document.
- * @interface
+ * @constructor
+ * @param {!xmled.XmlDocument} document
+ * @param {!xmled.XmlCanvas} canvas
+ * @return {?}
  */
-ops.Operation = function Operation() {
+xmled.SessionController = (function () {
     "use strict";
-};
+    /**
+     * @constructor
+     * @param {!xmled.XmlDocument} document
+     * @param {!xmled.XmlCanvas} canvas
+     * @return {?}
+     */
+    xmled.SessionController = function SessionController(document, canvas) {
+        var undoManager;
 
-/**
- * @param {?} data
- * @return {undefined}
- */
-ops.Operation.prototype.init = function (data) {"use strict"; };
+        this.getCanvas = function () {
+            return canvas;
+        };
 
-/**
- * This is meant to indicate whether
- * the operation is an 'edit', i.e.
- * causes any changes that would make
- * it into the saved ODF.
- * @type {!boolean}
- */
-ops.Operation.prototype.isEdit;
+        /**
+         * @param {?Event} e
+         * @return {undefined}
+         */
+        function forwardUndoStackChange(e) {
+            runtime.log(e + " ");
+        }
 
-/**
- * @param {!ops.Document} document
- * @return {!boolean}
- */
-ops.Operation.prototype.execute = function (document) {"use strict"; };
+        /**
+         * @param {?gui.UndoManager} manager
+         * @return {undefined}
+         */
+        this.setUndoManager = function (manager) {
+            if (undoManager) {
+                undoManager.unsubscribe(gui.UndoManager.signalUndoStackChanged, forwardUndoStackChange);
+            }
 
-/**
- * @return {!{optype,memberid,timestamp}}
- */
-ops.Operation.prototype.spec = function () {"use strict"; };
+            undoManager = manager;
+            if (undoManager) {
+                undoManager.setDocument(document);
+                // As per gui.UndoManager, this should NOT fire any signals or report
+                // events being executed back to the undo manager.
+                undoManager.setPlaybackFunction(function (op) {
+                    op.execute(document);
+                });
+                undoManager.subscribe(gui.UndoManager.signalUndoStackChanged, forwardUndoStackChange);
+            }
+        };
+
+        /**
+         * @returns {?gui.UndoManager}
+         */
+        this.getUndoManager = function () {
+            return undoManager;
+        };
+    };
+
+    return xmled.SessionController;
+}());
+// vim:expandtab

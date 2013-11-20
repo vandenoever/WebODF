@@ -310,11 +310,11 @@ Runtime.fromJson = function (jsonstr) {
 Runtime.getFunctionName = function getFunctionName(f) {
     "use strict";
     var m;
-    if (f.name === undefined && f.functionName === undefined) {
+    if (f.name === undefined) {
         m = new RegExp("function\\s+(\\w+)").exec(f);
         return m && m[1];
     }
-    return f.name || f.functionName;
+    return f.name;
 };
 /**
  * @class
@@ -1503,6 +1503,10 @@ var odf = {};
  * @namespace The editing operations
  */
 var ops = {};
+/**
+ * @namespace The editing operations
+ */
+var xmled = {};
 
 /*jslint sloppy: true*/
 (function () {

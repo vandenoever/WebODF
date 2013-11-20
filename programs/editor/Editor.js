@@ -53,6 +53,7 @@ define("webodf/editor/Editor", [
         "use strict";
 
         runtime.loadClass('odf.OdfCanvas');
+        runtime.loadClass("gui.TrivialUndoManager");
 
         /**
          * @constructor

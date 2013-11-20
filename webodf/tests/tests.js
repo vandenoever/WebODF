@@ -62,6 +62,7 @@ runtime.loadClass("odf.TextStyleApplicatorTests");
 runtime.loadClass("xmldom.LSSerializerTests");
 runtime.loadClass("xmldom.XPathTests");
 runtime.loadClass("xmled.ValidationModelTests");
+runtime.loadClass("xmled.XmlDocumentTests");
 
 // qtjsruntimetest tests break if OdfCanvas is allowed to insert a dynamic <link/> element.
 // If a dynamic link is inserted, subsequent dynamic style sheets (document.createElement(...)) fail to result in
@@ -101,6 +102,7 @@ if (runtime.getDOMImplementation() && runtime.parseXML("<a/>").createRange) {
     tests.push(ops.StepsTranslatorTests);
     tests.push(ops.TransformerTests);
     tests.push(xmled.ValidationModelTests);
+    tests.push(xmled.XmlDocumentTests);
 }
 // add tests depending on browser runtime
 if (runtime.type() === "BrowserRuntime") {

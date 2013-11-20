@@ -117,11 +117,11 @@ xmled.XmlCanvas = function XmlCanvas(element, validationModel, styleurl) {
             init();
             runtime.loadXML(url, function (err, dom) {
                 if (err) {
+                    runtime.log(err);
                     error = err;
                     state = xmled.XmlCanvas.State.ERROR;
                     return;
                 }
-                runtime.log(err);
                 root = /**@type{!Element}*/(doc.importNode(dom.documentElement, true));
                 //enrich(e);
                 element.appendChild(root);

@@ -49,20 +49,20 @@ gui.UndoManager = function UndoManager() {"use strict"; };
  * @param {!string} signal
  * @param {!Function} callback
  */
-gui.UndoManager.prototype.subscribe = function(signal, callback) {"use strict"; };
+gui.UndoManager.prototype.subscribe = function (signal, callback) {"use strict"; };
 
 /**
  * Unsubscribe to events related to the undo manager
  * @param {!string} signal
  * @param {!Function} callback
  */
-gui.UndoManager.prototype.unsubscribe = function(signal, callback) {"use strict"; };
+gui.UndoManager.prototype.unsubscribe = function (signal, callback) {"use strict"; };
 
 /**
- * Set the OdtDocument to operate on
- * @param newDocument
+ * Set the Document to operate on
+ * @param {!ops.Document} newDocument
  */
-gui.UndoManager.prototype.setOdtDocument = function (newDocument) {"use strict"; };
+gui.UndoManager.prototype.setDocument = function (newDocument) {"use strict"; };
 
 /**
  * Sets the initial document state and operation state. This is the earliest point
@@ -118,9 +118,12 @@ gui.UndoManager.prototype.moveBackward = function (states) {"use strict"; };
  */
 gui.UndoManager.prototype.onOperationExecuted = function (op) {"use strict"; };
 
-/**@const*/gui.UndoManager.signalUndoStackChanged = "undoStackChanged";
-/**@const*/gui.UndoManager.signalUndoStateCreated = "undoStateCreated";
-/**@const*/gui.UndoManager.signalUndoStateModified = "undoStateModified";
+/**@const*/
+gui.UndoManager.signalUndoStackChanged = "undoStackChanged";
+/**@const*/
+gui.UndoManager.signalUndoStateCreated = "undoStateCreated";
+/**@const*/
+gui.UndoManager.signalUndoStateModified = "undoStateModified";
 
 (function () {
     "use strict";
