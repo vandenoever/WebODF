@@ -1504,7 +1504,7 @@ var odf = {};
  */
 var ops = {};
 /**
- * @namespace The editing operations
+ * @namespace The xmled package.
  */
 var xmled = {};
 
