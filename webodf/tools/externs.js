@@ -123,6 +123,12 @@ NodeJSObject.prototype.unlink = function (path, callback) {"use strict"; };
  */
 NodeJSObject.prototype.close = function (fd, callback) {"use strict"; };
 /**
+ * @param {string} cmd
+ * @param {!{cwd:string,env:Object,encoding:string,timeout:number,maxBuffer:number,killSignal:string}|function(string,string,string):undefined} options
+ * @param {function(string,string,string):undefined=} callback
+ */
+NodeJSObject.prototype.exec = function (cmd, options, callback) {"use strict"; };
+/**
  * @constructor
  */
 function XmlDom() {"use strict"; }
