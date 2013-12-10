@@ -282,7 +282,6 @@ set(TYPEDLIBJSFILES
     lib/core/PositionFilterChain.js
     lib/gui/AnnotationViewManager.js
     lib/gui/SelectionMover.js
-    lib/odf/MetadataManager.js
     lib/odf/OdfNodeFilter.js
     lib/odf/Style2CSS.js
     lib/odf/StyleInfo.js
@@ -299,9 +298,9 @@ set(TYPEDLIBJSFILES
     lib/xmled/XmlEditor.js
     lib/odf/FontLoader.js
     lib/odf/ObjectNameGenerator.js
-    lib/odf/TextStyleApplicator.js
     lib/odf/Formatting.js
     lib/odf/OdfCanvas.js
+    lib/odf/TextStyleApplicator.js
     lib/gui/StyleHelper.js
 )
 # This list is generated automatically, do not edit this list by hand.

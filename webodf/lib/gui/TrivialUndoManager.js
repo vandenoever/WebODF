@@ -331,7 +331,9 @@ gui.TrivialUndoManager = function TrivialUndoManager(defaultRules) {
 
         if (moved) {
             // Only do actual work if moveBackward does something to the undo stacks
-            // TODO Replace with a neater hack for reloading the document tree
+            // TODO Replace with a neater hack for reloading the Odt tree
+            // Once this is fixed, SelectionView.addOverlays & StepsTranslator.verifyRootNode can be largely removed
+            // Also checkout some swear words in EventManager which re-adds the event trap
             document.setDocumentElement(initialDoc.cloneNode(true));
             eventNotifier.emit(gui.TrivialUndoManager.signalDocumentRootReplaced, { });
             // Need to reset the odt document cursor list back to nil so new cursors are correctly re-registered

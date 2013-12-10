@@ -509,8 +509,12 @@ ops.OdtDocumentTests = function OdtDocumentTests(runner) {
         testCursorPositions("<text:p><text:span>|<draw:frame text:anchor-type=\"as-char\"><draw:image><office:binary-data>data</office:binary-data></draw:image></draw:frame>|</text:span></text:p>");
     }
     function testAvailablePositions_Annotations() {
-        testCursorPositions('<text:p>|a|b|<office:annotation><text:list><text:list-item><text:p>|</text:p></text:list-item></text:list></office:annotation>c|d|<office:annotation-end></office:annotation-end>1|2|</text:p>');
+        testCursorPositions('<text:p>|a|b|<office:annotation><text:list><text:list-item><text:p>|</text:p></text:list-item></text:list></office:annotation>|c|d|<office:annotation-end></office:annotation-end>1|2|</text:p>');
     }
+    function testAvailablePositions_BetweenAnnotationAndSpan() {
+        testCursorPositions('<text:p>|a|b|<office:annotation><text:list><text:list-item><text:p>|</text:p></text:list-item></text:list></office:annotation><text:span>c|d|e|</text:span><office:annotation-end></office:annotation-end>1|2|</text:p>');
+    }
+
 
     function getTextNodeAtStep_BeginningOfTextNode() {
         var doc = createOdtDocument("<text:p>ABCD</text:p>");
@@ -563,6 +567,7 @@ ops.OdtDocumentTests = function OdtDocumentTests(runner) {
     function getTextNodeAtStep_At0_PutsTargetMemberCursor_AfterTextNode() {
         var doc = createOdtDocument("<text:p>ABCD</text:p>");
         t.paragraph = doc.getElementsByTagNameNS(odf.Namespaces.textns, "p")[0];
+        setCursorPosition(0);
 
         t.domPosition = t.odtDocument.getTextNodeAtStep(0, inputMemberId);
 
@@ -630,6 +635,78 @@ ops.OdtDocumentTests = function OdtDocumentTests(runner) {
         r.shouldBe(t, "t.cursor.getNode().previousSibling", "t.domPosition.textNode");
     }
 
+    function getTextNodeAtStep_At0_PutsTargetMemberCursor_BeforeTextNode() {
+        var doc = createOdtDocument("<text:p>ABCD</text:p>");
+        t.paragraph = doc.getElementsByTagNameNS(odf.Namespaces.textns, "p")[0];
+        setCursorPosition(0);
+
+        t.domPosition = t.odtDocument.getTextNodeAtStep(0);
+
+        // paragraph children are: <cursor>, #text
+        r.shouldBe(t, "t.domPosition.textNode", "t.paragraph.childNodes[1]");
+        r.shouldBe(t, "t.domPosition.textNode.textContent", "'ABCD'");
+        r.shouldBe(t, "t.domPosition.offset", "0");
+        r.shouldBe(t, "t.cursor.getNode().nextSibling", "t.domPosition.textNode");
+    }
+
+    function getTextNodeAtStep_At1_PutsTargetMemberCursor_BeforeTextNode() {
+        var doc = createOdtDocument("<text:p>ABCD</text:p>");
+        t.paragraph = doc.getElementsByTagNameNS(odf.Namespaces.textns, "p")[0];
+        setCursorPosition(1);
+
+        t.domPosition = t.odtDocument.getTextNodeAtStep(1);
+
+        // paragraph children are: #text, <cursor>, #text
+        r.shouldBe(t, "t.domPosition.textNode", "t.paragraph.childNodes[2]");
+        r.shouldBe(t, "t.domPosition.textNode.textContent", "'BCD'");
+        r.shouldBe(t, "t.domPosition.offset", "0");
+        r.shouldBe(t, "t.cursor.getNode().nextSibling", "t.domPosition.textNode");
+    }
+
+    function getTextNodeAtStep_At4_PutsTargetMemberCursor_BeforeTextNode() {
+        var doc = createOdtDocument("<text:p>ABCD</text:p>");
+        t.paragraph = doc.getElementsByTagNameNS(odf.Namespaces.textns, "p")[0];
+        setCursorPosition(4);
+
+        t.domPosition = t.odtDocument.getTextNodeAtStep(4);
+
+        // paragraph children are: #text, <cursor>, #text
+        r.shouldBe(t, "t.domPosition.textNode", "t.paragraph.childNodes[2]");
+        r.shouldBe(t, "t.domPosition.textNode.textContent", "''");
+        r.shouldBe(t, "t.domPosition.offset", "0");
+        r.shouldBe(t, "t.cursor.getNode().nextSibling", "t.domPosition.textNode");
+    }
+
+    function getTextNodeAtStep_AfterNonText_PutsTargetMemberCursor_BeforeTextNode() {
+        var doc = createOdtDocument("<text:p>ABC<text:s> </text:s></text:p>");
+        t.paragraph = doc.getElementsByTagNameNS(odf.Namespaces.textns, "p")[0];
+        setCursorPosition(4);
+
+        t.domPosition = t.odtDocument.getTextNodeAtStep(4);
+
+        // paragraph children are: #text, <s>, <cursor>, #text
+        r.shouldBe(t, "t.domPosition.textNode", "t.paragraph.childNodes[3]");
+        r.shouldBe(t, "t.domPosition.textNode.textContent", "''");
+        r.shouldBe(t, "t.domPosition.offset", "0");
+        r.shouldBe(t, "t.cursor.getNode().nextSibling", "t.domPosition.textNode");
+    }
+
+    function getTextNodeAtStep_EmptyP_MovesAllCursors_BeforeTextNode() {
+        var doc = createOdtDocument("<text:p/>");
+        t.paragraph = doc.getElementsByTagNameNS(odf.Namespaces.textns, "p")[0];
+        t.odtDocument.addCursor(new ops.OdtCursor("new 1", t.odtDocument));
+        t.odtDocument.addCursor(new ops.OdtCursor("new 2", t.odtDocument));
+
+        t.domPosition = t.odtDocument.getTextNodeAtStep(0);
+
+        // paragraph children are: <cursor>, <cursor>, <cursor member="Joe">, #text
+        r.shouldBe(t, "t.domPosition.textNode", "t.paragraph.childNodes[3]");
+        r.shouldBe(t, "t.domPosition.textNode.textContent", "''");
+        r.shouldBe(t, "t.domPosition.offset", "0");
+        r.shouldBe(t, "t.domPosition.textNode.nextSibling", "null");
+        r.shouldBe(t, "t.domPosition.textNode.previousSibling.localName", "'cursor'");
+    }
+
     this.setUp = function () {
         var doc, stylesElement;
         testarea = core.UnitTest.provideTestAreaDiv();
@@ -695,6 +772,7 @@ ops.OdtDocumentTests = function OdtDocumentTests(runner) {
             testAvailablePositions_SpaceElements,
             testAvailablePositions_DrawElements,
             testAvailablePositions_Annotations,
+            testAvailablePositions_BetweenAnnotationAndSpan,
 
             getTextNodeAtStep_BeginningOfTextNode,
             getTextNodeAtStep_EndOfTextNode,
@@ -704,7 +782,13 @@ ops.OdtDocumentTests = function OdtDocumentTests(runner) {
             getTextNodeAtStep_At1_PutsTargetMemberCursor_AfterTextNode,
             getTextNodeAtStep_At4_PutsTargetMemberCursor_AfterTextNode,
             getTextNodeAtStep_AfterNonText_PutsTargetMemberCursor_AfterTextNode,
-            getTextNodeAtStep_RearrangesExistingCursors_MovesMemberAfterTextNode
+            getTextNodeAtStep_RearrangesExistingCursors_MovesMemberAfterTextNode,
+
+            getTextNodeAtStep_At0_PutsTargetMemberCursor_BeforeTextNode,
+            getTextNodeAtStep_At1_PutsTargetMemberCursor_BeforeTextNode,
+            getTextNodeAtStep_At4_PutsTargetMemberCursor_BeforeTextNode,
+            getTextNodeAtStep_AfterNonText_PutsTargetMemberCursor_BeforeTextNode,
+            getTextNodeAtStep_EmptyP_MovesAllCursors_BeforeTextNode
         ]);
     };
     this.asyncTests = function () {

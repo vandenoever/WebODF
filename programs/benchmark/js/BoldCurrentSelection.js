@@ -36,56 +36,29 @@
  * @source: https://github.com/kogmbh/WebODF/
  */
 
-/*global runtime, gui, ops*/
-
-/**
- *
- * @param {!ops.OdtDocument} odtDocument
- * @param {!string} inputMemberId
- * @constructor
- */
-gui.PlainTextPasteboard = function PlainTextPasteboard(odtDocument, inputMemberId) {
+define(["BenchmarkAction"], function(BenchmarkAction) {
     "use strict";
 
-    function createOp(op, data) {
-        op.init(data);
-        return op;
+    /**
+     * Bold the current selection
+     * @constructor
+     */
+    function BoldCurrentSelection() {
+        var state = {description: "Bold the current selection"},
+            action = new BenchmarkAction(state);
+
+        this.subscribe = action.subscribe;
+        this.state = state;
+
+        /**
+         * @param {!SharedState} sharedState
+         */
+        this.start = function(sharedState) {
+            action.start();
+            sharedState.sessionController.getDirectTextStyler().setBold(true);
+            action.complete(true);
+        }
     }
 
-    /**
-     * @param {!string} data
-     * @return {!Array.<!ops.Operation>}
-     */
-    this.createPasteOps = function(data) {
-        var originalCursorPosition = odtDocument.getCursorPosition(inputMemberId),
-            cursorPosition = originalCursorPosition,
-            operations = [],
-            paragraphs;
-
-        paragraphs = data.replace(/\r/g, "").split("\n");
-        paragraphs.forEach(function(text) {
-            operations.push(createOp(new ops.OpSplitParagraph(), {
-                memberid: inputMemberId,
-                position: cursorPosition,
-                moveCursor: true
-            }));
-            cursorPosition += 1; // Splitting a paragraph introduces 1 walkable position, bumping the cursor forward
-            operations.push(createOp(new ops.OpInsertText(), {
-                memberid: inputMemberId,
-                position: cursorPosition,
-                text: text,
-                moveCursor: true
-            }));
-            cursorPosition += text.length;
-        });
-
-        // Merge the first element back into the first paragraph
-        operations.push(createOp(new ops.OpRemoveText(), {
-            memberid: inputMemberId,
-            position: originalCursorPosition,
-            length: 1
-        }));
-
-        return operations;
-    };
-};
+    return BoldCurrentSelection;
+});
