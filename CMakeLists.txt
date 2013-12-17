@@ -307,6 +307,7 @@ set(TYPEDLIBJSFILES
 set(UNTYPEDLIBJSFILES
 # These files depend only on files that are 100% typed.
     lib/core/RawDeflate.js
+    lib/gui/HyperlinkClickHandler.js
     lib/gui/ImageSelector.js
     lib/odf/CommandLineTools.js
     lib/ops/Member.js
