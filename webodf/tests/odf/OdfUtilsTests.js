@@ -51,7 +51,8 @@ odf.OdfUtilsTests = function OdfUtilsTests(runner) {
             "fo":"urn:oasis:names:tc:opendocument:xmlns:xsl-fo-compatible:1.0",
             "draw":"urn:oasis:names:tc:opendocument:xmlns:drawing:1.0",
             "svg":"urn:oasis:names:tc:opendocument:xmlns:svg-compatible:1.0",
-            "dr3d":"urn:oasis:names:tc:opendocument:xmlns:dr3d:1.0"
+            "dr3d":"urn:oasis:names:tc:opendocument:xmlns:dr3d:1.0",
+            "xlink":"http://www.w3.org/1999/xlink"
         };
 
     this.setUp = function () {
@@ -242,6 +243,31 @@ odf.OdfUtilsTests = function OdfUtilsTests(runner) {
         r.shouldBe(t, "t.imageElements.shift()", "t.doc.childNodes[0].firstChild.firstChild.firstChild");
         r.shouldBe(t, "t.imageElements.shift()", "t.doc.childNodes[1].firstChild.firstChild.firstChild.firstChild");
     }
+    function getTextElements_InlineRoots_ExcludesSubRoots() {
+        t.doc = createDocument("<text:p>abc<div xmlns='http://www.w3.org/1999/xhtml' class='annotationWrapper'><office:annotation>def</office:annotation></div>ghi</text:p>");
+        t.range.selectNode(t.doc);
+
+        t.textElements = t.odfUtils.getTextElements(t.range, false, false);
+
+        r.shouldBe(t, "t.textElements.length", "3");
+        r.shouldBe(t, "t.textElements.shift()", "t.doc.childNodes[0]");
+        r.shouldBe(t, "t.textElements.shift()", "t.doc.childNodes[1]");
+        r.shouldBe(t, "t.textElements.shift()", "t.doc.childNodes[2]");
+    }
+    function getTextElements_ContainedWithinRoot_StaysBounded() {
+        t.doc = createDocument("<text:p>abc<div xmlns='http://www.w3.org/1999/xhtml' class='annotationWrapper'>" +
+            "<office:annotation>" +
+            "<text:list><text:list-item><text:p>def</text:p></text:list-item></text:list>" +
+            "</office:annotation>" +
+            "</div>ghi</text:p>");
+        t.annotationText = t.doc.childNodes[1].firstChild.firstChild.firstChild.firstChild.firstChild; // should be "def"
+        t.range.selectNodeContents(t.annotationText.parentNode);
+
+        t.textElements = t.odfUtils.getTextElements(t.range, true, false);
+
+        r.shouldBe(t, "t.textElements.length", "1");
+        r.shouldBe(t, "t.textElements.shift()", "t.annotationText");
+    }
     function isDowngradableWhitespace_DowngradesFirstSpaceAfterChar() {
         t.doc = createDocument("<text:p>a<text:s> </text:s>b</text:p>");
         t.isDowngradable = t.odfUtils.isDowngradableSpaceElement(t.doc.childNodes[1]);
@@ -274,6 +300,33 @@ odf.OdfUtilsTests = function OdfUtilsTests(runner) {
         r.shouldBe(t, "t.isDowngradable1", "true");
         r.shouldBe(t, "t.isDowngradable2", "false");
     }
+    function getHyperlinkElements_ReturnNoLinkOutsideSelection() {
+        t.doc = createDocument("<text:p><text:a xlink:href='apple'>apple</text:a>google</text:p>");
+        t.range.setStartBefore(t.doc.childNodes[1]);
+        t.range.setEndAfter(t.doc.childNodes[1]);
+
+        t.hyperlinks = t.odfUtils.getHyperlinkElements(t.range);
+        r.shouldBe(t, "t.hyperlinks.length", "0");
+    }
+    function getHyperlinkElements_ReturnLinkWithinSelection() {
+        t.doc = createDocument("<text:p><text:a xlink:href='google'>google</text:a><text:a xlink:href='apple'>apple</text:a></text:p>");
+        t.range.setStartBefore(t.doc.childNodes[0]);
+        t.range.setEndAfter(t.doc.childNodes[0]);
+
+        t.hyperlinks = t.odfUtils.getHyperlinkElements(t.range);
+        r.shouldBe(t, "t.hyperlinks.length", "1");
+        r.shouldBe(t, "t.hyperlinks.shift()", "t.doc.childNodes[0]");
+    }
+    function getHyperlinkElements_ReturnLinksForPartialSelection() {
+        t.doc = createDocument("<text:p><text:a xlink:href='google'>google</text:a><text:a xlink:href='apple'>apple</text:a></text:p>");
+        t.range.setStart(t.doc.childNodes[0].childNodes[0], 1);
+        t.range.setEnd(t.doc.childNodes[1].childNodes[0], 2);
+
+        t.hyperlinks = t.odfUtils.getHyperlinkElements(t.range);
+        r.shouldBe(t, "t.hyperlinks.length", "2");
+        r.shouldBe(t, "t.hyperlinks.shift()", "t.doc.childNodes[0]");
+        r.shouldBe(t, "t.hyperlinks.shift()", "t.doc.childNodes[1]");
+    }
     this.tests = function () {
         return r.name([
             isAnchoredAsCharacterElement_ReturnTrueForTab,
@@ -292,12 +345,18 @@ odf.OdfUtilsTests = function OdfUtilsTests(runner) {
             getTextElements_ExcludesInsignificantWhitespace,
             getTextElements_CharacterElements,
             getImageElements_ReturnTwoImages,
+            getTextElements_InlineRoots_ExcludesSubRoots,
+            getTextElements_ContainedWithinRoot_StaysBounded,
 
             isDowngradableWhitespace_DowngradesFirstSpaceAfterChar,
             isDowngradableWhitespace_DowngradesFirstSpaceAfterTab,
             isDowngradableWhitespace_DoesNotDowngradeTrailingSpace,
             isDowngradableWhitespace_DoesNotDowngradeLeading,
-            isDowngradableWhitespace_DoesNotDowngradeAfterSpace
+            isDowngradableWhitespace_DoesNotDowngradeAfterSpace,
+
+            getHyperlinkElements_ReturnNoLinkOutsideSelection,
+            getHyperlinkElements_ReturnLinkWithinSelection,
+            getHyperlinkElements_ReturnLinksForPartialSelection
         ]);
     };
     this.asyncTests = function () {

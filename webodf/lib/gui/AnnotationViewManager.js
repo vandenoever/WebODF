@@ -68,8 +68,9 @@ gui.AnnotatableCanvas.prototype.getSizer = function () {"use strict"; };
  * @param {!gui.AnnotatableCanvas} canvas
  * @param {!Element} odfFragment
  * @param {!Element} annotationsPane
+ * @param {!boolean} showAnnotationRemoveButton
  */
-gui.AnnotationViewManager = function AnnotationViewManager(canvas, odfFragment, annotationsPane) {
+gui.AnnotationViewManager = function AnnotationViewManager(canvas, odfFragment, annotationsPane, showAnnotationRemoveButton) {
     "use strict";
     var /**@type{!Array.<!{node:!Element,end:Node}>}*/
         annotations = [],
@@ -93,7 +94,7 @@ gui.AnnotationViewManager = function AnnotationViewManager(canvas, odfFragment, 
             annotationNote = doc.createElement('div'),
             connectorHorizontal = doc.createElement('div'),
             connectorAngular = doc.createElement('div'),
-            removeButton = doc.createElement('div'),
+            removeButton,
             annotationNode = annotation.node;
 
         annotationWrapper.className = 'annotationWrapper';
@@ -101,8 +102,11 @@ gui.AnnotationViewManager = function AnnotationViewManager(canvas, odfFragment, 
 
         annotationNote.className = 'annotationNote';
         annotationNote.appendChild(annotationNode);
-        removeButton.className = 'annotationRemoveButton';
-        annotationNote.appendChild(removeButton);
+        if (showAnnotationRemoveButton) {
+            removeButton = doc.createElement('div');
+            removeButton.className = 'annotationRemoveButton';
+            annotationNote.appendChild(removeButton);
+        }
 
         connectorHorizontal.className = 'annotationConnector horizontal';
         connectorAngular.className = 'annotationConnector angular';
@@ -203,10 +207,10 @@ gui.AnnotationViewManager = function AnnotationViewManager(canvas, odfFragment, 
      * @return {undefined}
      */
     function renderAnnotation(annotation) {
-        var annotationNote = annotation.node.parentElement,
+        var annotationNote = /**@type{!Element}*/(annotation.node.parentNode),
             connectorHorizontal = annotationNote.nextElementSibling,
             connectorAngular = connectorHorizontal.nextElementSibling,
-            annotationWrapper = annotationNote.parentElement,
+            annotationWrapper = /**@type{!Element}*/(annotationNote.parentNode),
             connectorAngle = 0,
             previousAnnotation = annotations[annotations.indexOf(annotation) - 1],
             previousRect,
@@ -222,7 +226,7 @@ gui.AnnotationViewManager = function AnnotationViewManager(canvas, odfFragment, 
                                           - CONNECTOR_MARGIN + 'px';
 
         if (previousAnnotation) {
-            previousRect = previousAnnotation.node.parentElement.getBoundingClientRect();
+            previousRect = /**@type{!Element}*/(previousAnnotation.node.parentNode).getBoundingClientRect();
             if ((annotationWrapper.getBoundingClientRect().top - previousRect.bottom) / zoomLevel <= NOTE_MARGIN) {
                 annotationNote.style.top = Math.abs(annotationWrapper.getBoundingClientRect().top - previousRect.bottom) / zoomLevel + NOTE_MARGIN + 'px';
             } else {
@@ -296,6 +300,20 @@ gui.AnnotationViewManager = function AnnotationViewManager(canvas, odfFragment, 
         }
     }
     this.rerenderAnnotations = rerenderAnnotations;
+
+    /**
+     * Reports the minimum height in pixels needed to display all
+     * annotation notes in the annotation pane.
+     * If there is no pane shown or are no annotations, null is returned.
+     * @return {?string}
+     */
+    function getMinimumHeightForAnnotationPane() {
+        if (annotationsPane.style.display !== 'none' && annotations.length > 0) {
+            return (/**@type{!Element}*/(annotations[annotations.length-1].node.parentNode).getBoundingClientRect().bottom - annotationsPane.getBoundingClientRect().top) / canvas.getZoomLevel() + 'px';
+        }
+        return null;
+    }
+    this.getMinimumHeightForAnnotationPane = getMinimumHeightForAnnotationPane;
 
     /**
      * Adds an annotation to track, and wraps and highlights it

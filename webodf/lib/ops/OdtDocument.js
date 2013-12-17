@@ -200,7 +200,7 @@ ops.OdtDocument = function OdtDocument(odfCanvas) {
     this.convertDomToCursorRange = function (selection, constraint) {
         var point1,
             point2,
-            anchorConstraint = constraint(selection.anchorNode, selection.anchorOffset),
+            anchorConstraint = constraint && constraint(selection.anchorNode, selection.anchorOffset),
             focusConstraint;
 
         point1 = stepsTranslator.convertDomPointToSteps(selection.anchorNode, selection.anchorOffset, anchorConstraint);
@@ -209,7 +209,7 @@ ops.OdtDocument = function OdtDocument(odfCanvas) {
             // In this case, it's safest to just look up the next point again.
             point2 = point1;
         } else {
-            focusConstraint = constraint(selection.focusNode, selection.focusOffset);
+            focusConstraint = constraint && constraint(selection.focusNode, selection.focusOffset);
             point2 = stepsTranslator.convertDomPointToSteps(selection.focusNode, selection.focusOffset, focusConstraint);
         }
 

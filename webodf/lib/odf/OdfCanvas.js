@@ -252,17 +252,18 @@ runtime.loadClass("gui.AnnotationViewManager");
         }
 
         var masterStyles = odfContainer.rootElement.masterStyles,
-            masterPageElement = masterStyles.firstElementChild;
+            masterStylesChild = masterStyles.firstElementChild;
 
-        while (masterPageElement) {
-            if (masterPageElement.getAttributeNS(stylens, 'name')
+        while (masterStylesChild) {
+            if (masterStylesChild.getAttributeNS(stylens, 'name')
                     === masterPageName
-                    && masterPageElement.localName === "master-page"
-                    && masterPageElement.namespaceURI === stylens) {
+                    && masterStylesChild.localName === "master-page"
+                    && masterStylesChild.namespaceURI === stylens) {
                 break;
             }
+            masterStylesChild = masterStylesChild.nextElementSibling;
         }
-        return masterPageElement;
+        return masterStylesChild;
     }
 
     /**
@@ -276,7 +277,7 @@ runtime.loadClass("gui.AnnotationViewManager");
         for (i = 0; i < clonedDrawFrameElements.length; i += 1) {
             element = /**@type{!Element}*/(clonedDrawFrameElements[i]);
             presentationClass = element.getAttributeNS(presentationns, 'class');
-            if (presentationClass && ! /^(date-time|footer|header|page-number')$/.test(presentationClass)) {
+            if (presentationClass && ! /^(date-time|footer|header|page-number)$/.test(presentationClass)) {
                 element.parentNode.removeChild(element);
             }
         }
@@ -489,65 +490,56 @@ runtime.loadClass("gui.AnnotationViewManager");
     }
 
     /**
+     * @param {!Element} node
+     * @param {!Element} odffragment
+     * @return {undefined}
+     */
+    function modifyLink(node, odffragment) {
+        var /**@type{?string}*/url = odfUtils.getHyperlinkTarget(node),
+            clickHandler;
+        if (!url) {
+            return;
+        }
+
+        if (url[0] === '#') { // bookmark
+            url = url.substring(1);
+            clickHandler = function () {
+                var bookmarks = xpath.getODFElementsWithXPath(odffragment,
+                    "//text:bookmark-start[@text:name='" + url + "']",
+                    odf.Namespaces.lookupNamespaceURI);
+
+                if (bookmarks.length === 0) {
+                    bookmarks = xpath.getODFElementsWithXPath(odffragment,
+                        "//text:bookmark[@text:name='" + url + "']",
+                        odf.Namespaces.lookupNamespaceURI);
+                }
+
+                if (bookmarks.length > 0) {
+                    bookmarks[0].scrollIntoView(true);
+                }
+
+                return false;
+            };
+        } else {
+            // Ask the browser to open the link in a new window.
+            clickHandler = function () {
+                window.open(url);
+            };
+        }
+
+        node.onclick = clickHandler;
+    }
+
+    /**
      * Modify ODF links to work like HTML links.
      * @param {!Element} odffragment
      * @return {undefined}
      */
     function modifyLinks(odffragment) {
-        var i,
-            links,
-            node;
-
-        /**
-         * @param {!Element} node
-         * @return {undefined}
-         */
-        function modifyLink(node) {
-            var /**@type{string}*/
-                url,
-                clickHandler;
-            if (!node.hasAttributeNS(xlinkns, "href")) {
-                return;
-            }
-
-            url = node.getAttributeNS(xlinkns, "href");
-            if (url[0] === '#') { // bookmark
-                url = url.substring(1);
-                clickHandler = function () {
-                    var bookmarks = xpath.getODFElementsWithXPath(
-                        odffragment,
-                        "//text:bookmark-start[@text:name='" + url + "']",
-                        odf.Namespaces.lookupNamespaceURI);
-
-                    if (bookmarks.length === 0) {
-                        bookmarks = xpath.getODFElementsWithXPath(
-                            odffragment,
-                            "//text:bookmark[@text:name='" + url + "']",
-                            odf.Namespaces.lookupNamespaceURI);
-                    }
-
-                    if (bookmarks.length > 0) {
-                        bookmarks[0].scrollIntoView(true);
-                    }
-
-                    return false;
-                };
-            } else {
-                // Ask the browser to open the link in a new window.
-                clickHandler = function () {
-                    window.open(url);
-                };
-            }
-
-            node.onclick = clickHandler;
-        }
-
         // All links are of name text:a.
-        links = odffragment.getElementsByTagNameNS(textns, 'a');
-        for (i = 0; i < links.length; i += 1) {
-            node = /**@type{!Element}*/(links.item(i));
-            modifyLink(node);
-        }
+        domUtils.getElementsByTagNameNS(odffragment, textns, 'a').forEach(function(link) {
+            modifyLink(/**@type{!Element}*/(link), odffragment);
+        });
     }
 
     /**
@@ -638,7 +630,7 @@ runtime.loadClass("gui.AnnotationViewManager");
                 node = node.firstElementChild;
             } else {
                 while (node && node !== odfbody && !node.nextElementSibling) {
-                    node = node.parentElement;
+                    node = /**@type{!Element}*/(node.parentNode);
                 }
                 if (node && node.nextElementSibling) {
                     node = node.nextElementSibling;
@@ -1016,6 +1008,7 @@ runtime.loadClass("gui.AnnotationViewManager");
             /**@type{HTMLDivElement}*/
             annotationsPane = null,
             allowAnnotations = false,
+            showAnnotationRemoveButton = false,
             /**@type{gui.AnnotationViewManager}*/
             annotationViewManager = null,
             webodfcss,
@@ -1131,7 +1124,8 @@ runtime.loadClass("gui.AnnotationViewManager");
          * @return {undefined}
          */
         function fixContainerSize() {
-            var odfdoc = sizer.firstChild;
+            var minHeight,
+                odfdoc = sizer.firstChild;
             if (!odfdoc) {
                 return;
             }
@@ -1158,6 +1152,15 @@ runtime.loadClass("gui.AnnotationViewManager");
             sizer.style.MozTransform = 'scale(' + zoomLevel + ')';
             sizer.style.OTransform = 'scale(' + zoomLevel + ')';
             sizer.style.msTransform = 'scale(' + zoomLevel + ')';
+
+            if (annotationViewManager) {
+                minHeight = annotationViewManager.getMinimumHeightForAnnotationPane();
+                if (minHeight) {
+                    sizer.style.minHeight = minHeight;
+                } else {
+                    sizer.style.removeProperty('min-height');
+                }
+            }
 
             element.style.width = Math.round(zoomLevel * sizer.offsetWidth) + "px";
             element.style.height = Math.round(zoomLevel * sizer.offsetHeight) + "px";
@@ -1248,13 +1251,13 @@ runtime.loadClass("gui.AnnotationViewManager");
             if (allowAnnotations) {
                 if (!annotationsPane.parentNode) {
                     sizer.appendChild(annotationsPane);
-                    fixContainerSize();
                 }
                 if (annotationViewManager) {
                     annotationViewManager.forgetAnnotations();
                 }
-                annotationViewManager = new gui.AnnotationViewManager(self, odfnode.body, annotationsPane);
+                annotationViewManager = new gui.AnnotationViewManager(self, odfnode.body, annotationsPane, showAnnotationRemoveButton);
                 modifyAnnotations(odfnode.body);
+                fixContainerSize();
             } else {
                 if (annotationsPane.parentNode) {
                     sizer.removeChild(annotationsPane);
@@ -1309,6 +1312,15 @@ runtime.loadClass("gui.AnnotationViewManager");
                 }, 100);
             }
         }
+
+        /**
+         * Register the supplied link with the canvas. This hooks up specialised event
+         * handlers to the onclick event
+         * @param {!Element} linkNode
+         */
+        this.registerLink = function(linkNode) {
+            modifyLink(linkNode, odfcontainer.rootElement);
+        };
 
         /**
          * Updates the CSS rules to match the ODF document styles and also
@@ -1420,6 +1432,7 @@ runtime.loadClass("gui.AnnotationViewManager");
         this.rerenderAnnotations = function () {
             if (annotationViewManager) {
                 annotationViewManager.rerenderAnnotations();
+                fixContainerSize();
             }
         };
 
@@ -1434,11 +1447,13 @@ runtime.loadClass("gui.AnnotationViewManager");
 
         /** Allows / disallows annotations
          * @param {!boolean} allow
+         * @param {!boolean} showRemoveButton
          * @return {undefined}
          */
-        this.enableAnnotations = function (allow) {
+        this.enableAnnotations = function (allow, showRemoveButton) {
             if (allow !== allowAnnotations) {
                 allowAnnotations = allow;
+                showAnnotationRemoveButton = showRemoveButton;
                 if (odfcontainer) {
                     handleAnnotations(odfcontainer.rootElement);
                 }
@@ -1454,6 +1469,7 @@ runtime.loadClass("gui.AnnotationViewManager");
         this.addAnnotation = function (annotation) {
             if (annotationViewManager) {
                 annotationViewManager.addAnnotation(annotation);
+                fixContainerSize();
             }
         };
 
@@ -1464,6 +1480,7 @@ runtime.loadClass("gui.AnnotationViewManager");
         this.forgetAnnotations = function () {
             if (annotationViewManager) {
                 annotationViewManager.forgetAnnotations();
+                fixContainerSize();
             }
         };
 

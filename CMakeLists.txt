@@ -334,6 +334,7 @@ set(UNTYPEDLIBJSFILES
     lib/ops/OpAddMember.js
     lib/ops/OpAddStyle.js
     lib/ops/OpApplyDirectStyling.js
+    lib/ops/OpApplyHyperlink.js
     lib/ops/OpInsertImage.js
     lib/ops/OpInsertTable.js
     lib/ops/OpInsertText.js
@@ -341,6 +342,7 @@ set(UNTYPEDLIBJSFILES
     lib/ops/OpRemoveAnnotation.js
     lib/ops/OpRemoveBlob.js
     lib/ops/OpRemoveCursor.js
+    lib/ops/OpRemoveHyperlink.js
     lib/ops/OpRemoveMember.js
     lib/ops/OpRemoveStyle.js
     lib/ops/OpRemoveText.js
@@ -362,6 +364,7 @@ set(UNTYPEDLIBJSFILES
     lib/gui/AnnotationController.js
     lib/gui/DirectParagraphStyler.js
     lib/gui/DirectTextStyler.js
+    lib/gui/HyperlinkController.js
     lib/gui/ImageManager.js
     lib/gui/TextManipulator.js
     lib/gui/SessionController.js
@@ -394,13 +397,14 @@ set (RUNTIME ${CMAKE_CURRENT_SOURCE_DIR}/webodf/lib/runtime.js)
 
 macro(COPY_FILES _varname _srcdir _tgtdir)
   foreach(_file ${ARGN})
-    GET_FILENAME_COMPONENT(_subdir ${_file} PATH)
-    FILE(MAKE_DIRECTORY ${_tgtdir}/${_subdir})
     if (IS_ABSOLUTE ${_file})
+      SET(_subdir "")
       SET(_srcfile ${_file})
     else (IS_ABSOLUTE ${_file})
+      GET_FILENAME_COMPONENT(_subdir ${_file} PATH)
       SET(_srcfile ${_srcdir}/${_file})
     endif (IS_ABSOLUTE ${_file})
+    FILE(MAKE_DIRECTORY ${_tgtdir}/${_subdir})
     add_custom_command(
       OUTPUT ${_tgtdir}/${_file}
       COMMAND ${CMAKE_COMMAND} ARGS -E copy_if_different
