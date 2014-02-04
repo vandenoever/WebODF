@@ -89,7 +89,14 @@ function Main(cmakeListPath) {
             "ops/TextPositionFilter.js",
             "xmldom/LSSerializer.js",
             "xmldom/LSSerializerFilter.js",
-            "xmldom/XPath.js"
+            "xmldom/XPath.js",
+            "xmled/AttributeEditor.js",
+            "xmled/CrumbBar.js",
+            "xmled/ValidationModel.js",
+            "xmled/XmlCanvas.js",
+            "xmled/XmlEditor.js",
+            "xmled/XsdChecker.js",
+            "xmled/XmlCaret.js"
         ],
         jslintconfig;
 

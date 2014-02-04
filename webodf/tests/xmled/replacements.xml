@@ -1,0 +1,18 @@
+<replacements xmlns:e="http://example.org/">
+  <replacement id="empty"></replacement>
+  <replacement id="a"><e:a/></replacement>
+  <replacement id="b"><e:b/></replacement>
+  <replacement id="c"><e:c/></replacement>
+  <replacement id="d"><e:d><e:a/></e:d></replacement>
+  <replacement id="daa"><e:d><e:a/><e:a/><e:a/></e:d></replacement>
+  <replacement id="e"><e:e num="1"/></replacement>
+  <replacement id="f"><e:f><e:a/></e:f></replacement>
+  <replacement id="g"><e:g><e:b/></e:g></replacement>
+  <replacement id="ga"><e:g><e:a/></e:g></replacement>
+  <replacement id="gb"><e:g><e:b/></e:g></replacement>
+  <replacement id="gbb"><e:g><e:b/><e:b/></e:g></replacement>
+  <replacement id="h"><e:h><e:g><e:a/></e:g><e:g><e:a/></e:g></e:h></replacement>
+  <replacement id="ha"><e:h><e:g><e:a/></e:g></e:h></replacement>
+  <replacement id="j"><e:j/></replacement>
+  <replacement id="k"><e:k><e:j/></e:k></replacement>
+</replacements>

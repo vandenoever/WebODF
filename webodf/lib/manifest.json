@@ -592,5 +592,40 @@
     "xmldom/RelaxNGParser.js": [
     ],
     "xmldom/XPath.js": [
+    ],
+    "xmled/AttributeEditor.js": [
+        "xmled/ValidationModel.js"
+    ],
+    "xmled/CrumbBar.js": [
+        "xmled/ValidationModel.js"
+    ],
+    "xmled/SessionController.js": [
+        "gui/UndoManager.js",
+        "xmled/XmlCanvas.js",
+        "xmled/XmlDocument.js"
+    ],
+    "xmled/ValidationModel.js": [
+        "xmled/XsdChecker.js"
+    ],
+    "xmled/XmlCanvas.js": [
+        "xmled/ValidationModel.js",
+        "xmled/XmlCaret.js"
+    ],
+    "xmled/XmlCaret.js": [
+        "core/Cursor.js"
+    ],
+    "xmled/XmlDocument.js": [
+        "ops/Document.js",
+        "ops/OdtCursor.js"
+    ],
+    "xmled/XmlEditor.js": [
+        "xmldom/LSSerializer.js",
+        "xmldom/LSSerializerFilter.js",
+        "xmled/AttributeEditor.js",
+        "xmled/CrumbBar.js",
+        "xmled/ValidationModel.js",
+        "xmled/XmlCanvas.js"
+    ],
+    "xmled/XsdChecker.js": [
     ]
 }

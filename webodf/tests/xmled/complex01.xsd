@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema" targetNamespace="http://example.org/" xmlns:e="http://example.org/">
+  <xs:element name="a">
+    <xs:complexType>
+    </xs:complexType>
+  </xs:element>
+  <xs:element name="d">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element name="a" maxOccurs="10"/>
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+  <xs:element name="e">
+    <xs:complexType>
+      <xs:attribute name="num" type="xs:integer" use="required"/>
+    </xs:complexType>
+  </xs:element>
+  <xs:element name="f">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element ref="e:a"/>
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+  <xs:group name="g">
+    <xs:choice>
+      <xs:element name="a"/>
+      <xs:element name="b" form="qualified" maxOccurs="2"/>
+      <xs:element name="c"/>
+    </xs:choice>
+  </xs:group>
+  <xs:element name="g">
+    <xs:complexType>
+      <xs:group ref="e:g" minOccurs="1" maxOccurs="1"/>
+    </xs:complexType>
+  </xs:element>
+  <xs:element name="h">
+    <xs:complexType>
+      <xs:choice>
+        <xs:element ref="e:g" maxOccurs="3"/>
+      </xs:choice>
+    </xs:complexType>
+  </xs:element>
+  <xs:element name="i" abstract="true"/>
+  <xs:element name="j" substitutionGroup="e:i">
+    <xs:complexType/>
+  </xs:element>
+  <xs:element name="k">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element ref="e:i"/>
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+</xs:schema>
+

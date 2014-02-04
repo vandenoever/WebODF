@@ -33,7 +33,7 @@
  * @source: http://www.webodf.org/
  * @source: https://github.com/kogmbh/WebODF/
  */
-/*global Packages, HTMLStyleElement, window, XMLHttpRequest, HTMLStyleElement, Document, NodeFilter, Range*/
+/*global Packages, HTMLStyleElement, window, XMLHttpRequest, HTMLStyleElement, Document, NodeFilter, Range, XSLTProcessor */
 /*jslint nomen: false, emptyblock: true, unparam: true */
 /**
  * @constructor
@@ -122,6 +122,12 @@ NodeJSObject.prototype.unlink = function (path, callback) {"use strict"; };
  * @return {undefined}
  */
 NodeJSObject.prototype.close = function (fd, callback) {"use strict"; };
+/**
+ * @param {string} cmd
+ * @param {!{cwd:string,env:Object,encoding:string,timeout:number,maxBuffer:number,killSignal:string}|function(string,string,string):undefined} options
+ * @param {function(string,string,string):undefined=} callback
+ */
+NodeJSObject.prototype.exec = function (cmd, options, callback) {"use strict"; };
 /**
  * @constructor
  */
@@ -639,3 +645,13 @@ function TextEvent() { "use strict"; }
  * @type {!string}
  */
 TextEvent.prototype.data;
+/**
+ * @param {!Document} doc
+ * @return {undefined}
+ */
+XSLTProcessor.prototype.importStylesheet = function (doc) {"use strict"; };
+/**
+ * @param {!Node} node
+ * @return {Document}
+ */
+XSLTProcessor.prototype.transformToDocument = function (node) {"use strict"; };

@@ -174,5 +174,14 @@
         "core/UnitTester.js",
         "odf/Namespaces.js",
         "xmldom/XPath.js"
+    ],
+    "xmled/ValidationModelTests.js": [
+        "core/UnitTester.js",
+        "xmldom/LSSerializer.js",
+        "xmled/ValidationModel.js"
+    ],
+    "xmled/XmlDocumentTests.js": [
+        "core/UnitTester.js",
+        "xmled/XmlDocument.js"
     ]
 }

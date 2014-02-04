@@ -1588,6 +1588,10 @@ var odf = {};
  * @namespace The editing operations
  */
 var ops = {};
+/**
+ * @namespace The xmled package.
+ */
+var xmled = {};
 
 /*jslint sloppy: true*/
 (function () {

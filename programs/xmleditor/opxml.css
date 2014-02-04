@@ -1,0 +1,126 @@
+@namespace cursor url(urn:webodf:names:cursor);
+.canvas * {
+    display: block;
+    margin: 1px;
+    padding: 1px;
+    border: 1px solid transparent;
+    background-clip: padding-box; /* for IE9+, Firefox 4+, Opera, Chrome */
+}
+.canvas spreker *, .canvas alineaitem *, .canvas al *, .canvas considerans\.al * {
+    display: inline;
+}
+.canvas nadruk[type='ondlijn'] {
+    text-decoration: underline;
+}
+.canvas nadruk[type='vet'], .canvas nadruk[type='vetcur'] {
+    font-weight: bold;
+}
+.canvas nadruk[type='cur'], .canvas nadruk[type='vetcur'] {
+    font-style: italic;
+}
+.canvas li > *:first-child, .canvas entry {
+    display: table-cell;
+}
+.canvas entry {
+    border: 1px solid black;
+}
+.canvas li, .canvas row {
+    display: table-row;
+}
+.canvas lijst, .canvas table {
+    display: table;
+}
+.canvas *:hover {
+    border: 1px solid rgb(127, 127, 127);
+    border: 1px solid rgba(255, 138, 0, .2);
+    background-color: rgba(255, 255, 255, 0.025);
+    box-shadow: 0px 0px 10px #aaa;
+}
+.canvas *[cursor|active], .canvas *[cursor|active]:hover {
+    background-color: rgba(255, 138, 0, .2);;
+}
+.canvas *[cursor|caret], .canvas *[cursor|caret]:hover {
+    border: 1px solid lightgreen;
+}
+.canvas *[cursor|hover], .canvas *[cursor|hover]:hover {
+    border: 1px dashed black;
+    box-shadow: 0px 0px 10px #aaa;
+}
+
+/* below set up the cursor */
+.canvas cursor|*, .canvas cursor|*:hover {
+    display: inline;
+    border: 0px;
+    padding: 0px;
+    margin: 0px;
+    width: 0px;
+    height: 1em;
+    /* making the position relative enables the avatar to use
+       the cursor as reference for its absolute position */
+    position: relative;
+    z-index: 1;
+}
+.canvas cursor|* > span, .canvas cursor|* > span:hover {
+    /* IMPORTANT: when changing these values ensure DEFAULT_CARET_TOP and DEFAULT_CARET_HEIGHT
+        in Caret.js remain in sync */
+    display: inline;
+    position: absolute;
+    top: 5%; /* push down the caret; 0px can do the job, 5% looks better, 10% is a bit over */
+    height: 1em;
+    border-left: 2px solid black;
+    outline: none;
+}
+.hoveropaque:hover {
+    background-color: rgba(128,128,128,0.5);
+}
+.unselectable {
+   -moz-user-select: none;
+   -khtml-user-select: none;
+   -webkit-user-select: none;
+   /*
+ *      Introduced in IE 10.
+ *           See http://ie.microsoft.com/testdrive/HTML5/msUserSelect/
+ *              */
+   -ms-user-select: none;
+   user-select: none;
+}
+cursor|t:before, cursor|o:before {
+    content: '<';
+}
+cursor|c:before {
+    content: '</';
+}
+cursor|o:after, cursor|c:after {
+    content: '>';
+}
+cursor|t:after {
+    content: '/>';
+}
+cursor|t, cursor|o, cursor|c {
+    display: block;
+    width: 100%;
+    font-family: sans-serif;
+    color: rgb(136, 18, 128);
+    margin-left: -1em;
+}
+cursor|e {
+    display: block;
+    margin-left: 1em;
+}
+cursor|an {
+    color: rgb(153, 69, 0);
+}
+cursor|an:before {
+    content: " ";
+}
+cursor|an:after {
+    content: "=";
+    color: rgb(136, 18, 128);
+}
+cursor|av:before, cursor|av:after {
+    content: "\"";
+    color: rgb(136, 18, 128);
+}
+cursor|av {
+    color: rgb(26, 26, 166);
+}
