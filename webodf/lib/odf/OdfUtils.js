@@ -963,4 +963,21 @@ odf.OdfUtils = function OdfUtils() {
         newRange.detach();
         return links;
     };
+    /**
+     * Get the bounding rect for the page or spreadsheet.
+     * @param {!Element} node
+     * @return {!ClientRect}
+     */
+    this.getPageRect = function (node) {
+        var p = node;
+        while (p && !((p.namespaceURI === odf.Namespaces.officens
+                          && (p.localName === "text"
+                              || p.localName === "spreadsheet"))
+                       || (p.namespaceURI === odf.Namespaces.drawns
+                           && p.localName === "page"))) {
+            p = p.parentElement;
+        }
+        p = p || node;
+        return /**@type{!ClientRect}*/(p.getBoundingClientRect());
+    };
 };
