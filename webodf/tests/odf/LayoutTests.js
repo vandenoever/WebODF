@@ -107,7 +107,7 @@ odf.LayoutTests = function LayoutTests(runner) {
         }
         while (n) {
             testName = n.getAttribute("name");
-            runtime.assert(n.localName === "test", "Element is not <test/>.");
+            runtime.assert(n.localName === "test", "Element is not <test/> but " + n.localName);
             runtime.assert(!tests.hasOwnProperty(testName), "Test name " + testName + " is not unique.");
             test = parseTest(testName, n);
             if (!test.isFailing) {
@@ -220,6 +220,7 @@ odf.LayoutTests = function LayoutTests(runner) {
     /**
      * @param {!Element} node
      * @return {!odf.OdfRect}
+     * @return {!ClientRect}
      */
     function getRectOnPage(node) {
         var pr = odfUtils.getPageRect(node),
