@@ -219,7 +219,7 @@ odf.LayoutTests = function LayoutTests(runner) {
     }
     /**
      * @param {!Element} node
-     * @return {!odf.OdfRect}
+     * @return {!ClientRect}
      */
     function getRectOnPage(node) {
         var pr = odfUtils.getPageRect(node),

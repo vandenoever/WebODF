@@ -963,6 +963,7 @@ odf.OdfUtils = function OdfUtils() {
         newRange.detach();
         return links;
     };
+<<<<<<< HEAD
 
     /**
      * Normalize the font-family name as defined in
@@ -1048,14 +1049,14 @@ odf.OdfUtils = function OdfUtils() {
     this.getPageRect = function (node) {
         var p = node;
         while (p && !((p.namespaceURI === odf.Namespaces.officens
-                          && (p.localName === "body"
+                          && (p.localName === "text"
                               || p.localName === "spreadsheet"))
                        || (p.namespaceURI === odf.Namespaces.drawns
                            && p.localName === "page"))) {
             p = p.parentElement;
         }
         p = p || node;
-        return p.getBoundingClientRect();
+        return /**@type{!ClientRect}*/(p.getBoundingClientRect());
     };
 };
 /**
