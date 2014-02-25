@@ -165,38 +165,19 @@ odf.LayoutTests = function LayoutTests(runner) {
         });
     }
     /**
-     * @param {!string|!number} val
-     * @return {!number}
-     */
-    function convertToPx(val) {
-        var n = -1, length;
-        if (typeof val === "number") {
-            n = val;
-        } else {
-            length = odfUtils.parseLength(val);
-            if (length && length.unit === "px") {
-                n = length.value;
-            } else if (length && length.unit === "cm") {
-                n = length.value / 2.54 * 96;
-            } else if (length && length.unit === "mm") {
-                n = length.value / 25.4 * 96;
-            } else {
-                throw "Unit " + length.unit + " not supported.";
-            }
-        }
-        return n;
-    }
-    /**
      * @param {!string|!number} a
      * @param {!string} b
      * @return {!boolean}
      */
     function compareLengths(a, b) {
         var na, nb;
-        na = convertToPx(a);
-        nb = convertToPx(b);
+        na = odfUtils.convertToPx(a);
+        nb = odfUtils.convertToPx(b);
         // check that the difference is less than one percent.
         // the % of allowed error may become configurable in the future.
+        if (nb === 0) {
+            return a === 0;
+        }
         return Math.abs((na - nb) / nb) < 0.01;
     }
     /**
@@ -221,9 +202,14 @@ odf.LayoutTests = function LayoutTests(runner) {
     function getRectOnPage(node) {
         var pr = odfUtils.getPageRect(node),
             rect = node.getBoundingClientRect();
-        rect.top -= pr.top;
-        rect.left -= pr.left;
-        return rect;
+        return {
+            top: rect.top - pr.top,
+            left: rect.left - pr.left,
+            width: rect.width,
+            height: rect.height,
+            bottom: rect.bottom - pr.top,
+            right: rect.right - pr.left
+        };
     }
     /**
      * @param {!{count:!number,values:!Object.<!string,!string>,xpath:!string}} check

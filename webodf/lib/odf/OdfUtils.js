@@ -45,7 +45,8 @@
 odf.OdfUtils = function OdfUtils() {
     "use strict";
 
-    var /**@const
+    var self = this,
+        /**@const
            @type{!string}*/
         textns = odf.Namespaces.textns,
         /**@const
@@ -996,6 +997,38 @@ odf.OdfUtils = function OdfUtils() {
     };
     /*jslint regexp: false*/
     /**
+     * @param {!string|!number} val
+     * @return {!number}
+     */
+    this.convertToPx = function (val) {
+        var n = -1, length;
+        if (typeof val === "number") {
+            n = val;
+        } else {
+            length = self.parseLength(val);
+            if (length && length.unit === "px") {
+                n = length.value;
+            } else if (length && length.unit === "cm") {
+                n = length.value / 2.54 * 96;
+            } else if (length && length.unit === "mm") {
+                n = length.value / 25.4 * 96;
+            } else {
+                throw "Unit " + length.unit + " not supported.";
+            }
+        }
+        return n;
+    };
+    /**
+     * @param {!string|!number} a
+     * @param {!string|!number} b
+     * @return {!number}
+     */
+    this.sumLengths = function (a, b) {
+        var an = self.convertToPx(a),
+            bn = self.convertToPx(b);
+        return an + bn;
+    };
+    /**
      * Get the bounding rect for the page or spreadsheet.
      * @param {!Element} node
      * @return {!ClientRect}
@@ -1003,7 +1036,7 @@ odf.OdfUtils = function OdfUtils() {
     this.getPageRect = function (node) {
         var p = node;
         while (p && !((p.namespaceURI === odf.Namespaces.officens
-                          && (p.localName === "text"
+                          && (p.localName === "body"
                               || p.localName === "spreadsheet"))
                        || (p.namespaceURI === odf.Namespaces.drawns
                            && p.localName === "page"))) {
