@@ -45,7 +45,8 @@
 odf.OdfUtils = function OdfUtils() {
     "use strict";
 
-    var /**@const
+    var self = this,
+        /**@const
            @type{!string}*/
         textns = odf.Namespaces.textns,
         /**@const
