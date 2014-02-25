@@ -333,7 +333,9 @@
             width = frame.getAttributeNS(svgns, 'width'),
             height = frame.getAttributeNS(svgns, 'height'),
             minheight = frame.getAttributeNS(fons, 'min-height'),
-            minwidth = frame.getAttributeNS(fons, 'min-width');
+            minwidth = frame.getAttributeNS(fons, 'min-width'),
+            parentRect = frame.parentElement.getBoundingClientRect(),
+            pageRect = odfUtils.getPageRect(frame);
 
         if (anchor === "as-char") {
             rule = 'display: inline-block;';
@@ -343,10 +345,10 @@
             rule = 'display: block;';
         }
         if (x) {
-            rule += 'left: ' + x + ';';
+            rule += 'left: ' + odfUtils.sumLengths(x, pageRect.left - parentRect.left) + 'px;';
         }
         if (y) {
-            rule += 'top: ' + y + ';';
+            rule += 'top: ' + odfUtils.sumLengths(y, pageRect.top - parentRect.top) + 'px;';
         }
         if (width) {
             rule += 'width: ' + width + ';';
