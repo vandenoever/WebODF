@@ -178,6 +178,8 @@ odf.LayoutTests = function LayoutTests(runner) {
                 n = length.value;
             } else if (length && length.unit === "cm") {
                 n = length.value / 2.54 * 96;
+            } else if (length && length.unit === "mm") {
+                n = length.value / 25.4 * 96;
             } else {
                 throw "Unit " + length.unit + " not supported.";
             }
@@ -213,6 +215,17 @@ odf.LayoutTests = function LayoutTests(runner) {
         r.shouldBe(t, "t.a", "t.b");
     }
     /**
+     * @param {!Element} node
+     * @return {!ClientRect}
+     */
+    function getRectOnPage(node) {
+        var pr = odfUtils.getPageRect(node),
+            rect = node.getBoundingClientRect();
+        rect.top -= pr.top;
+        rect.left -= pr.left;
+        return rect;
+    }
+    /**
      * @param {!{count:!number,values:!Object.<!string,!string>,xpath:!string}} check
      * @param {!Element} node
      * @return {undefined}
@@ -224,9 +237,15 @@ odf.LayoutTests = function LayoutTests(runner) {
             value;
         for (i in check.values) {
             if (check.values.hasOwnProperty(i)) {
-                // get value from computed style (e.g. margin-left) or from
-                // node properties (e.g. clientWidth).
-                value = style[i] || node[i];
+                if (i === "pageX") {
+                    value = getRectOnPage(node).left;
+                } else if (i === "pageY") {
+                    value = getRectOnPage(node).top;
+                } else {
+                    // get value from computed style (e.g. margin-left) or from
+                    // node properties (e.g. clientWidth).
+                    value = style[i] || node[i];
+                }
                 compareValues(value, check.values[i]);
             }
         }
