@@ -33,6 +33,9 @@
     <style:style style:name="pageTopPageLeftFrame" style:family="graphic" style:parent-style-name="commonFrame">
      <style:graphic-properties style:vertical-pos="top" style:vertical-rel="page" style:horizontal-pos="left" style:horizontal-rel="page"/>
     </style:style>
+    <style:style style:name="pageTopPageLeftFrame" style:family="graphic">
+     <style:graphic-properties style:vertical-pos="top" style:vertical-rel="page" style:horizontal-pos="left" style:horizontal-rel="page" draw:stroke="solid" svg:stroke-width="1mm" draw:fill="solid" draw:fill-color="#eeeeee"/>
+    </style:style>
     <style:page-layout style:name="onecol">
      <style:page-layout-properties
       fo:page-width="10cm" fo:page-height="20cm"
