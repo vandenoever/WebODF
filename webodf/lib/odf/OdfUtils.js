@@ -1021,7 +1021,7 @@ odf.OdfUtils = function OdfUtils() {
             } else if (length && length.unit === "pc") {
                 n = length.value * 16;
             } else {
-                throw "Unit " + length.unit + " not supported.";
+                throw "Unit " + length.unit + " not supported by this function.";
             }
         }
         return n;
