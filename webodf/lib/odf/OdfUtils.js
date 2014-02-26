@@ -1038,9 +1038,10 @@ odf.OdfUtils = function OdfUtils() {
         return an + bn;
     };
     /**
-     * Get the bounding rect for the page or spreadsheet.
+     * Find the page, slide or spreadsheet for a node and return the rect for it.
+     * The page, slide or spreadsheet should be an ancestor to the node.
      * @param {!Element} node
-     * @return {!odf.OdfRect}
+     * @return {?odf.OdfRect}
      */
     this.getPageRect = function (node) {
         var p = node;
@@ -1052,7 +1053,7 @@ odf.OdfUtils = function OdfUtils() {
             p = p.parentElement;
         }
         p = p || node;
-        return /**@type{!ClientRect}*/(p.getBoundingClientRect());
+        return p.getBoundingClientRect();
     };
 };
 /**
