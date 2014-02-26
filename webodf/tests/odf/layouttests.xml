@@ -400,9 +400,6 @@
   </input>
   <layoutchecks>
    <check xpath=".//draw:frame">
-    <backgroundColor value="rgb(238, 238, 238)"/>
-    <width value="12mm"/>
-    <height value="13mm"/>
     <pageX value="10mm"/>
     <pageY value="11mm"/>
    </check>
