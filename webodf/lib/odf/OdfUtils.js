@@ -45,8 +45,7 @@
 odf.OdfUtils = function OdfUtils() {
     "use strict";
 
-    var self = this,
-        /**@const
+    var /**@const
            @type{!string}*/
         textns = odf.Namespaces.textns,
         /**@const
@@ -964,7 +963,6 @@ odf.OdfUtils = function OdfUtils() {
         newRange.detach();
         return links;
     };
-<<<<<<< HEAD
 
     /**
      * Normalize the font-family name as defined in
@@ -1045,7 +1043,7 @@ odf.OdfUtils = function OdfUtils() {
      * Find the page, slide or spreadsheet for a node and return the rect for it.
      * The page, slide or spreadsheet should be an ancestor to the node.
      * @param {!Element} node
-     * @return {?odf.OdfRect}
+     * @return {?ClientRect}
      */
     this.getPageRect = function (node) {
         var p = node;
@@ -1057,10 +1055,6 @@ odf.OdfUtils = function OdfUtils() {
             p = p.parentElement;
         }
         p = p || node;
-        return /**@type{!ClientRect}*/(p.getBoundingClientRect());
+        return domUtils.getBoundingClientRect(p);
     };
 };
-/**
- * @typedef{!ClientRect|!{top:!number,left:!number,right:!number,bottom:!number,width:!number,height:!number}}
- */
-odf.OdfRect;
