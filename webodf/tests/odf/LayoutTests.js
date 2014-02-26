@@ -143,31 +143,36 @@ odf.LayoutTests = function LayoutTests(runner) {
         }
     }
     /**
-     * @param {!Object.<!string,{isFailing:!boolean,input:!Element,name:!string,commonInput:?Element}>} test
-     * @param {!function():undefined} callback
+     * @param {!odf.ODFDocumentElement} root
+     * @param {!Element} input
      * @return {undefined}
      */
-    function fillDocument(test, callback) {
-        var officens = odf.Namespaces.officens,
-            odfContainer = new odf.OdfContainer("", null),
-            root = odfContainer.rootElement,
-            path = test.name + ".odt",
-            input = test.input,
-            commonInput = test.commonInput;
-        if (commonInput) {
-            addChildren(root.automaticStyles,
-                commonInput.getElementsByTagNameNS(officens, "automatic-styles"));
-            addChildren(root.masterStyles,
-                commonInput.getElementsByTagNameNS(officens, "master-styles"));
-            addChildren(root.body.getElementsByTagNameNS(officens, "text")[0],
-                commonInput.getElementsByTagNameNS(officens, "text"));
-        }
+    function fill(root, input) {
+        var officens = odf.Namespaces.officens;
+        addChildren(root.styles,
+            input.getElementsByTagNameNS(officens, "styles"));
         addChildren(root.automaticStyles,
             input.getElementsByTagNameNS(officens, "automatic-styles"));
         addChildren(root.masterStyles,
             input.getElementsByTagNameNS(officens, "master-styles"));
         addChildren(root.body.getElementsByTagNameNS(officens, "text")[0],
             input.getElementsByTagNameNS(officens, "text"));
+    }
+    /**
+     * @param {!Object.<!string,{isFailing:!boolean,input:!Element,name:!string,commonInput:?Element}>} test
+     * @param {!function():undefined} callback
+     * @return {undefined}
+     */
+    function fillDocument(test, callback) {
+        var odfContainer = new odf.OdfContainer("", null),
+            root = odfContainer.rootElement,
+            path = test.name + ".odt",
+            input = test.input,
+            commonInput = test.commonInput;
+        if (commonInput) {
+            fill(root, commonInput);
+        }
+        fill(root, input);
         function handler() {
             t.odfContainer = t.odfCanvas.odfContainer();
             callback();
