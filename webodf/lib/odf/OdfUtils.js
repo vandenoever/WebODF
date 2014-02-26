@@ -999,7 +999,7 @@ odf.OdfUtils = function OdfUtils() {
     /**
      * Get the bounding rect for the page or spreadsheet.
      * @param {!Element} node
-     * @return {!ClientRect}
+     * @return {!odf.OdfRect}
      */
     this.getPageRect = function (node) {
         var p = node;
@@ -1014,3 +1014,7 @@ odf.OdfUtils = function OdfUtils() {
         return /**@type{!ClientRect}*/(p.getBoundingClientRect());
     };
 };
+/**
+ * @typedef{!ClientRect|!{top:!number,left:!number,right:!number,bottom:!number,width:!number,height:!number}}
+ */
+odf.OdfRect;
