@@ -170,15 +170,19 @@ odf.LayoutTests = function LayoutTests(runner) {
      * @return {!boolean}
      */
     function compareLengths(a, b) {
-        var na, nb;
+        var na, nb, epsilon = 0.01; // allow one % error
         na = odfUtils.convertToPx(a);
         nb = odfUtils.convertToPx(b);
-        // check that the difference is less than one percent.
+        // if na is rounded, increase epsilon accordingly
+        if (Math.round(na) === na) {
+            epsilon = Math.max(epsilon, 1 / na);
+        }
+        // check that the difference is less than epsilon
         // the % of allowed error may become configurable in the future.
         if (nb === 0) {
             return a === 0;
         }
-        return Math.abs((na - nb) / nb) < 0.01;
+        return Math.abs((na - nb) / nb) < epsilon;
     }
     /**
      * @param {!string|!number} a
