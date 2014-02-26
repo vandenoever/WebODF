@@ -344,10 +344,10 @@
         } else if (width || height || minheight || minwidth) {
             rule = 'display: block;';
         }
-        if (x) {
+        if (x && parentRect && pageRect) {
             rule += 'left: ' + odfUtils.sumLengths(x, pageRect.left - parentRect.left) + 'px;';
         }
-        if (y) {
+        if (y && parentRect && pageRect) {
             rule += 'top: ' + odfUtils.sumLengths(y, pageRect.top - parentRect.top) + 'px;';
         }
         if (width) {
