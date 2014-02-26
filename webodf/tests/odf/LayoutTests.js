@@ -63,7 +63,7 @@ odf.LayoutTests = function LayoutTests(runner) {
     /**
      * @param {!string} name
      * @param {!Element} node
-     * @return {!{isFailing:!boolean,input:!Element,name:!string,layoutChecks:!Array}}
+     * @return {!{isFailing:!boolean,input:!Element,name:!string,layoutChecks:!Array,commonInput:?Element}}
      */
     function parseTest(name, node) {
         var isFailing = node.getAttribute("isFailing") === "true",
@@ -82,12 +82,13 @@ odf.LayoutTests = function LayoutTests(runner) {
             isFailing: isFailing,
             input: input,
             name: name,
-            layoutChecks: layoutChecks
+            layoutChecks: layoutChecks,
+            commonInput: null
         };
     }
     /**
      * @param {!string} url
-     * @param {!Object.<!string,{isFailing:!boolean,input:!Element,name:!string}>} tests
+     * @param {!Object.<!string,{isFailing:!boolean,input:!Element,name:!string,commonInput:?Element}>} tests
      * @return {undefined}
      */
     function loadTests(url, tests) {
@@ -95,16 +96,22 @@ odf.LayoutTests = function LayoutTests(runner) {
             xml = runtime.parseXML(s),
             n,
             test,
+            commonInput = null,
             testName;
         runtime.assert(s.length > 0, "XML file is empty.");
         runtime.assert(xml.documentElement.localName === "layouttests", "Element is not <layouttests/>.");
         n = xml.documentElement.firstElementChild;
+        if (n.localName === "commonInput") {
+            commonInput = n;
+            n = n.nextElementSibling;
+        }
         while (n) {
             testName = n.getAttribute("name");
             runtime.assert(n.localName === "test", "Element is not <test/>.");
             runtime.assert(!tests.hasOwnProperty(testName), "Test name " + testName + " is not unique.");
             test = parseTest(testName, n);
             if (!test.isFailing) {
+                test.commonInput = commonInput;
                 tests[testName] = test;
             }
             n = n.nextElementSibling;
@@ -112,7 +119,7 @@ odf.LayoutTests = function LayoutTests(runner) {
     }
     /**
      * @param {!Array.<!string>} urls
-     * @return {!Object.<!string,{isFailing:!boolean,input:!Element,name:!string}>}
+     * @return {!Object.<!string,{isFailing:!boolean,input:!Element,name:!string,commonInput:?Element}>}
      */
     function loadTestFiles(urls) {
         var optests = {}, i;
@@ -126,11 +133,8 @@ odf.LayoutTests = function LayoutTests(runner) {
      * @param {!NodeList} childList
      * @return {undefined}
      */
-    function replaceChildren(odfNode, childList) {
+    function addChildren(odfNode, childList) {
         var doc = odfNode.ownerDocument, i, c;
-        while (odfNode.firstChild) {
-            odfNode.removeChild(odfNode.firstChild);
-        }
         for (i = 0; i < childList.length; i += 1) {
             c = doc.importNode(childList.item(i), true);
             while (c.firstChild !== null) {
@@ -139,7 +143,7 @@ odf.LayoutTests = function LayoutTests(runner) {
         }
     }
     /**
-     * @param {!Object.<!string,{isFailing:!boolean,input:!Element,name:!string}>} test
+     * @param {!Object.<!string,{isFailing:!boolean,input:!Element,name:!string,commonInput:?Element}>} test
      * @param {!function():undefined} callback
      * @return {undefined}
      */
@@ -148,12 +152,21 @@ odf.LayoutTests = function LayoutTests(runner) {
             odfContainer = new odf.OdfContainer("", null),
             root = odfContainer.rootElement,
             path = test.name + ".odt",
-            input = test.input;
-        replaceChildren(root.automaticStyles,
+            input = test.input,
+            commonInput = test.commonInput;
+        if (commonInput) {
+            addChildren(root.automaticStyles,
+                commonInput.getElementsByTagNameNS(officens, "automatic-styles"));
+            addChildren(root.masterStyles,
+                commonInput.getElementsByTagNameNS(officens, "master-styles"));
+            addChildren(root.body.getElementsByTagNameNS(officens, "text")[0],
+                commonInput.getElementsByTagNameNS(officens, "text"));
+        }
+        addChildren(root.automaticStyles,
             input.getElementsByTagNameNS(officens, "automatic-styles"));
-        replaceChildren(root.masterStyles,
+        addChildren(root.masterStyles,
             input.getElementsByTagNameNS(officens, "master-styles"));
-        replaceChildren(root.body.getElementsByTagNameNS(officens, "text")[0],
+        addChildren(root.body.getElementsByTagNameNS(officens, "text")[0],
             input.getElementsByTagNameNS(officens, "text"));
         function handler() {
             t.odfContainer = t.odfCanvas.odfContainer();

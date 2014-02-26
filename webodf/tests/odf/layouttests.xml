@@ -13,33 +13,34 @@
       Workaround for a bug(?) in Firefox which only provides those
       attributes by the camelCase name, not the original name,
       even with bracket notation. -->
+ <commonInput>
+  <!-- Styles here are used in all test documents. -->
+  <office:document-styles>
+   <office:automatic-styles>
+    <style:style style:name="onecol" style:family="section">
+     <style:section-properties>
+      <style:columns fo:column-count="1"/>
+     </style:section-properties>
+    </style:style>
+    <style:style style:name="pageTopPageLeftFrame" style:family="graphic">
+     <style:graphic-properties style:vertical-pos="from-top" style:vertical-rel="page" style:horizontal-pos="from-left" style:horizontal-rel="page" draw:stroke="solid" svg:stroke-width="1mm" draw:fill="solid" draw:fill-color="#eeeeee"/>
+    </style:style>
+    <style:page-layout style:name="onecol">
+     <style:page-layout-properties
+      fo:page-width="10cm" fo:page-height="20cm"
+      fo:margin-top="1cm" fo:margin-bottom="4cm" fo:margin-left="2cm"
+      fo:margin-right="3cm">
+      <style:columns fo:column-count="1"/>
+     </style:page-layout-properties>
+    </style:page-layout>
+   </office:automatic-styles>
+   <office:master-styles>
+    <style:master-page style:name="Standard" style:page-layout-name="onecol" />
+   </office:master-styles>
+  </office:document-styles>
+ </commonInput>
  <test name="simple">
   <input>
-   <office:document-styles>
-    <office:automatic-styles>
-     <style:style style:name="onecol" style:family="section">
-      <style:section-properties>
-       <style:columns fo:column-count="1"/>
-      </style:section-properties>
-     </style:style>
-     <style:page-layout style:name="onecol">
-      <style:page-layout-properties
-       fo:page-width="10cm" fo:page-height="20cm" fo:margin="2cm"
-       fo:margin-top="2cm" fo:margin-bottom="2cm" fo:margin-left="2cm"
-       fo:margin-right="2cm">
-       <style:columns fo:column-count="1">
-        <style:column style:rel-width="1*" fo:start-indent="0cm"
-         fo:end-indent="5mm" />
-        <style:column style:rel-width="1*" fo:start-indent="5mm"
-         fo:end-indent="0cm" />
-       </style:columns>
-      </style:page-layout-properties>
-     </style:page-layout>
-    </office:automatic-styles>
-    <office:master-styles>
-     <style:master-page style:name="Standard" style:page-layout-name="onecol" />
-    </office:master-styles>
-   </office:document-styles>
    <office:text>
     <text:p>Lorem ipsum.</text:p>
    </office:text>
@@ -50,55 +51,31 @@
    </check>
    <check xpath=".//office:text">
     <marginLeft value="2cm"/>
-    <marginRight value="2cm"/>
-    <width value="6cm"/>
+    <marginRight value="3cm"/>
+    <width value="5cm"/>
    </check>
    <check xpath=".//text:p">
-    <clientWidth value="6cm"/>
-    <width value="6cm"/>
+    <clientWidth value="5cm"/>
+    <width value="5cm"/>
     <fontVariant value="normal"/>
    </check>
   </layoutchecks>
  </test>
  <test name="simpleFrame">
   <input>
-   <office:document-styles>
-    <office:automatic-styles>
-     <style:style style:name="onecol" style:family="section"/>
-     <style:page-layout style:name="onecol">
-      <style:page-layout-properties
-       fo:page-width="10cm" fo:page-height="20cm" fo:margin="2cm"
-       fo:margin-top="2cm" fo:margin-bottom="2cm" fo:margin-left="2cm"
-       fo:margin-right="2cm"/>
-     </style:page-layout>
-    </office:automatic-styles>
-    <office:master-styles>
-     <style:master-page style:name="Standard" style:page-layout-name="onecol" />
-    </office:master-styles>
-   </office:document-styles>
    <office:text>
-    <text:p><draw:frame text:anchor-type="paragraph" draw:z-index="0" svg:width="4cm" svg:height="2cm" svg:x="1cm" svg:y="1cm">
-     <draw:text-box/>
-    </draw:frame></text:p>
+    <text:p>
+     <draw:frame draw:style-name="pageTopPageLeftFrame" text:anchor-type="paragraph" draw:z-index="0" svg:width="4cm" svg:height="2cm" svg:x="1cm" svg:y="1cm">
+      <draw:text-box/>
+     </draw:frame>
+    </text:p>
    </office:text>
   </input>
   <layoutchecks>
-   <check xpath="office:body">
-    <width value="10cm"/>
-   </check>
    <check xpath=".//draw:frame">
     <width value="4cm"/>
     <height value="2cm"/>
-   </check>
-   <check xpath=".//office:text">
-    <marginLeft value="2cm"/>
-    <marginRight value="2cm"/>
-    <width value="6cm"/>
-   </check>
-   <check xpath=".//office:text/text:p">
-    <clientWidth value="6cm"/>
-    <width value="6cm"/>
-    <fontVariant value="normal"/>
+    <backgroundColor value="rgb(238, 238, 238)"/>
    </check>
   </layoutchecks>
  </test>
@@ -319,26 +296,9 @@
  </test>
  <test name="frame01">
   <input>
-   <office:document-styles>
-    <office:automatic-styles>
-     <style:style style:name="fr1" style:family="graphic">
-      <style:graphic-properties style:vertical-pos="from-top" style:vertical-rel="page" style:horizontal-pos="from-left" style:horizontal-rel="page" draw:stroke="solid" svg:stroke-width="1mm" draw:fill="solid" draw:fill-color="#eeeeee"/>
-     </style:style>
-     <style:style style:name="onecol" style:family="section"/>
-     <style:page-layout style:name="onecol">
-      <style:page-layout-properties
-       fo:page-width="10cm" fo:page-height="20cm" fo:margin="2cm"
-       fo:margin-top="2cm" fo:margin-bottom="2cm" fo:margin-left="2cm"
-       fo:margin-right="2cm"/>
-     </style:page-layout>
-    </office:automatic-styles>
-    <office:master-styles>
-     <style:master-page style:name="Standard" style:page-layout-name="onecol" />
-    </office:master-styles>
-   </office:document-styles>
    <office:text>
     <text:p>
-     <draw:frame draw:style-name="fr1" text:anchor-type="char" svg:x="10mm" svg:y="11mm" svg:width="12mm" svg:height="13mm">
+     <draw:frame draw:style-name="pageTopPageLeftFrame" text:anchor-type="char" svg:x="10mm" svg:y="11mm" svg:width="12mm" svg:height="13mm">
       <draw:text-box/>
      </draw:frame>
     </text:p>
@@ -346,9 +306,6 @@
   </input>
   <layoutchecks>
    <check xpath=".//draw:frame">
-    <backgroundColor value="rgb(238, 238, 238)"/>
-    <width value="12mm"/>
-    <height value="13mm"/>
     <pageX value="10mm"/>
     <pageY value="11mm"/>
    </check>
@@ -356,34 +313,14 @@
  </test>
  <test name="frame02">
   <input>
-   <office:document-styles>
-    <office:automatic-styles>
-     <style:style style:name="fr1" style:family="graphic">
-      <style:graphic-properties style:vertical-pos="from-top" style:vertical-rel="page" style:horizontal-pos="from-left" style:horizontal-rel="page" draw:stroke="solid" svg:stroke-width="1mm" draw:fill="solid" draw:fill-color="#eeeeee"/>
-     </style:style>
-     <style:style style:name="onecol" style:family="section"/>
-     <style:page-layout style:name="onecol">
-      <style:page-layout-properties
-       fo:page-width="10cm" fo:page-height="20cm" fo:margin="2cm"
-       fo:margin-top="2cm" fo:margin-bottom="2cm" fo:margin-left="2cm"
-       fo:margin-right="2cm"/>
-     </style:page-layout>
-    </office:automatic-styles>
-    <office:master-styles>
-     <style:master-page style:name="Standard" style:page-layout-name="onecol" />
-    </office:master-styles>
-   </office:document-styles>
    <office:text>
-    <draw:frame draw:style-name="fr1" text:anchor-type="char" svg:x="10mm" svg:y="11mm" svg:width="12mm" svg:height="13mm">
+    <draw:frame draw:style-name="pageTopPageLeftFrame" text:anchor-type="char" svg:x="10mm" svg:y="11mm" svg:width="12mm" svg:height="13mm">
      <draw:text-box/>
     </draw:frame>
    </office:text>
   </input>
   <layoutchecks>
    <check xpath=".//draw:frame">
-    <backgroundColor value="rgb(238, 238, 238)"/>
-    <width value="12mm"/>
-    <height value="13mm"/>
     <pageX value="10mm"/>
     <pageY value="11mm"/>
    </check>
