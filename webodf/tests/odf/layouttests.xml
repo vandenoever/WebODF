@@ -16,19 +16,22 @@
  <commonInput>
   <!-- Styles here are used in all test documents. -->
   <office:document-styles>
+   <office:styles>
+    <style:style style:name="commonFrame" style:family="graphic">
+     <style:graphic-properties fo:background-color="#eeeeee" style:background-transparency="0%" draw:fill="solid" fo:padding="0mm" fo:border="1mm solid #000000" style:shadow="none" draw:fill-color="#eeeeee"/>
+    </style:style>
+   </office:styles>
    <office:automatic-styles>
     <style:style style:name="onecol" style:family="section">
      <style:section-properties>
       <style:columns fo:column-count="1"/>
      </style:section-properties>
     </style:style>
-    <style:style style:name="commonFrame" style:family="graphic">
+    <style:style style:name="pageFromTopPageFromLeftFrame" style:family="graphic" style:parent-style-name="commonFrame">
+     <style:graphic-properties style:vertical-pos="from-top" style:vertical-rel="page" style:horizontal-pos="from-left" style:horizontal-rel="page"/>
     </style:style>
-    <style:style style:name="pageFromTopPageFromLeftFrame" style:family="graphic">
-     <style:graphic-properties style:vertical-pos="from-top" style:vertical-rel="page" style:horizontal-pos="from-left" style:horizontal-rel="page" draw:stroke="solid" svg:stroke-width="1mm" draw:fill="solid" draw:fill-color="#eeeeee"/>
-    </style:style>
-    <style:style style:name="pageTopPageLeftFrame" style:family="graphic">
-     <style:graphic-properties style:vertical-pos="top" style:vertical-rel="page" style:horizontal-pos="left" style:horizontal-rel="page" draw:stroke="solid" svg:stroke-width="1mm" draw:fill="solid" draw:fill-color="#eeeeee"/>
+    <style:style style:name="pageTopPageLeftFrame" style:family="graphic" style:parent-style-name="commonFrame">
+     <style:graphic-properties style:vertical-pos="top" style:vertical-rel="page" style:horizontal-pos="left" style:horizontal-rel="page"/>
     </style:style>
     <style:page-layout style:name="onecol">
      <style:page-layout-properties
@@ -343,6 +346,23 @@
    <check xpath=".//draw:frame">
     <pageX value="10mm"/>
     <pageY value="11mm"/>
+   </check>
+  </layoutchecks>
+ </test>
+ <test name="frame-as-char01">
+  <input>
+   <office:text>
+    <text:p>
+     <draw:frame draw:style-name="commonFrame" svg:width="12mm" svg:height="13mm" text:anchor-type="as-char">
+      <draw:text-box/>
+     </draw:frame>
+    </text:p>
+   </office:text>
+  </input>
+  <layoutchecks>
+   <check xpath=".//draw:frame">
+    <pageX value="20mm"/>
+    <pageY value="10mm"/>
    </check>
   </layoutchecks>
  </test>
