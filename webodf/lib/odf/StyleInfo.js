@@ -899,6 +899,82 @@ odf.StyleInfo = function StyleInfo() {
         }
     };
 
+    /**
+     * @param {!Element} stylesElement
+     * @param {!string} styleName
+     * @param {!string} styleFamily
+     * @return {?Element}
+     */
+    function getStyleElement(stylesElement, styleName, styleFamily) {
+        var e = stylesElement.firstElementChild;
+        while (e && !(e.namespaceURI === stylens && e.localName === "style"
+                      && e.getAttributeNS(stylens, "name") === styleName
+                      && e.getAttributeNS(stylens, "family") === styleFamily)) {
+            e = e.nextElementSibling;
+        }
+        return e;
+    }
+
+    /**
+     * @param {!Element} styleElement
+     * @param {!Object.<!string,!Object.<!string,?string>>} properties
+     * @return {undefined}
+     */
+    function getProperties(styleElement, properties) {
+        var c = styleElement.firstElementChild, p, ns,
+            /**@type{!string}*/
+            prefix,
+            /**@type{!string}*/
+            n;
+        while (c) {
+            for (prefix in properties) {
+                if (properties.hasOwnProperty(prefix)) {
+                    p = properties[prefix];
+                    ns = /**@type{!string}*/(odf.Namespaces.namespaceMap[prefix]);
+                    for (n in p) {
+                        if (p.hasOwnProperty(n) && p[n] === null && c.hasAttributeNS(ns, n)) {
+                            p[n] = c.getAttributeNS(ns, n);
+                        }
+                    }
+                }
+            }
+            c = c.nextElementSibling;
+        }
+    }
+
+    /**
+     * @param {!Element} styles
+     * @param {!Element} automaticStyles
+     * @param {!string} styleName
+     * @param {!string} styleFamily
+     * @param {!Object.<!string,!Object.<!string,?string>>} properties
+     * @return {!Object.<!string,!Object.<!string,?string>>}
+     */
+    function getStyleProperties(styles, automaticStyles, styleName,
+            styleFamily, properties) {
+        var s;
+        do {
+            s = getStyleElement(automaticStyles, styleName, styleFamily);
+            if (s) {
+                getProperties(s, properties);
+                styleName = s.getAttributeNS(stylens, "parent-style-name");
+            } else {
+                styleName = "";
+            }
+        } while (styleName !== "");
+        while (styleName !== "") {
+            s = getStyleElement(styles, styleName, styleFamily);
+            if (s) {
+                getProperties(s, properties);
+                styleName = s.getAttributeNS(stylens, "parent-style-name");
+            } else {
+                styleName = "";
+            }
+        }
+        return properties;
+    }
+    this.getStyleProperties = getStyleProperties;
+
     this.hasDerivedStyles = hasDerivedStyles;
     this.prefixStyleNames = prefixStyleNames;
     this.removePrefixFromStyleNames = removePrefixFromStyleNames;
