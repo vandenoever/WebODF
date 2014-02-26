@@ -45,8 +45,7 @@
 odf.OdfUtils = function OdfUtils() {
     "use strict";
 
-    var self = this,
-        /**@const
+    var /**@const
            @type{!string}*/
         textns = odf.Namespaces.textns,
         /**@const
@@ -997,35 +996,45 @@ odf.OdfUtils = function OdfUtils() {
     };
     /*jslint regexp: false*/
     /**
+     * Convert a unit in a string to number of pixels at 96 dpi.
+     * If the input value has unit 'px' or is a number, the number is taken as
+     * is. Other allowed unit: cm, mm, pt, pc.
      * @param {!string|!number} val
      * @return {!number}
      */
-    this.convertToPx = function (val) {
+    function convertToPx(val) {
         var n = -1, length;
         if (typeof val === "number") {
             n = val;
         } else {
-            length = self.parseLength(val);
+            length = parseLength(val);
             if (length && length.unit === "px") {
                 n = length.value;
             } else if (length && length.unit === "cm") {
                 n = length.value / 2.54 * 96;
             } else if (length && length.unit === "mm") {
                 n = length.value / 25.4 * 96;
+            } else if (length && length.unit === "in") {
+                n = length.value * 96;
+            } else if (length && length.unit === "pt") {
+                n = length.value / 0.75;
+            } else if (length && length.unit === "pc") {
+                n = length.value * 16;
             } else {
                 throw "Unit " + length.unit + " not supported.";
             }
         }
         return n;
-    };
+    }
+    this.convertToPx = convertToPx;
     /**
      * @param {!string|!number} a
      * @param {!string|!number} b
      * @return {!number}
      */
     this.sumLengths = function (a, b) {
-        var an = self.convertToPx(a),
-            bn = self.convertToPx(b);
+        var an = convertToPx(a),
+            bn = convertToPx(b);
         return an + bn;
     };
     /**
