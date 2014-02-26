@@ -981,24 +981,23 @@ odf.StyleInfo = function StyleInfo() {
      */
     function getStyleProperties(styles, automaticStyles, styleName,
             styleFamily, properties) {
-        var style = null,
-            visited = {},
+        var s;
+        do {
             s = getStyleElement(styleName, styleFamily, [automaticStyles]);
-        if (s) {
-            getProperties(s, properties);
-            if (s.hasAttributeNS(stylens, "parent-style-name")) {
-                style = s.getAttributeNS(stylens, "parent-style-name");
-            }
-        }
-        while (style !== null && !visited[style]) {
-            s = getStyleElement(style, styleFamily, [styles]);
-            visited[style] = true; // avoid infinite loop
-            style = null;
             if (s) {
                 getProperties(s, properties);
-                if (s.hasAttributeNS(stylens, "parent-style-name")) {
-                    style = s.getAttributeNS(stylens, "parent-style-name");
-                }
+                styleName = s.getAttributeNS(stylens, "parent-style-name");
+            } else {
+                styleName = "";
+            }
+        } while (styleName !== "");
+        while (styleName !== "") {
+            s = getStyleElement(styleName, styleFamily, [styles]);
+            if (s) {
+                getProperties(s, properties);
+                styleName = s.getAttributeNS(stylens, "parent-style-name");
+            } else {
+                styleName = "";
             }
         }
         return properties;
