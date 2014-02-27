@@ -193,6 +193,7 @@
         xpath = xmldom.XPath,
         odfUtils = new odf.OdfUtils(),
         styleInfo = new odf.StyleInfo(),
+        textLayout = new odf.TextLayout(),
         domUtils = new core.DomUtils();
 
     /**
@@ -1066,7 +1067,10 @@
             stylesxmlcss,
             /**@type{!HTMLStyleElement}*/
             positioncss,
+            /**@type{!HTMLDivElement}*/
             shadowContent,
+            /**@type{!HTMLDivElement}*/
+            pagesDiv,
             /**@type{!Object.<string,!Array.<!Function>>}*/
             eventHandlers = {},
             waitingForDoneTimeoutId,
@@ -1257,7 +1261,7 @@
             // styled, so we will populate this in the ODF body first. Once the
             // styling is handled, it can then be lifted out of the
             // ODF body and placed beside it, to not pollute the ODF dom.
-            shadowContent = doc.createElementNS(element.namespaceURI, 'div');
+            shadowContent = /**@type{!HTMLDivElement}*/(doc.createElementNS(element.namespaceURI, 'div'));
             shadowContent.id = "shadowContent";
             shadowContent.style.position = 'absolute';
             shadowContent.style.top = 0;
@@ -1265,6 +1269,9 @@
             container.getContentElement().appendChild(shadowContent);
 
             modifyDrawElements(odfnode, css);
+            pagesDiv = /**@type{!HTMLDivElement}*/(doc.createElementNS(element.namespaceURI, 'div'));
+            container.getContentElement().parentNode.insertBefore(pagesDiv, container.getContentElement());
+            textLayout.layout(odfnode, pagesDiv, 100);
             cloneMasterPages(formatting, container, shadowContent, odfnode, css);
             modifyTables(odfnode.body, element.namespaceURI);
             modifyLineBreakElements(odfnode.body);

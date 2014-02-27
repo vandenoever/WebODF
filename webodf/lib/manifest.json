@@ -219,6 +219,7 @@
         "odf.Formatting",
         "odf.ListStylesToCss",
         "odf.Style2CSS",
+        "odf.TextLayout",
         "ops.Canvas"
     ],
     "odf.OdfContainer": [
@@ -247,6 +248,9 @@
     ],
     "odf.StyleTree": [
         "odf.Namespaces"
+    ],
+    "odf.TextLayout": [
+        "odf.OdfContainer"
     ],
     "odf.TextSerializer": [
         "odf.OdfUtils",
