@@ -1003,25 +1003,27 @@ odf.OdfUtils = function OdfUtils() {
      * @return {!number}
      */
     function convertToPx(val) {
-        var n = -1, length;
+        var n = -1, length, unit;
         if (typeof val === "number") {
             n = val;
         } else {
             length = parseLength(val);
-            if (length && length.unit === "px") {
+            unit = length && length.unit;
+            if (unit === "px") {
                 n = length.value;
-            } else if (length && length.unit === "cm") {
+            } else if (unit === "cm") {
                 n = length.value / 2.54 * 96;
-            } else if (length && length.unit === "mm") {
+            } else if (unit === "mm") {
                 n = length.value / 25.4 * 96;
-            } else if (length && length.unit === "in") {
+            } else if (unit === "in") {
                 n = length.value * 96;
-            } else if (length && length.unit === "pt") {
+            } else if (unit === "pt") {
                 n = length.value / 0.75;
-            } else if (length && length.unit === "pc") {
+            } else if (unit === "pc") {
                 n = length.value * 16;
             } else {
-                throw "Unit " + length.unit + " not supported by this function.";
+                // TODO: handle catching of this exception in the callers
+                throw "Unit " + unit + " not supported by this function.";
             }
         }
         return n;
