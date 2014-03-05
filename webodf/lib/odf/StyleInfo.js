@@ -900,20 +900,47 @@ odf.StyleInfo = function StyleInfo() {
     };
 
     /**
-     * @param {!Element} stylesElement
+     * Fetch style element associated with the requested name and family
      * @param {!string} styleName
-     * @param {!string} styleFamily
-     * @return {?Element}
+     * @param {!string} family
+     * @param {!Array.<!Element>} styleElements Specific style trees to search. If unspecified will search both automatic
+     *  and user-created styles
+     * @return {Element}
      */
-    function getStyleElement(stylesElement, styleName, styleFamily) {
-        var e = stylesElement.firstElementChild;
-        while (e && !(e.namespaceURI === stylens && e.localName === "style"
-                      && e.getAttributeNS(stylens, "name") === styleName
-                      && e.getAttributeNS(stylens, "family") === styleFamily)) {
-            e = e.nextElementSibling;
+    function getStyleElement(styleName, family, styleElements) {
+        var node,
+            nodeStyleName,
+            styleListElement,
+            i;
+
+        for (i = 0; i < styleElements.length; i += 1) {
+            styleListElement = /**@type{!Element}*/(styleElements[i]);
+            node = styleListElement.firstElementChild;
+            while (node) {
+                nodeStyleName = node.getAttributeNS(stylens, 'name');
+                if (node.namespaceURI === stylens
+                        && node.localName === "style"
+                        && node.getAttributeNS(stylens, 'family') === family
+                        && nodeStyleName === styleName) {
+                    return node;
+                }
+                if (family === "list-style"
+                        && node.namespaceURI === textns
+                        && node.localName === "list-style"
+                        && nodeStyleName === styleName) {
+                    return node;
+                }
+                if (family === "data"
+                        && node.namespaceURI === numberns
+                        && nodeStyleName === styleName) {
+                    return node;
+                }
+                node = node.nextElementSibling;
+            }
         }
-        return e;
+        return null;
     }
+    this.getStyleElement = getStyleElement;
 
     /**
      * @param {!Element} styleElement
@@ -943,6 +970,8 @@ odf.StyleInfo = function StyleInfo() {
     }
 
     /**
+     * Get specific style properties from a style element.
+     *
      * @param {!Element} styles
      * @param {!Element} automaticStyles
      * @param {!string} styleName
@@ -954,7 +983,7 @@ odf.StyleInfo = function StyleInfo() {
             styleFamily, properties) {
         var style = null,
             visited = {},
-            s = getStyleElement(automaticStyles, styleName, styleFamily);
+            s = getStyleElement(styleName, styleFamily, [automaticStyles]);
         if (s) {
             getProperties(s, properties);
             if (s.hasAttributeNS(stylens, "parent-style-name")) {
@@ -962,7 +991,7 @@ odf.StyleInfo = function StyleInfo() {
             }
         }
         while (style !== null && !visited[style]) {
-            s = getStyleElement(styles, style, styleFamily);
+            s = getStyleElement(style, styleFamily, [styles]);
             visited[style] = true; // avoid infinite loop
             style = null;
             if (s) {

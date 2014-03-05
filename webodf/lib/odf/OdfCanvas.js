@@ -319,9 +319,11 @@
         }
     }
     /**
-     * @param {!string} x
-     * @param {?string} horizontalPos
-     * @param {?string} horizontalRel
+     * Calculate the horizontal position on a page at which a frame should
+     * be positioned.
+     * @param {!string} x svg:x
+     * @param {?string} horizontalPos style:horizontal-pos
+     * @param {?string} horizontalRel style:horizontal-rel
      * @param {!Element} frame
      * @return {!number}
      */
@@ -344,9 +346,11 @@
         return nx;
     }
     /**
-     * @param {!string} y
-     * @param {?string} verticalPos
-     * @param {?string} verticalRel
+     * Calculate the vertical position on a page at which a frame should
+     * be positioned.
+     * @param {!string} y svg:y
+     * @param {?string} verticalPos style:vertical-pos
+     * @param {?string} verticalRel style:vertical-rel
      * @param {!Element} frame
      * @return {!number}
      */
