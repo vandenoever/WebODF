@@ -331,7 +331,8 @@
         var parentRect = frame.parentElement.getBoundingClientRect(),
             pageRect,
             nx = 0;
-        if (horizontalPos === "from-left" || horizontalPos === "from-inside") {
+        if (horizontalPos === null || horizontalPos === "from-left"
+                || horizontalPos === "from-inside") {
             nx = odfUtils.convertToPx(x || 0);
         }
         if (horizontalRel === "page") {
@@ -358,7 +359,7 @@
         var parentRect = frame.parentElement.getBoundingClientRect(),
             pageRect,
             ny = 0;
-        if (verticalPos === "from-top") {
+        if (verticalPos === null || verticalPos === "from-top") {
             ny = odfUtils.convertToPx(y || 0);
         }
         if (verticalRel === "page") {
