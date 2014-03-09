@@ -1271,7 +1271,9 @@
             modifyDrawElements(odfnode, css);
             pagesDiv = /**@type{!HTMLDivElement}*/(doc.createElementNS(element.namespaceURI, 'div'));
             container.getContentElement().parentNode.insertBefore(pagesDiv, container.getContentElement());
-            textLayout.layout(odfnode, pagesDiv, 100);
+            //textLayout.layout(odfnode, pagesDiv, 100);
+            textLayout.updateCompleteLayout(odfnode, pagesDiv);
+            cloneMasterPages(container, shadowContent, odfnode, css);
             cloneMasterPages(formatting, container, shadowContent, odfnode, css);
             modifyTables(odfnode.body, element.namespaceURI);
             modifyLineBreakElements(odfnode.body);

@@ -36,12 +36,15 @@
  * @source: https://github.com/kogmbh/WebODF/
  */
 
-/*global odf, window*/
+/*global odf, window, core, NodeFilter*/
 /**
  * @constructor
  */
 odf.TextLayout = function TextLayout() {
     "use strict";
+    var domUtils = new core.DomUtils(),
+        officens = "urn:oasis:names:tc:opendocument:xmlns:office:1.0",
+        textns = "urn:oasis:names:tc:opendocument:xmlns:text:1.0";
     /**
      * @param {!HTMLDivElement} pagesDiv
      * @return {!number}
@@ -206,6 +209,247 @@ odf.TextLayout = function TextLayout() {
         return maxTime > 0;
     }
     this.layout = layout;
+    /**
+     * @param {!odf.ODFDocumentElement} odfRoot
+     * @return {?Element}
+     */
+    function getOfficeText(odfRoot) {
+        return domUtils.getDirectChild(odfRoot.body, officens, "text");
+    }
+    /**
+     * @param {!Node} node
+     * @return {!number}
+     */
+    function paragraphNodeFilter(node) {
+        var r = NodeFilter.FILTER_ACCEPT;
+        if (node.localName !== "p" && node.localName !== "h") {
+            r = NodeFilter.FILTER_REJECT;
+        } else if (node.namespaceURI !== textns) {
+            r = NodeFilter.FILTER_REJECT;
+        }
+        return r;
+    }
+    /**
+     * @param {!Element} officeText
+     * @return {!TreeWalker}
+     */
+    function createParagraphWalker(officeText) {
+        var doc = officeText.ownerDocument;
+        return doc.createTreeWalker(officeText, NodeFilter.SHOW_ELEMENT,
+            paragraphNodeFilter, false);
+    }
+    /**
+     * @param {!Element} element
+     * @return {!number}
+     */
+    function getTop(element) {
+        var he = /**@type{!HTMLElement}*/(element),
+            top = he.offsetTop || 0;
+        if (he.offsetParent) {
+            top += getTop(he.offsetParent);
+        }
+        return top;
+    }
+    /**
+     * @param {!Element} element
+     * @return {!number}
+     */
+    function getBottom(element) {
+        var height = /**@type{!HTMLElement}*/(element).offsetHeight || 0;
+        return height + getTop(element);
+    }
+    /**
+     * @param {!HTMLDivElement} pagesDiv
+     * @return {!HTMLDivElement}
+     */
+    function createPageDiv(pagesDiv) {
+        var doc = pagesDiv.ownerDocument,
+            htmlns = pagesDiv.namespaceURI,
+            page = doc.createElementNS(htmlns, "div"),
+            header = doc.createElementNS(htmlns, "div"),
+            footer = doc.createElementNS(htmlns, "div");
+        page.style.cssFloat = "right";
+        page.style.width = "1px";
+        page.style.height = "10cm";
+        page.style.position = "relative";
+
+        header.style.position = "absolute";
+        header.style.right = 0;
+        header.style.top = 0;
+        header.style.width = "1cm";
+        header.style.height = "1cm";
+        header.style.background = "yellow";
+
+        footer.style.position = "absolute";
+        footer.style.right = 0;
+        footer.style.bottom = 0;
+        footer.style.width = "1cm";
+        footer.style.height = "1cm";
+        footer.style.background = "red";
+
+        page.appendChild(header);
+        page.appendChild(footer);
+        return /**@type{!HTMLDivElement}*/(page);
+    }
+    /**
+     * @param {!HTMLDivElement} pagesDiv
+     * @return {!HTMLDivElement}
+     */
+    function createSeparator(pagesDiv) {
+        var doc = pagesDiv.ownerDocument,
+            htmlns = pagesDiv.namespaceURI,
+            separator = doc.createElementNS(htmlns, "div");
+        separator.style.cssFloat = "right";
+        separator.style.width = "100%";
+        separator.style.height = "1cm";
+        separator.style.background = "black";
+        return /**@type{!HTMLDivElement}*/(separator);
+    }
+    /**
+     * @param {!number} page
+     * @param {!HTMLDivElement} pagesDiv
+     * @return {!HTMLDivElement}
+     */
+    function getPageDiv(page, pagesDiv) {
+        var pageDiv = pagesDiv.firstElementChild;
+        if (pageDiv === null) {
+            pagesDiv.appendChild(createSeparator(pagesDiv));
+        }
+        while (page > 0 && pageDiv !== null) {
+            pageDiv = pageDiv.nextElementSibling;
+            pageDiv = pageDiv && pageDiv.nextElementSibling;
+            if (pageDiv !== null) {
+                page -= 1;
+            }
+        }
+        if (pageDiv === null) {
+            while (page > 0) {
+                pageDiv = pagesDiv.appendChild(createPageDiv(pagesDiv));
+                pagesDiv.appendChild(createSeparator(pagesDiv));
+                page -= 1;
+            }
+        }
+        return /**@type{!HTMLDivElement}*/(pageDiv);
+    }
+    /**
+     * @param {!number} pageBottom
+     * @param {?Element} officeText
+     * @param {?Element} previousFirstPageParagraph
+     * @return {?Element}
+     */
+    function getFirstPageParagraph(pageBottom, officeText, previousFirstPageParagraph) {
+        if (!officeText) {
+            return null;
+        }
+        var walker = createParagraphWalker(officeText),
+            top,
+            e;
+        if (previousFirstPageParagraph) {
+            walker.currentNode = previousFirstPageParagraph;
+        }
+        e = /**@type{?Element}*/(walker.nextNode());
+        while (e) {
+            top = getTop(e);
+            if (top >= pageBottom) {
+                break;
+            }
+            e = /**@type{?Element}*/(walker.nextNode());
+        }
+        return e;
+    }
+    /**
+     * @param {!Element} masterPageStyle
+     * @return {!odf.TextLayout.PageDimensions}
+     */
+    function getPageDimensions(masterPageStyle) {
+        var dims = {
+                pageHeight: 1130, // ~ 30 cm
+                marginTop: 60,
+                marginBottom: 60,
+                pageSeparation: 30,// ~ 1 cm
+                background: "black"
+            };
+        if (masterPageStyle) {
+            dims.background = "black";
+        }
+        return dims;
+    }
+    /**
+     * @param {!HTMLDivElement} pageDiv
+     * @param {!Element} masterPageStyle
+     * @return {undefined}
+     */
+    function updatePageSize(pageDiv, masterPageStyle) {
+        var dim = getPageDimensions(masterPageStyle),
+            h = dim.pageHeight + "px";
+        if (pageDiv.style.height !== h) {
+            pageDiv.style.height = h;
+        }
+    }
+    /**
+     * @param {!number} currentPage
+     * @param {!Element} paragraph
+     * @param {!odf.ODFDocumentElement} odfroot
+     * @return {!Element}
+     */
+    function getMasterPageStyle(currentPage, paragraph, odfroot) {
+        var p = paragraph;
+        if (currentPage || odfroot) {
+            p = paragraph;
+        }
+        return p;
+    }
+    /**
+     * Update the layout of pages.
+     * Returns the number of the next page that should be layed out or 0 if
+     * layout is done.
+     * @param {!odf.ODFDocumentElement} odfroot
+     * @param {!HTMLDivElement} pagesDiv
+     * @param {!number} maxTime (milliseconds)
+     * @param {!number} currentPage
+     * @return {!number}
+     */
+    function updateLayout(odfroot, pagesDiv, maxTime, currentPage) {
+        currentPage = Math.max(1, currentPage);
+        var officeText = getOfficeText(odfroot),
+            masterPageStyle,
+            firstPageParagraph = getFirstPageParagraph(0, officeText, null),
+            end = endTime(maxTime),
+            pageBottom,
+            pageDiv,
+            timeLeft = true;
+runtime.log(currentPage + " " + firstPageParagraph);
+runtime.log(firstPageParagraph + " ");
+        while (timeLeft && firstPageParagraph) {
+            masterPageStyle = getMasterPageStyle(currentPage,
+                    firstPageParagraph, odfroot);
+            pageDiv = getPageDiv(currentPage, pagesDiv);
+console.log(pageDiv);
+            updatePageSize(pageDiv, masterPageStyle);
+            currentPage += 1;
+            pageBottom = getBottom(pageDiv);
+            firstPageParagraph = getFirstPageParagraph(pageBottom, officeText, firstPageParagraph);
+            timeLeft = checkTime(end);
+runtime.log("timeleft " + timeLeft);
+runtime.log(firstPageParagraph + " ");
+        }
+        return timeLeft ? 0 : currentPage;
+    }
+    this.updateLayout = updateLayout;
+    /**
+     * @param {!odf.ODFDocumentElement} odfroot
+     * @param {!HTMLDivElement} pagesDiv
+     * @return {undefined}
+     */
+    function updateCompleteLayout(odfroot, pagesDiv) {
+        var page = 1,
+            count = 0;
+        do {
+            page = updateLayout(odfroot, pagesDiv, 1, page);
+            count += 1;
+        } while (page !== 0 && count < 10);
+    }
+    this.updateCompleteLayout = updateCompleteLayout;
 };
 /**@typedef{{
     pageHeight:!number,
