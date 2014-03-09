@@ -393,10 +393,26 @@ odf.TextLayout = function TextLayout() {
      * @return {!Element}
      */
     function getMasterPageStyle(currentPage, paragraph, odfroot) {
-        var p = paragraph;
-        if (currentPage || odfroot) {
+        var styleElements = [odfroot.automaticStyles, odfroot.styles],
+            //styleName,
+            //style,
+            p = paragraph;
+        if (styleElements && currentPage) {
             p = paragraph;
         }
+/* TODO: implement
+        do {
+            if (p.hasAttributeNS(textns, "style-name")) {
+                styleName = p.getAttributeNS(textns, "style-name");
+                style = styleInfo.getStyleElement(styleName, "paragraph",
+                        styleElements);
+                if (style) {
+                }
+            } else {
+            }
+            p = p.previousElementSibling;
+        } while (p !== null);
+*/
         return p;
     }
     /**
@@ -418,20 +434,15 @@ odf.TextLayout = function TextLayout() {
             pageBottom,
             pageDiv,
             timeLeft = true;
-runtime.log(currentPage + " " + firstPageParagraph);
-runtime.log(firstPageParagraph + " ");
         while (timeLeft && firstPageParagraph) {
             masterPageStyle = getMasterPageStyle(currentPage,
                     firstPageParagraph, odfroot);
             pageDiv = getPageDiv(currentPage, pagesDiv);
-console.log(pageDiv);
             updatePageSize(pageDiv, masterPageStyle);
             currentPage += 1;
             pageBottom = getBottom(pageDiv);
             firstPageParagraph = getFirstPageParagraph(pageBottom, officeText, firstPageParagraph);
             timeLeft = checkTime(end);
-runtime.log("timeleft " + timeLeft);
-runtime.log(firstPageParagraph + " ");
         }
         return timeLeft ? 0 : currentPage;
     }
