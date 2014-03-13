@@ -219,19 +219,19 @@ odf.LayoutTests = function LayoutTests(runner) {
     }
     /**
      * @param {!Element} node
-     * @return {!odf.OdfRect}
+     * @return {!ClientRect}
      */
     function getRectOnPage(node) {
         var pr = odfUtils.getPageRect(node),
             rect = node.getBoundingClientRect();
-        return {
+        return /**@type{!ClientRect}*/({
             top: rect.top - pr.top,
             left: rect.left - pr.left,
             width: rect.width,
             height: rect.height,
             bottom: rect.bottom - pr.top,
             right: rect.right - pr.left
-        };
+        });
     }
     /**
      * @param {!{count:!number,values:!Object.<!string,!string>,xpath:!string}} check
