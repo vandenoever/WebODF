@@ -18,7 +18,7 @@
   <office:document-styles>
    <office:styles>
     <style:style style:name="commonFrame" style:family="graphic">
-     <style:graphic-properties fo:background-color="#eeeeee" style:background-transparency="0%" draw:fill="solid" fo:padding="0mm" fo:border="1mm solid #000000" style:shadow="none" draw:fill-color="#eeeeee"/>
+     <style:graphic-properties fo:background-color="#eeeeee" style:background-transparency="0%" draw:fill="solid" fo:padding="0mm" fo:border="1mm solid #000000" style:shadow="none" draw:fill-color="#eeeeee" draw:stroke="solid" svg:stroke-width="1mm"/>
     </style:style>
    </office:styles>
    <office:automatic-styles>
@@ -307,29 +307,10 @@
  </test>
  <test name="frame01">
   <input>
-   <office:document-styles>
-    <office:automatic-styles>
-     <style:style style:name="fr1" style:family="graphic">
-      <style:graphic-properties style:vertical-pos="from-top" style:vertical-rel="page" style:horizontal-pos="from-left" style:horizontal-rel="page" draw:stroke="solid" svg:stroke-width="1mm" draw:fill="solid" draw:fill-color="#eeeeee"/>
-     </style:style>
-     <style:style style:name="onecol" style:family="section"/>
-     <style:page-layout style:name="onecol">
-      <style:page-layout-properties
-       fo:page-width="10cm" fo:page-height="20cm" fo:margin="2cm"
-       fo:margin-top="2cm" fo:margin-bottom="2cm" fo:margin-left="2cm"
-       fo:margin-right="2cm"/>
-     </style:page-layout>
-    </office:automatic-styles>
-    <office:master-styles>
-     <style:master-page style:name="Standard" style:page-layout-name="onecol" />
-    </office:master-styles>
-   </office:document-styles>
    <office:text>
     <text:p>
-     <draw:frame draw:style-name="fr1" text:anchor-type="char" svg:x="10mm" svg:y="11mm" svg:width="12mm" svg:height="13mm">
-      <draw:text-box>
-       <text:p/>
-      </draw:text-box>
+     <draw:frame draw:style-name="pageFromTopPageFromLeftFrame" text:anchor-type="char" svg:x="0mm" svg:y="0mm" svg:width="12mm" svg:height="13mm">
+      <draw:text-box/>
      </draw:frame>
     </text:p>
    </office:text>
@@ -339,8 +320,8 @@
     <backgroundColor value="rgb(238, 238, 238)"/>
     <width value="12mm"/>
     <height value="13mm"/>
-    <pageX value="10mm"/>
-    <pageY value="11mm"/>
+    <pageX value="0mm"/>
+    <pageY value="0mm"/>
    </check>
   </layoutchecks>
  </test>
@@ -354,6 +335,8 @@
   </input>
   <layoutchecks>
    <check xpath=".//draw:frame">
+    <width value="12mm"/>
+    <height value="13mm"/>
     <pageX value="10mm"/>
     <pageY value="11mm"/>
    </check>
