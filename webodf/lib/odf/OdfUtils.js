@@ -1048,7 +1048,7 @@ odf.OdfUtils = function OdfUtils() {
     this.getPageRect = function (node) {
         var p = node;
         while (p && !((p.namespaceURI === odf.Namespaces.officens
-                          && (p.localName === "text"
+                          && (p.localName === "body"
                               || p.localName === "spreadsheet"))
                        || (p.namespaceURI === odf.Namespaces.drawns
                            && p.localName === "page"))) {
