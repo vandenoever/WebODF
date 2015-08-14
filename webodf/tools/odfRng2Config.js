@@ -226,6 +226,9 @@ function handleChildElements(e, defs, current, elements, attributes, defines) {
             handleChildElements(c, defs, info, elements, attributes, defines);
         } else if (isRng("text", c)) {
             current.text = true;
+        } else if (isRng("mixed", c)) {
+            current.text = true;
+            handleChildElements(c, defs, current, elements, attributes, defines);
         } else if (isRng("data", c)) {
             current.data = true;
         } else if (isRng("value", c)) {
