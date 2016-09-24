@@ -22,14 +22,15 @@
  * @source: https://github.com/kogmbh/WebODF/
  */
 
-/*global core, runtime*/
+var runtime = require("../runtime").runtime;
+var EventSource = require("./EventSource").EventSource;
 
 /**
  * @constructor
- * @implements {core.EventSource}
+ * @implements {EventSource}
  * @param {!Array.<!string>=} eventIds
  */
-core.EventNotifier = function EventNotifier(eventIds) {
+function EventNotifier(eventIds) {
     "use strict";
 
     var /**@type{!Object.<!string,!Array.<!Function>>}*/
@@ -102,3 +103,5 @@ core.EventNotifier = function EventNotifier(eventIds) {
 
     init();
 };
+/**@const*/
+exports.EventNotifier = EventNotifier;

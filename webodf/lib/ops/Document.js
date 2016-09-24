@@ -22,27 +22,30 @@
  * @source: https://github.com/kogmbh/WebODF/
  */
 
-/*global ops */
+var PositionFilter = require("../core/PositionFilter").PositionFilter;
+var PositionIterator = require("../core/PositionIterator").PositionIterator;
+var Canvas = require("./Canvas").Canvas;
+
 /*jslint emptyblock: true, unparam: true */
 
 /**
  * A document that keeps all data related to the mapped document.
  * @interface
  */
-ops.Document = function Document() { "use strict"; };
+function OpsDocument() { "use strict"; }
 /**
  * @return {!Array.<string>}
  */
-ops.Document.prototype.getMemberIds = function () { "use strict"; };
+OpsDocument.prototype.getMemberIds = function () { "use strict"; };
 /**
  * @param {!string} memberid
  * @return {!boolean}
  */
-ops.Document.prototype.removeCursor = function (memberid) { "use strict"; };
+OpsDocument.prototype.removeCursor = function (memberid) { "use strict"; };
 /**
  * @return {!Element}
  */
-ops.Document.prototype.getDocumentElement = function () { "use strict"; };
+OpsDocument.prototype.getDocumentElement = function () { "use strict"; };
 /**
  * Return the element where the document content begins.
  * Document content means the body of the document. In the case of ODF this is
@@ -50,62 +53,64 @@ ops.Document.prototype.getDocumentElement = function () { "use strict"; };
  * getRootNode() will return the same node as getDocumentElement().
  * @return {!Element}
  */
-ops.Document.prototype.getRootNode = function () { "use strict"; };
+OpsDocument.prototype.getRootNode = function () { "use strict"; };
 /**
  * @return {!Document}
  */
-ops.Document.prototype.getDOMDocument = function () { "use strict"; };
+OpsDocument.prototype.getDOMDocument = function () { "use strict"; };
 /**
  * @return {!Element}
  */
-ops.Document.prototype.cloneDocumentElement = function () { "use strict"; };
+OpsDocument.prototype.cloneDocumentElement = function () { "use strict"; };
 /**
  * @param {!Element} element
  * @return {undefined}
  */
-ops.Document.prototype.setDocumentElement = function (element) { "use strict"; };
+OpsDocument.prototype.setDocumentElement = function (element) { "use strict"; };
 /**
  * @param {!string} eventid
  * @param {!Function} cb
  * @return {undefined}
  */
-ops.Document.prototype.subscribe = function (eventid, cb) { "use strict"; };
+OpsDocument.prototype.subscribe = function (eventid, cb) { "use strict"; };
 /**
  * @param {!string} eventid
  * @param {!Function} cb
  * @return {undefined}
  */
-ops.Document.prototype.unsubscribe = function (eventid, cb) { "use strict"; };
+OpsDocument.prototype.unsubscribe = function (eventid, cb) { "use strict"; };
 // vim:expandtab
 /**
- * @return {!ops.Canvas}
+ * @return {!Canvas}
  */
-ops.Document.prototype.getCanvas = function () { "use strict"; };
+OpsDocument.prototype.getCanvas = function () { "use strict"; };
 /**
  * @param {string|!Node} inputMemberId
- * @return {!core.PositionFilter}
+ * @return {!PositionFilter}
  */
-ops.Document.prototype.createRootFilter = function (inputMemberId) { "use strict"; };
+OpsDocument.prototype.createRootFilter = function (inputMemberId) { "use strict"; };
 /**
  * @param {!Node} rootNode
- * @return {!core.PositionIterator}
+ * @return {!PositionIterator}
  */
-ops.Document.prototype.createPositionIterator = function (rootNode) { "use strict"; };
+OpsDocument.prototype.createPositionIterator = function (rootNode) { "use strict"; };
 /**
  * @param {!string} memberid
  * @return {!boolean}
  */
-ops.Document.prototype.hasCursor = function (memberid) { "use strict"; };
+OpsDocument.prototype.hasCursor = function (memberid) { "use strict"; };
 
 /**@const*/
-ops.Document.signalCursorAdded =   "cursor/added";
+OpsDocument.signalCursorAdded =   "cursor/added";
 /**@const*/
-ops.Document.signalCursorRemoved = "cursor/removed";
+OpsDocument.signalCursorRemoved = "cursor/removed";
 /**@const*/
-ops.Document.signalCursorMoved =   "cursor/moved";
+OpsDocument.signalCursorMoved =   "cursor/moved";
 /**@const*/
-ops.Document.signalMemberAdded =   "member/added";
+OpsDocument.signalMemberAdded =   "member/added";
 /**@const*/
-ops.Document.signalMemberUpdated = "member/updated";
+OpsDocument.signalMemberUpdated = "member/updated";
 /**@const*/
-ops.Document.signalMemberRemoved = "member/removed";
+OpsDocument.signalMemberRemoved = "member/removed";
+/**@const*/
+exports.Document = OpsDocument;

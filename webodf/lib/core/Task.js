@@ -22,10 +22,10 @@
  * @source: https://github.com/kogmbh/WebODF/
  */
 
-/*global core, runtime*/
+"use strict";
 
-(function() {
-    "use strict";
+var runtime = require("../runtime").runtime;
+var ScheduledTask = require("./ScheduledTask").ScheduledTask;
     /** @type {!RedrawTasks} */
     var redrawTasks;
 
@@ -85,17 +85,12 @@
     }
 
     /**
-     * @type {!Object}
-     */
-    core.Task =  {};
-
-    /**
-     * Disable manually processing of tasks when core.Task.processTasks is called.
+     * Disable manually processing of tasks when processTasks is called.
      * This is only used during benchmarks to prevent caret redraws from skewing
      * the resulting numbers
      * @type {!boolean}
      */
-    core.Task.SUPPRESS_MANUAL_PROCESSING = false;
+exports.SUPPRESS_MANUAL_PROCESSING = false;
 
     /**
      * Process any outstanding redraw tasks that may be queued up
@@ -103,8 +98,8 @@
      * 
      * @return {undefined}
      */
-    core.Task.processTasks = function() {
-        if (!core.Task.SUPPRESS_MANUAL_PROCESSING) {
+    exports.processTasks = function() {
+        if (!exports.SUPPRESS_MANUAL_PROCESSING) {
             redrawTasks.performRedraw();
         }
     };
@@ -116,10 +111,10 @@
      * call being made.
      *
      * @param {!Function} callback
-     * @return {!core.ScheduledTask}
+     * @return {!ScheduledTask}
      */
-    core.Task.createRedrawTask = function (callback) {
-        return new core.ScheduledTask(callback,
+    exports.createRedrawTask = function (callback) {
+        return new ScheduledTask(callback,
             redrawTasks.requestRedrawTask,
             redrawTasks.cancelRedrawTask
         );
@@ -133,10 +128,10 @@
      *
      * @param {!Function} callback
      * @param {!number} delay
-     * @return {!core.ScheduledTask}
+     * @return {!ScheduledTask}
      */
-    core.Task.createTimeoutTask = function (callback, delay) {
-        return new core.ScheduledTask(callback,
+    exports.createTimeoutTask = function (callback, delay) {
+        return new ScheduledTask(callback,
             function(callback) {
                 return runtime.setTimeout(callback, delay);
             },
@@ -144,8 +139,4 @@
         );
     };
 
-    function init() {
-        redrawTasks = new RedrawTasks();
-    }
-    init();
-}());
+    redrawTasks = new RedrawTasks();

@@ -22,7 +22,9 @@
  * @source: https://github.com/kogmbh/WebODF/
  */
 
-/*global runtime, odf*/
+"use strict";
+var runtime = require("../runtime").runtime;
+var Namespaces = require("./Namespaces").Namespaces;
 
 /**
  * Object that retrieves properties lazily and caches them.
@@ -31,10 +33,10 @@
  * An object with getters functions is passed into the constructor. There must
  * be a getter function for each property.
  * @constructor
- * @param {!odf.LazyStyleProperties|undefined} parent
+ * @param {!LazyStyleProperties|undefined} parent
  * @param {!Object.<!string,function():*>} getters
  */
-odf.LazyStyleProperties = function (parent, getters) {
+function LazyStyleProperties(parent, getters) {
     "use strict";
     var /**@type{!Object.<!string,*>}*/
         data = {};
@@ -63,21 +65,20 @@ odf.LazyStyleProperties = function (parent, getters) {
     /**
      * Give a new parent to the LazyStyleProperties.
      * The cache is invalidated when this is done.
-     * @param {!odf.LazyStyleProperties|undefined} p
+     * @param {!LazyStyleProperties|undefined} p
      * @return {undefined}
      */
     this.reset = function (p) {
         parent = p;
         data = {};
     };
-};
+}
+/**@const*/
+exports.LazyStyleProperties = LazyStyleProperties;
 /**
  * A collection of helper functions for parsing style attributes.
- * @constructor
  */
-odf.StyleParseUtils = function () {
-    "use strict";
-    var stylens = odf.Namespaces.stylens;
+    var stylens = Namespaces.stylens;
     /**
      * Returns the length split as value and unit, from an ODF attribute.
      * If the length does not match the regular expression, null is returned.
@@ -119,7 +120,7 @@ odf.StyleParseUtils = function () {
         }
         return n;
     }
-    this.parseLength = parseLength;
+    exports.parseLength = parseLength;
     /**
      * Parse a percentage of the form -?([0-9]+(\.[0-9]*)?|\.[0-9]+)%.
      * If parsing fails undefined is returned.
@@ -141,7 +142,7 @@ odf.StyleParseUtils = function () {
      * If parsing fails undefined is returned.
      * @param {?string|undefined} value
      * @param {!string} name
-     * @param {!odf.LazyStyleProperties|undefined} parent
+     * @param {!LazyStyleProperties|undefined} parent
      * @return {!number|undefined}
      */
     function parsePositiveLengthOrPercent(value, name, parent) {
@@ -161,7 +162,7 @@ odf.StyleParseUtils = function () {
         }
         return v;
     }
-    this.parsePositiveLengthOrPercent = parsePositiveLengthOrPercent;
+    exports.parsePositiveLengthOrPercent = parsePositiveLengthOrPercent;
     /**
      * Find a child element from the ODF style namespace with the given local
      * name.
@@ -181,7 +182,7 @@ odf.StyleParseUtils = function () {
         }
         return e;
     }
-    this.getPropertiesElement = getPropertiesElement;
+    exports.getPropertiesElement = getPropertiesElement;
 
 
     /**
@@ -202,5 +203,4 @@ odf.StyleParseUtils = function () {
         return text && text.length > 0 ? text.split(/\s+/) : [];
     }
     /*jslint regexp: false*/
-    this.parseAttributeList = parseAttributeList;
-};
+    exports.parseAttributeList = parseAttributeList;

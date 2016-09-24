@@ -22,15 +22,17 @@
  * @source: https://github.com/kogmbh/WebODF/
  */
 
-/*global runtime, odf, core, document, xmldom*/
+/*global document*/
 /*jslint sub: true*/
 
-
-(function () {
-    "use strict";
-    var xpath = xmldom.XPath,
-        odfUtils = odf.OdfUtils,
-        base64 = new core.Base64();
+"use strict";
+var Base64 = require("../core/Base64").Base64;
+var Namespaces = require("./Namespaces").Namespaces;
+var OdfContainer = require("./OdfContainer").OdfContainer;
+var odfUtils = require("./OdfUtils");
+var runtime = require("../runtime").runtime;
+var xpath = require("../xmldom/XPath");
+var base64 = new Base64();
 
     /**
      * @param {!Element} fontFaceDecls
@@ -43,16 +45,16 @@
         }
         fonts = xpath.getODFElementsWithXPath(fontFaceDecls,
                     "style:font-face[svg:font-face-src]",
-                    odf.Namespaces.lookupNamespaceURI);
+                    Namespaces.lookupNamespaceURI);
         for (i = 0; i < fonts.length; i += 1) {
             font = fonts[i];
-            name = font.getAttributeNS(odf.Namespaces.stylens, "name");
-            family = odfUtils.getNormalizedFontFamilyName(font.getAttributeNS(odf.Namespaces.svgns, "font-family"));
+            name = font.getAttributeNS(Namespaces.stylens, "name");
+            family = odfUtils.getNormalizedFontFamilyName(font.getAttributeNS(Namespaces.svgns, "font-family"));
             uris = xpath.getODFElementsWithXPath(font,
                 "svg:font-face-src/svg:font-face-uri",
-                odf.Namespaces.lookupNamespaceURI);
+                Namespaces.lookupNamespaceURI);
             if (uris.length > 0) {
-                href = uris[0].getAttributeNS(odf.Namespaces.xlinkns, "href");
+                href = uris[0].getAttributeNS(Namespaces.xlinkns, "href");
                 decls[name] = {href: href, family: family};
             }
         }
@@ -84,7 +86,7 @@
     }
     /**
      * @param {!Object.<string,{href:string,family:string}>} embeddedFontDeclarations
-     * @param {!odf.OdfContainer} odfContainer
+     * @param {!OdfContainer} odfContainer
      * @param {!number} pos
      * @param {!CSSStyleSheet} stylesheet
      * @param {!function():undefined=} callback
@@ -126,7 +128,7 @@
     }
     /**
      * @param {!Object.<string,{href:string,family:string}>} embeddedFontDeclarations
-     * @param {!odf.OdfContainer} odfContainer
+     * @param {!OdfContainer} odfContainer
      * @param {!CSSStyleSheet} stylesheet
      * @return {undefined}
      */
@@ -139,9 +141,9 @@
      * @constructor
      * @return {?}
      */
-    odf.FontLoader = function FontLoader() {
+    function FontLoader() {
         /**
-         * @param {!odf.OdfContainer} odfContainer
+         * @param {!OdfContainer} odfContainer
          * @param {!CSSStyleSheet} stylesheet Will be cleaned and filled with rules for the fonts
          * @return {undefined}
          */
@@ -161,5 +163,6 @@
                 loadFontsIntoCSS(embeddedFontDeclarations, odfContainer, stylesheet);
             }
         };
-    };
-}());
+    }
+/**@const*/
+exports.FontLoader = FontLoader;

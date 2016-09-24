@@ -22,13 +22,28 @@
  * @source: https://github.com/kogmbh/WebODF/
  */
 
-/*global ops, runtime, gui, odf, Node, core*/
+/*global Node*/
+
+var runtime = require("../runtime").runtime;
+var OdtDocument = require("./OdtDocument").OdtDocument;
+var op = require("./Operation");
+var OdtCursor = require("./OdtCursor").OdtCursor;
+var OpsDocument = require("./Document").Document;
+var Formatting = require("../odf/Formatting").Formatting;
+var OdfContainer = require("../odf/OdfContainer").OdfContainer;
+var TextStyleApplicator = require("../odf/TextStyleApplicator").TextStyleApplicator;
+var ObjectNameGenerator = require("../odf/ObjectNameGenerator").ObjectNameGenerator;
+var odfUtils = require("../odf/OdfUtils");
+var domUtils = require("../core/DomUtils");
+
+/**@typedef{!Object.<!string,(!string|!Object.<!string,!string>)>}*/
+Formatting.StyleData;
 
 /**
  * @constructor
- * @implements ops.Operation
+ * @implements op.Operation
  */
-ops.OpApplyDirectStyling = function OpApplyDirectStyling() {
+function OpApplyDirectStyling() {
     "use strict";
 
     var memberid, timestamp,
@@ -36,13 +51,11 @@ ops.OpApplyDirectStyling = function OpApplyDirectStyling() {
         position,
         /**@type {number}*/
         length,
-        /**@type{!odf.Formatting.StyleData}*/
-        setProperties,
-        odfUtils = odf.OdfUtils,
-        domUtils = core.DomUtils;
+        /**@type{!Formatting.StyleData}*/
+        setProperties;
 
     /**
-     * @param {!ops.OpApplyDirectStyling.InitSpec} data
+     * @param {!OpApplyDirectStyling.InitSpec} data
      */
     this.init = function (data) {
         memberid = data.memberid;
@@ -58,7 +71,7 @@ ops.OpApplyDirectStyling = function OpApplyDirectStyling() {
     /**
      * Apply the specified style properties to all elements within the given range.
      * Currently, only text styles are applied.
-     * @param {!ops.OdtDocument} odtDocument
+     * @param {!OdtDocument} odtDocument
      * @param {!Range} range Range to apply text style to
      * @param {!Object} info Style information. Only data within "style:text-properties" will be considered and applied
      */
@@ -69,8 +82,8 @@ ops.OpApplyDirectStyling = function OpApplyDirectStyling() {
             textNodes = odfUtils.getTextNodes(range, false),
             textStyles;
 
-        textStyles = new odf.TextStyleApplicator(
-            new odf.ObjectNameGenerator(/**@type{!odf.OdfContainer}*/(odfContainer), memberid), // TODO: use the instance in SessionController
+        textStyles = new TextStyleApplicator(
+            new ObjectNameGenerator(/**@type{!OdfContainer}*/(odfContainer), memberid), // TODO: use the instance in SessionController
             odtDocument.getFormatting(),
             odfContainer.rootElement.automaticStyles
         );
@@ -79,10 +92,10 @@ ops.OpApplyDirectStyling = function OpApplyDirectStyling() {
     }
 
     /**
-     * @param {!ops.Document} document
+     * @param {!OpsDocument} document
      */
     this.execute = function (document) {
-        var odtDocument = /**@type{ops.OdtDocument}*/(document),
+        var odtDocument = /**@type{OdtDocument}*/(document),
             range = odtDocument.convertCursorToDomRange(position, length),
             impactedParagraphs = odfUtils.getParagraphElements(range);
 
@@ -93,7 +106,7 @@ ops.OpApplyDirectStyling = function OpApplyDirectStyling() {
         odtDocument.fixCursorPositions(); // The container splits may leave the cursor in an invalid spot
 
         impactedParagraphs.forEach(function (n) {
-            odtDocument.emit(ops.OdtDocument.signalParagraphChanged, {
+            odtDocument.emit(OdtDocument.signalParagraphChanged, {
                 paragraphElement: n,
                 memberId: memberid,
                 timeStamp: timestamp
@@ -105,7 +118,7 @@ ops.OpApplyDirectStyling = function OpApplyDirectStyling() {
     };
 
     /**
-     * @return {!ops.OpApplyDirectStyling.Spec}
+     * @return {!OpApplyDirectStyling.Spec}
      */
     this.spec = function () {
         return {
@@ -117,21 +130,26 @@ ops.OpApplyDirectStyling = function OpApplyDirectStyling() {
             setProperties: setProperties
         };
     };
-};
-/**@typedef{{
-    optype:string,
-    memberid:string,
-    timestamp:number,
-    position:number,
-    length:number,
-    setProperties:!odf.Formatting.StyleData
-}}*/
-ops.OpApplyDirectStyling.Spec;
-/**@typedef{{
-    memberid:string,
-    timestamp:(number|undefined),
-    position:number,
-    length:number,
-    setProperties:!odf.Formatting.StyleData
-}}*/
-ops.OpApplyDirectStyling.InitSpec;
+}
+
+/**
+ * @record
+ * @extends {op.SpecBase}
+ */
+OpApplyDirectStyling.InitSpec = function() {}
+/**@type{!number}*/
+OpApplyDirectStyling.InitSpec.prototype.position;
+/**@type{!number}*/
+OpApplyDirectStyling.InitSpec.prototype.length;
+/**@type{!Formatting.StyleData}*/
+OpApplyDirectStyling.InitSpec.prototype.setProperties;
+
+/**
+ * @record
+ * @extends {op.TypedOperationSpec}
+ * @extends {OpApplyDirectStyling.InitSpec}
+ */
+OpApplyDirectStyling.Spec = function() {}
+
+/**@const*/
+exports.OpApplyDirectStyling = OpApplyDirectStyling;

@@ -22,18 +22,19 @@
  * @source: https://github.com/kogmbh/WebODF/
  */
 
-/*global runtime, gui, odf */
+var OdfCanvas = require("../odf/OdfCanvas").OdfCanvas;
+var Namespaces = require("../odf/Namespaces").Namespaces;
 
 /**
  * @class
  * @constructor
- * @param {!odf.OdfCanvas} odfCanvas
+ * @param {!OdfCanvas} odfCanvas
  */
-gui.ImageSelector = function ImageSelector(odfCanvas) {
+function ImageSelector(odfCanvas) {
     "use strict";
     var /**@const
            @type {!string}*/
-        svgns = odf.Namespaces.svgns,
+        svgns = Namespaces.svgns,
         /**@const
            @type {!string}*/
         imageSelectorId = "imageSelector",
@@ -137,4 +138,6 @@ gui.ImageSelector = function ImageSelector(odfCanvas) {
         }
         return node === selectorElement || node.parentNode === selectorElement;
     };
-};
+}
+/**@const*/
+exports.ImageSelector = ImageSelector;

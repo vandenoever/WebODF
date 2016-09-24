@@ -22,37 +22,56 @@
  * @source: https://github.com/kogmbh/WebODF/
  */
 
-/*global runtime, core, gui, odf, ops, Node */
+/*global Node */
+
+var runtime = require("../runtime").runtime;
+var WordBoundaryFilter = require("../odf/WordBoundaryFilter").WordBoundaryFilter;
+var ParagraphBoundaryScanner = require("./ParagraphBoundaryScanner").ParagraphBoundaryScanner;
+var LineBoundaryScanner = require("./LineBoundaryScanner").LineBoundaryScanner;
+var ClosestXOffsetScanner = require("./ClosestXOffsetScanner").ClosestXOffsetScanner;
+var OpMoveCursor = require("../ops/OpMoveCursor").OpMoveCursor;
+var OpUpdateMetadata = require("../ops/OpUpdateMetadata").OpUpdateMetadata;
+var Destroyable = require("../core/Destroyable").Destroyable;
+var task = require("../core/Task");
+var async = require("../core/Async");
+var guiStepUtils = require("./GuiStepUtils");
+var OdtCursor = require("../ops/OdtCursor").OdtCursor;
+var domUtils = require("../core/DomUtils");
+var StepDirection = require("../core/enums").StepDirection;
+var OdtDocument = require("../ops/OdtDocument").OdtDocument;
+var odfUtils = require("../odf/OdfUtils");
+var PositionFilter = require("../core/PositionFilter").PositionFilter;
+var Operation = require("../ops/Operation").Operation;
+var StepIterator = require("../core/StepIterator").StepIterator;
+var ScheduledTask = require("../core/ScheduledTask").ScheduledTask;
+var Session = require("../ops/Session").Session;
 
 /**
  * @constructor
- * @implements {core.Destroyable}
- * @param {!ops.Session} session
+ * @implements {Destroyable}
+ * @param {!Session} session
  * @param {!string} inputMemberId
  */
-gui.SelectionController = function SelectionController(session, inputMemberId) {
+function SelectionController(session, inputMemberId) {
     "use strict";
     var odtDocument = session.getOdtDocument(),
-        domUtils = core.DomUtils,
-        odfUtils = odf.OdfUtils,
         baseFilter = odtDocument.getPositionFilter(),
-        guiStepUtils = new gui.GuiStepUtils(),
         rootFilter = odtDocument.createRootFilter(inputMemberId),
         /**@type{?function():(!number|undefined)}*/
         caretXPositionLocator = null,
         /**@type{!number|undefined}*/
         lastXPosition,
-        /**@type{!core.ScheduledTask}*/
+        /**@type{!ScheduledTask}*/
         resetLastXPositionTask,
-        TRAILING_SPACE = odf.WordBoundaryFilter.IncludeWhitespace.TRAILING,
-        LEADING_SPACE = odf.WordBoundaryFilter.IncludeWhitespace.LEADING,
-        PREVIOUS = core.StepDirection.PREVIOUS,
-        NEXT = core.StepDirection.NEXT,
+        TRAILING_SPACE = WordBoundaryFilter.IncludeWhitespace.TRAILING,
+        LEADING_SPACE = WordBoundaryFilter.IncludeWhitespace.LEADING,
+        PREVIOUS = StepDirection.PREVIOUS,
+        NEXT = StepDirection.NEXT,
         // Number of milliseconds to keep the user's last up/down caret X position for
         /**@const*/ UPDOWN_NAVIGATION_RESET_DELAY_MS = 2000;
 
     /**
-     * @param {!ops.Operation} op
+     * @param {!Operation} op
      * @return undefined;
      */
     function resetLastXPosition(op) {
@@ -66,7 +85,7 @@ gui.SelectionController = function SelectionController(session, inputMemberId) {
     /**
      * Create a new step iterator with the base Odt filter, and a root filter for the current input member.
      * The step iterator subtree is set to the root of the current cursor node
-     * @return {!core.StepIterator}
+     * @return {!StepIterator}
      */
     function createKeyboardStepIterator() {
         var cursor = odtDocument.getCursor(inputMemberId),
@@ -79,11 +98,11 @@ gui.SelectionController = function SelectionController(session, inputMemberId) {
      * Create a new step iterator that will iterate by word boundaries
      * @param {!Node} node
      * @param {!number} offset
-     * @param {!odf.WordBoundaryFilter.IncludeWhitespace} includeWhitespace
-     * @return {!core.StepIterator}
+     * @param {!WordBoundaryFilter.IncludeWhitespace} includeWhitespace
+     * @return {!StepIterator}
      */
     function createWordBoundaryStepIterator(node, offset, includeWhitespace) {
-        var wordBoundaryFilter = new odf.WordBoundaryFilter(odtDocument, includeWhitespace),
+        var wordBoundaryFilter = new WordBoundaryFilter(odtDocument, includeWhitespace),
             nodeRoot = odtDocument.getRootElement(node) || odtDocument.getRootNode(),
             nodeRootFilter = odtDocument.createRootFilter(nodeRoot);
         return odtDocument.createStepIterator(node, offset, [baseFilter, nodeRootFilter, wordBoundaryFilter], nodeRoot);
@@ -140,10 +159,10 @@ gui.SelectionController = function SelectionController(session, inputMemberId) {
      * @param {!number} position
      * @param {!number} length
      * @param {string=} selectionType
-     * @return {!ops.Operation}
+     * @return {!Operation}
      */
     function createOpMoveCursor(position, length, selectionType) {
-        var op = new ops.OpMoveCursor();
+        var op = new OpMoveCursor();
         op.init({
             memberid: inputMemberId,
             position: position,
@@ -209,7 +228,7 @@ gui.SelectionController = function SelectionController(session, inputMemberId) {
             focusNode: stepIterator.container(),
             focusOffset: stepIterator.offset()
         });
-        op = createOpMoveCursor(newSelection.position, newSelection.length, ops.OdtCursor.RegionSelection);
+        op = createOpMoveCursor(newSelection.position, newSelection.length, OdtCursor.RegionSelection);
         session.enqueue([op]);
     }
     this.selectImage = selectImage;
@@ -266,7 +285,7 @@ gui.SelectionController = function SelectionController(session, inputMemberId) {
      * This function will assert if no valid step is found within the supplied root.
      *
      * @param {!Node} root Root to contain iteration within
-     * @param {!Array.<!core.PositionFilter>} filters Position filters
+     * @param {!Array.<!PositionFilter>} filters Position filters
      * @param {!Range} range Range to modify
      * @param {!boolean} modifyStart Set to true to modify the start container & offset. If false, the end
      * container and offset will be modified instead.
@@ -361,14 +380,14 @@ gui.SelectionController = function SelectionController(session, inputMemberId) {
         newSelection = odtDocument.convertDomToCursorRange(validSelection);
         existingSelection = odtDocument.getCursorSelection(inputMemberId);
         if (newSelection.position !== existingSelection.position || newSelection.length !== existingSelection.length) {
-            op = createOpMoveCursor(newSelection.position, newSelection.length, ops.OdtCursor.RangeSelection);
+            op = createOpMoveCursor(newSelection.position, newSelection.length, OdtCursor.RangeSelection);
             session.enqueue([op]);
         }
     }
     this.selectRange = selectRange;
 
     /**
-     * @param {!core.StepDirection} direction
+     * @param {!StepDirection} direction
      * @param {!boolean} extend
      * @return {undefined}
      */
@@ -428,14 +447,14 @@ gui.SelectionController = function SelectionController(session, inputMemberId) {
     };
 
     /**
-     * @param {!core.StepDirection} direction PREVIOUS for upwards NEXT for downwards
+     * @param {!StepDirection} direction PREVIOUS for upwards NEXT for downwards
      * @param {!boolean} extend
      * @return {undefined}
      */
     function moveCursorByLine(direction, extend) {
         var stepIterator,
             currentX = lastXPosition,
-            stepScanners = [new gui.LineBoundaryScanner(), new gui.ParagraphBoundaryScanner()];
+            stepScanners = [new LineBoundaryScanner(), new ParagraphBoundaryScanner()];
 
         // Both a line boundary AND a paragraph boundary scanner are necessary to ensure the caret stops correctly
         // inside an empty paragraph.
@@ -468,8 +487,8 @@ gui.SelectionController = function SelectionController(session, inputMemberId) {
             return;
         }
 
-        stepScanners = [new gui.ClosestXOffsetScanner(/**@type{!number}*/(currentX)),
-                        new gui.LineBoundaryScanner(), new gui.ParagraphBoundaryScanner()];
+        stepScanners = [new ClosestXOffsetScanner(/**@type{!number}*/(currentX)),
+                        new LineBoundaryScanner(), new ParagraphBoundaryScanner()];
         // Finally, move to the closest point to the desired X offset within the current line
         if (guiStepUtils.moveToFilteredStep(stepIterator, direction, stepScanners)) {
             moveCursorFocusPoint(stepIterator.container(), stepIterator.offset(), extend);
@@ -515,13 +534,13 @@ gui.SelectionController = function SelectionController(session, inputMemberId) {
     this.extendSelectionDown = extendSelectionDown;
 
     /**
-     * @param {!core.StepDirection} direction
+     * @param {!StepDirection} direction
      * @param {!boolean} extend
      * @return {undefined}
      */
     function moveCursorToLineBoundary(direction, extend) {
         var stepIterator = createKeyboardStepIterator(),
-            stepScanners = [new gui.LineBoundaryScanner(), new gui.ParagraphBoundaryScanner()];
+            stepScanners = [new LineBoundaryScanner(), new ParagraphBoundaryScanner()];
 
         // Both a line boundary AND a paragraph boundary scanner are necessary to ensure the caret stops correctly
         // inside an empty paragraph.
@@ -536,7 +555,7 @@ gui.SelectionController = function SelectionController(session, inputMemberId) {
     }
 
     /**
-     * @param {!core.StepDirection} direction
+     * @param {!StepDirection} direction
      * @param {!boolean} extend whether extend the selection instead of moving the cursor
      * @return {undefined}
      */
@@ -623,7 +642,7 @@ gui.SelectionController = function SelectionController(session, inputMemberId) {
     this.extendSelectionToLineEnd = extendSelectionToLineEnd;
 
     /**
-     * @param {!core.StepDirection} direction
+     * @param {!StepDirection} direction
      * @param {!boolean} extend True to extend the selection
      * @param {!function(!Node):Node} getContainmentNode Returns a node container for the supplied node.
      *  Usually this will be something like the parent paragraph or root the supplied node is within
@@ -764,15 +783,17 @@ gui.SelectionController = function SelectionController(session, inputMemberId) {
      * @return {undefined}
      */
     this.destroy = function (callback) {
-        odtDocument.unsubscribe(ops.OdtDocument.signalOperationStart, resetLastXPosition);
-        core.Async.destroyAll([resetLastXPositionTask.destroy], callback);
+        odtDocument.unsubscribe(OdtDocument.signalOperationStart, resetLastXPosition);
+        async.destroyAll([resetLastXPositionTask.destroy], callback);
     };
 
     function init() {
-        resetLastXPositionTask = core.Task.createTimeoutTask(function() {
+        resetLastXPositionTask = task.createTimeoutTask(function() {
             lastXPosition = undefined;
         }, UPDOWN_NAVIGATION_RESET_DELAY_MS);
-        odtDocument.subscribe(ops.OdtDocument.signalOperationStart, resetLastXPosition);
+        odtDocument.subscribe(OdtDocument.signalOperationStart, resetLastXPosition);
     }
     init();
-};
+}
+/**@const*/
+exports.SelectionController = SelectionController;

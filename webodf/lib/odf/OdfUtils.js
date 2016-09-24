@@ -22,42 +22,39 @@
  * @source: https://github.com/kogmbh/WebODF/
  */
 
-/*global Node, runtime, odf, NodeFilter, core*/
+/*global Node, NodeFilter*/
 
-/**
- * @constructor
- */
-odf.OdfUtilsImpl = function OdfUtilsImpl() {
-    "use strict";
+"use strict";
+var odfSchema = require("./OdfSchema");
+var Namespaces = require("./Namespaces").Namespaces;
+var domUtils = require("../core/DomUtils");
 
     var /**@const
            @type{!string}*/
-        textns = odf.Namespaces.textns,
+        textns = Namespaces.textns,
         /**@const
            @type{!string}*/
-        drawns = odf.Namespaces.drawns,
+        drawns = Namespaces.drawns,
         /**@const
            @type{!string}*/
-        xlinkns = odf.Namespaces.xlinkns,
-        domUtils = core.DomUtils,
+        xlinkns = Namespaces.xlinkns,
         // only add odf element namespaces here.
         // Namespaces solely used for attributes are excluded. eg. fo, xlink & xml
         odfNodeNamespaceMap = [
-            odf.Namespaces.dbns,
-            odf.Namespaces.dcns,
-            odf.Namespaces.dr3dns,
-            odf.Namespaces.drawns,
-            odf.Namespaces.chartns,
-            odf.Namespaces.formns,
-            odf.Namespaces.numberns,
-            odf.Namespaces.officens,
-            odf.Namespaces.presentationns,
-            odf.Namespaces.stylens,
-            odf.Namespaces.svgns,
-            odf.Namespaces.tablens,
-            odf.Namespaces.textns
-        ],
-        odfSchema = odf.OdfSchema;
+            Namespaces.dbns,
+            Namespaces.dcns,
+            Namespaces.dr3dns,
+            Namespaces.drawns,
+            Namespaces.chartns,
+            Namespaces.formns,
+            Namespaces.numberns,
+            Namespaces.officens,
+            Namespaces.presentationns,
+            Namespaces.stylens,
+            Namespaces.svgns,
+            Namespaces.tablens,
+            Namespaces.textns
+        ];
 
     /**
      * Determine if the node is a draw:image element.
@@ -68,7 +65,7 @@ odf.OdfUtilsImpl = function OdfUtilsImpl() {
         var name = e && e.localName;
         return name === "image" && e.namespaceURI === drawns;
     }
-    this.isImage = isImage;
+exports.isImage = isImage;
 
     /**
      * Determine if the node is a draw:frame element and has its text:anchor-type attribute set to 'as-char'.
@@ -82,7 +79,7 @@ odf.OdfUtilsImpl = function OdfUtilsImpl() {
             && /**@type{!Element}*/(e).getAttributeNS(textns, "anchor-type")
                 === "as-char";
     }
-    this.isCharacterFrame = isCharacterFrame;
+exports.isCharacterFrame = isCharacterFrame;
 
     /**
      * Determine if the node is an office:annotation element.
@@ -91,7 +88,7 @@ odf.OdfUtilsImpl = function OdfUtilsImpl() {
      */
     function isAnnotation(e) {
         var name = e && e.localName;
-        return name === "annotation" && e.namespaceURI === odf.Namespaces.officens;
+        return name === "annotation" && e.namespaceURI === Namespaces.officens;
     }
 
     /**
@@ -114,14 +111,14 @@ odf.OdfUtilsImpl = function OdfUtilsImpl() {
         return isAnnotation(e)
             || isAnnotationWrapper(e);
     }
-    this.isInlineRoot = isInlineRoot;
+exports.isInlineRoot = isInlineRoot;
 
     /**
      * Determine if the node is a text:span element.
      * @param {?Node} e
      * @return {!boolean}
      */
-    this.isTextSpan = function (e) {
+exports.isTextSpan = function (e) {
         var name = e && e.localName;
         return name === "span" && e.namespaceURI === textns;
     };
@@ -135,14 +132,14 @@ odf.OdfUtilsImpl = function OdfUtilsImpl() {
         var name = node && node.localName;
         return name === "a" && node.namespaceURI === textns;
     }
-    this.isHyperlink = isHyperlink;
+exports.isHyperlink = isHyperlink;
 
     /**
      * Gets the href attribute of text:a element
      * @param {!Element} element
      * @return {!string}
      */
-    this.getHyperlinkTarget = function (element) {
+exports.getHyperlinkTarget = function (element) {
         return element.getAttributeNS(xlinkns, 'href') || "";
     };
 
@@ -155,7 +152,7 @@ odf.OdfUtilsImpl = function OdfUtilsImpl() {
         var name = e && e.localName;
         return (name === "p" || name === "h") && e.namespaceURI === textns;
     }
-    this.isParagraph = isParagraph;
+exports.isParagraph = isParagraph;
 
     /**
      * Find the paragraph containing the specified node. If an offset is provided and
@@ -174,7 +171,7 @@ odf.OdfUtilsImpl = function OdfUtilsImpl() {
         }
         return /**@type{?Element}*/(node);
     }
-    this.getParagraphElement = getParagraphElement;
+exports.getParagraphElement = getParagraphElement;
 
     /**
      * @param {?Node} node  Node to start searching with
@@ -183,21 +180,21 @@ odf.OdfUtilsImpl = function OdfUtilsImpl() {
      */
     function getParentAnnotation(node, container) {
          while (node && node !== container) {
-            if (node.namespaceURI === odf.Namespaces.officens && node.localName === 'annotation') {
+            if (node.namespaceURI === Namespaces.officens && node.localName === 'annotation') {
                 return /**@type{!Element}*/(node);
             }
             node = node.parentNode;
         }
         return null;
     }
-    this.getParentAnnotation = getParentAnnotation;
+exports.getParentAnnotation = getParentAnnotation;
 
     /**
      * @param {?Node} node  Node to start searching with
      * @param {!Element} container  Root container to stop searching at.
      * @return {!boolean}
      */
-    this.isWithinAnnotation = function (node, container) {
+exports.isWithinAnnotation = function (node, container) {
         return Boolean(getParentAnnotation(node, container));
     };
 
@@ -206,8 +203,8 @@ odf.OdfUtilsImpl = function OdfUtilsImpl() {
      * @param {!Element} annotationElement
      * @return {!string}
      */
-    this.getAnnotationCreator = function (annotationElement) {
-        var creatorElement = /**@type{!Element}*/(annotationElement.getElementsByTagNameNS(odf.Namespaces.dcns, "creator")[0]);
+exports.getAnnotationCreator = function (annotationElement) {
+        var creatorElement = /**@type{!Element}*/(annotationElement.getElementsByTagNameNS(Namespaces.dcns, "creator")[0]);
         return creatorElement.textContent;
     };
 
@@ -216,7 +213,7 @@ odf.OdfUtilsImpl = function OdfUtilsImpl() {
      * @param {?Node} e
      * @return {!boolean}
      */
-    this.isListItem = function (e) {
+exports.isListItem = function (e) {
         var name = e && e.localName;
         return name === "list-item" && e.namespaceURI === textns;
     };
@@ -226,7 +223,7 @@ odf.OdfUtilsImpl = function OdfUtilsImpl() {
      * @param {?Node} e
      * @return {!boolean}
      */
-    this.isLineBreak = function (e) {
+exports.isLineBreak = function (e) {
         var name = e && e.localName;
         return name === "line-break" && e.namespaceURI === textns;
     };
@@ -240,7 +237,7 @@ odf.OdfUtilsImpl = function OdfUtilsImpl() {
     function isODFWhitespace(text) {
         return (/^[ \t\r\n]+$/).test(text);
     }
-    this.isODFWhitespace = isODFWhitespace;
+exports.isODFWhitespace = isODFWhitespace;
 
     /**
      * Determine if the node is a grouping element.
@@ -256,7 +253,7 @@ odf.OdfUtilsImpl = function OdfUtilsImpl() {
         return odfSchema.isTextContainer(e.namespaceURI, localName)
                || (localName === "span" && e.className === "webodf-annotationHighlight");
     }
-    this.isGroupingElement = isGroupingElement;
+exports.isGroupingElement = isGroupingElement;
 
     /**
      * @param {?Node} n
@@ -270,7 +267,7 @@ odf.OdfUtilsImpl = function OdfUtilsImpl() {
             localName = e.localName;
         return odfSchema.isField(e.namespaceURI, localName);
     }
-    this.isFieldElement = isFieldElement;
+exports.isFieldElement = isFieldElement;
 
     /**
      * Determine if the node is a character element,
@@ -290,7 +287,7 @@ odf.OdfUtilsImpl = function OdfUtilsImpl() {
         }
         return r;
     }
-    this.isCharacterElement = isCharacterElement;
+exports.isCharacterElement = isCharacterElement;
     /**
      * Determine if the node is an 'as char' type of element,
      * i.e. any element which behaves like a character with
@@ -304,7 +301,7 @@ odf.OdfUtilsImpl = function OdfUtilsImpl() {
     function isAnchoredAsCharacterElement(e) {
         return isCharacterElement(e) || isFieldElement(e) || isCharacterFrame(e) || isInlineRoot(e);
     }
-    this.isAnchoredAsCharacterElement = isAnchoredAsCharacterElement;
+exports.isAnchoredAsCharacterElement = isAnchoredAsCharacterElement;
     /**
      * Determine if the node is a <text:s/> character element.
      * @param {?Node} e
@@ -322,7 +319,7 @@ odf.OdfUtilsImpl = function OdfUtilsImpl() {
         }
         return r;
     }
-    this.isSpaceElement = isSpaceElement;
+exports.isSpaceElement = isSpaceElement;
 
     /**
      * Returns true if the given node is an odf node
@@ -332,7 +329,7 @@ odf.OdfUtilsImpl = function OdfUtilsImpl() {
     function isODFNode(node) {
         return odfNodeNamespaceMap.indexOf(node.namespaceURI) !== -1;
     }
-    this.isODFNode = isODFNode;
+exports.isODFNode = isODFNode;
 
     /**
      * Returns true if the supplied node contains no text-in-ODF, or ODF elements
@@ -356,7 +353,7 @@ odf.OdfUtilsImpl = function OdfUtilsImpl() {
         }
         return true;
     }
-    this.hasNoODFContent= hasNoODFContent;
+exports.hasNoODFContent= hasNoODFContent;
 
     /**
      * @param {!Node} node
@@ -368,7 +365,7 @@ odf.OdfUtilsImpl = function OdfUtilsImpl() {
         }
         return node;
     }
-    this.firstChild = firstChild;
+exports.firstChild = firstChild;
     /**
      * @param {!Node} node
      * @return {!Node}
@@ -379,7 +376,7 @@ odf.OdfUtilsImpl = function OdfUtilsImpl() {
         }
         return node;
     }
-    this.lastChild = lastChild;
+exports.lastChild = lastChild;
     /**
      * @param {!Node} node
      * @return {?Node}
@@ -390,7 +387,7 @@ odf.OdfUtilsImpl = function OdfUtilsImpl() {
         }
         return isParagraph(node) ? null : lastChild(/**@type{!Node}*/(node.previousSibling));
     }
-    this.previousNode = previousNode;
+exports.previousNode = previousNode;
     /**
      * @param {!Node} node
      * @return {?Node}
@@ -401,7 +398,7 @@ odf.OdfUtilsImpl = function OdfUtilsImpl() {
         }
         return isParagraph(node) ? null : firstChild(/**@type{!Node}*/(node.nextSibling));
     }
-    this.nextNode = nextNode;
+exports.nextNode = nextNode;
 
     /**
      * Walk to the left along the DOM and return true if the first thing
@@ -433,7 +430,7 @@ odf.OdfUtilsImpl = function OdfUtilsImpl() {
         }
         return r;
     }
-    this.scanLeftForNonSpace = scanLeftForNonSpace;
+exports.scanLeftForNonSpace = scanLeftForNonSpace;
     /**
      * Walk to the left along the DOM and return the type of the first
      * thing encountered.
@@ -464,7 +461,7 @@ odf.OdfUtilsImpl = function OdfUtilsImpl() {
         }
         return r;
     }
-    this.lookLeftForCharacter = lookLeftForCharacter;
+exports.lookLeftForCharacter = lookLeftForCharacter;
     /**
      * Look to the right along the DOM and return true if the first thing
      * encountered is either a non-whitespace character or a character
@@ -486,7 +483,7 @@ odf.OdfUtilsImpl = function OdfUtilsImpl() {
         }
         return r;
     }
-    this.lookRightForCharacter = lookRightForCharacter;
+exports.lookRightForCharacter = lookRightForCharacter;
     /**
      * Walk to the left along the DOM and return true if either a
      * non-whitespace character or a character element is encountered.
@@ -515,7 +512,7 @@ odf.OdfUtilsImpl = function OdfUtilsImpl() {
         }
         return r;
     }
-    this.scanLeftForAnyCharacter = scanLeftForAnyCharacter;
+exports.scanLeftForAnyCharacter = scanLeftForAnyCharacter;
     /**
      * Walk to the right along the DOM and return true if either a
      * non-whitespace character or a character element is encountered.
@@ -544,7 +541,7 @@ odf.OdfUtilsImpl = function OdfUtilsImpl() {
         }
         return r;
     }
-    this.scanRightForAnyCharacter = scanRightForAnyCharacter;
+exports.scanRightForAnyCharacter = scanRightForAnyCharacter;
 
     /**
      * check if the node is part of the trailing whitespace
@@ -558,7 +555,7 @@ odf.OdfUtilsImpl = function OdfUtilsImpl() {
         }
         return !scanRightForAnyCharacter(nextNode(textnode));
     }
-    this.isTrailingWhitespace = isTrailingWhitespace;
+exports.isTrailingWhitespace = isTrailingWhitespace;
 
     /**
      * Takes a textNode and an offset, and returns true if the character
@@ -605,7 +602,7 @@ odf.OdfUtilsImpl = function OdfUtilsImpl() {
         }
         return false;
     }
-    this.isSignificantWhitespace = isSignificantWhitespace;
+exports.isSignificantWhitespace = isSignificantWhitespace;
 
     /**
      * Returns true if the supplied node is a downgradeable space element.
@@ -615,7 +612,7 @@ odf.OdfUtilsImpl = function OdfUtilsImpl() {
      * @param {!Node} node
      * @return {!boolean}
      */
-    this.isDowngradableSpaceElement = function(node) {
+exports.isDowngradableSpaceElement = function(node) {
         if (isSpaceElement(node)) {
             return scanLeftForNonSpace(previousNode(node)) && scanRightForAnyCharacter(nextNode(node));
         }
@@ -635,7 +632,7 @@ odf.OdfUtilsImpl = function OdfUtilsImpl() {
         }
         return {value: parseFloat(m[1]), unit: m[3]};
     }
-    this.parseLength = parseLength;
+exports.parseLength = parseLength;
 
     /**
      * Returns the value and unit of the length, if it is positive ( > 0)
@@ -662,7 +659,7 @@ odf.OdfUtilsImpl = function OdfUtilsImpl() {
         }
         return result;
     }
-    this.parseNonNegativeLength = parseNonNegativeLength;
+exports.parseNonNegativeLength = parseNonNegativeLength;
 
     /**
      * Returns the value and unit(%) of the length, if it is specified in %age
@@ -686,7 +683,7 @@ odf.OdfUtilsImpl = function OdfUtilsImpl() {
     function parseFoFontSize(fontSize) {
         return parsePositiveLength(fontSize) || parsePercentage(fontSize);
     }
-    this.parseFoFontSize = parseFoFontSize;
+exports.parseFoFontSize = parseFoFontSize;
 
     /**
      * Returns the value and unit of the line height, in conformance with fo:line-height
@@ -697,7 +694,7 @@ odf.OdfUtilsImpl = function OdfUtilsImpl() {
     function parseFoLineHeight(lineHeight) {
         return parseNonNegativeLength(lineHeight) || parsePercentage(lineHeight);
     }
-    this.parseFoLineHeight = parseFoLineHeight;
+exports.parseFoLineHeight = parseFoLineHeight;
 
     /**
      * Adapted from instructions on how to generate plain text from an ODT document.
@@ -708,11 +705,11 @@ odf.OdfUtilsImpl = function OdfUtilsImpl() {
     function isTextContentContainingNode(node) {
         switch (node.namespaceURI) {
             // Namespace skips
-        case odf.Namespaces.drawns:
-        case odf.Namespaces.svgns:
-        case odf.Namespaces.dr3dns:
+        case Namespaces.drawns:
+        case Namespaces.svgns:
+        case Namespaces.dr3dns:
             return false;
-        case odf.Namespaces.textns:
+        case Namespaces.textns:
             // Specific node type skips
             //noinspection FallthroughInSwitchStatementJS
             switch (node.localName) {
@@ -721,7 +718,7 @@ odf.OdfUtilsImpl = function OdfUtilsImpl() {
                 return false;
             }
             break;
-        case odf.Namespaces.officens:
+        case Namespaces.officens:
             // Specific node type skips
             //noinspection FallthroughInSwitchStatementJS
             switch (node.localName) {
@@ -742,7 +739,7 @@ odf.OdfUtilsImpl = function OdfUtilsImpl() {
         }
         return true;
     }
-    this.isTextContentContainingNode = isTextContentContainingNode;
+exports.isTextContentContainingNode = isTextContentContainingNode;
 
     /**
      * Returns true if the text node is within a paragraph and contains either non-whitespace characters, or
@@ -809,7 +806,7 @@ odf.OdfUtilsImpl = function OdfUtilsImpl() {
 
         return textNodes;
     }
-    this.getTextNodes = getTextNodes;
+exports.getTextNodes = getTextNodes;
 
     /**
      * Get all character elements and text nodes fully contained within the
@@ -867,7 +864,7 @@ odf.OdfUtilsImpl = function OdfUtilsImpl() {
 
         return elements;
     }
-    this.getTextElements = getTextElements;
+exports.getTextElements = getTextElements;
 
     /**
      * Crawl parent nodes starting at the startContainer until a matching node is found,
@@ -907,7 +904,7 @@ odf.OdfUtilsImpl = function OdfUtilsImpl() {
      * @param {!Range} range
      * @return {!Array.<!Element>}
      */
-    this.getParagraphElements = function (range) {
+exports.getParagraphElements = function (range) {
         var elements;
         /**
          * @param {!Node} node
@@ -941,7 +938,7 @@ odf.OdfUtilsImpl = function OdfUtilsImpl() {
      * @param {!Range} range
      * @return {!Array.<Node>}
      */
-    this.getImageElements = function (range) {
+exports.getImageElements = function (range) {
         var elements;
 
         /**
@@ -995,7 +992,7 @@ odf.OdfUtilsImpl = function OdfUtilsImpl() {
      * @param {!Range} range
      * @return {!Array.<Node>}
      */
-    this.getHyperlinkElements = function (range) {
+exports.getHyperlinkElements = function (range) {
         var links = [],
             newRange = /** @type {!Range}*/(range.cloneRange()),
             node,
@@ -1031,7 +1028,7 @@ odf.OdfUtilsImpl = function OdfUtilsImpl() {
      * @return {!string}
      */
     /*jslint regexp: true*/
-    this.getNormalizedFontFamilyName = function(fontFamilyName) {
+exports.getNormalizedFontFamilyName = function(fontFamilyName) {
         // not quoted with either single- or double-quotes?
         // (\n & \r are syntactically okay as whitespaces, so need to be accepted as well)
         //     ^(["'])        -> match either " or ' at begin (and store match)
@@ -1054,9 +1051,3 @@ odf.OdfUtilsImpl = function OdfUtilsImpl() {
         return fontFamilyName;
     };
     /*jslint regexp: false*/
-};
-
-/**
- * @type {!odf.OdfUtilsImpl}
- */
-odf.OdfUtils = new odf.OdfUtilsImpl();

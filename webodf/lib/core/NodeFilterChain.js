@@ -22,14 +22,14 @@
  * @source: https://github.com/kogmbh/WebODF/
  */
 
-/*global core, NodeFilter*/
+/*global NodeFilter*/
 
 /**
  * @constructor
  * @implements NodeFilter
  * @param {!Array.<!NodeFilter>} filters
  */
-core.NodeFilterChain = function (filters) {
+function NodeFilterChain(filters) {
     "use strict";
     var FILTER_REJECT = NodeFilter.FILTER_REJECT,
         FILTER_ACCEPT = NodeFilter.FILTER_ACCEPT;
@@ -47,4 +47,6 @@ core.NodeFilterChain = function (filters) {
         }
         return FILTER_ACCEPT;
     };
-};
+}
+/**@const*/
+exports.NodeFilterChain = NodeFilterChain;

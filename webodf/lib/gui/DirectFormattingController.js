@@ -22,20 +22,44 @@
  * @source: https://github.com/kogmbh/WebODF/
  */
 
-/*global core, ops, odf, gui, runtime*/
+var runtime = require("../runtime").runtime;
+var Namespaces = require("../odf/Namespaces").Namespaces;
+var LazyProperty = require("../core/LazyProperty").LazyProperty;
+var Destroyable = require("../core/Destroyable").Destroyable;
+var Session = require("../ops/Session").Session;
+var SessionConstraints = require("./SessionConstraints").SessionConstraints;
+var SessionContext = require("./SessionContext").SessionContext;
+var ObjectNameGenerator = require("../odf/ObjectNameGenerator").ObjectNameGenerator;
+var EventNotifier = require("../core/EventNotifier").EventNotifier;
+var OpAddStyle = require("../ops/OpAddStyle").OpAddStyle;
+var OpSetParagraphStyle = require("../ops/OpSetParagraphStyle").OpSetParagraphStyle;
+var OpApplyDirectStyling = require("../ops/OpApplyDirectStyling").OpApplyDirectStyling;
+var StyleSummary = require("./StyleSummary").StyleSummary;
+var OdtDocument = require("../ops/OdtDocument").OdtDocument;
+var OpsDocument = require("../ops/Document").Document;
+var OdtCursor = require("../ops/OdtCursor").OdtCursor;
+var CommonConstraints = require("./CommonConstraints").CommonConstraints;
+var odfUtils = require("../odf/OdfUtils");
+var StepDirection = require("../core/enums").StepDirection;
+var utils = require("../core/Utils");
+var Operation = require("../ops/Operation").Operation;
+var Formatting = require("../odf/Formatting").Formatting;
+
+/**@typedef{!Object.<!string,(!string|!Object.<!string,!string>)>}*/
+Formatting.StyleData;
 
 /**
  * @constructor
- * @implements {core.Destroyable}
- * @param {!ops.Session} session
- * @param {!gui.SessionConstraints} sessionConstraints
- * @param {!gui.SessionContext} sessionContext
+ * @implements {Destroyable}
+ * @param {!Session} session
+ * @param {!SessionConstraints} sessionConstraints
+ * @param {!SessionContext} sessionContext
  * @param {!string} inputMemberId
- * @param {!odf.ObjectNameGenerator} objectNameGenerator
+ * @param {!ObjectNameGenerator} objectNameGenerator
  * @param {!boolean} directTextStylingEnabled
  * @param {!boolean} directParagraphStylingEnabled
  */
-gui.DirectFormattingController = function DirectFormattingController(
+function DirectFormattingController(
     session,
     sessionConstraints,
     sessionContext,
@@ -48,28 +72,26 @@ gui.DirectFormattingController = function DirectFormattingController(
 
     var self = this,
         odtDocument = session.getOdtDocument(),
-        utils = new core.Utils(),
-        odfUtils = odf.OdfUtils,
-        eventNotifier = new core.EventNotifier([
-            gui.DirectFormattingController.enabledChanged,
-            gui.DirectFormattingController.textStylingChanged,
-            gui.DirectFormattingController.paragraphStylingChanged
+        eventNotifier = new EventNotifier([
+            DirectFormattingController.enabledChanged,
+            DirectFormattingController.textStylingChanged,
+            DirectFormattingController.paragraphStylingChanged
         ]),
         /**@const*/
-        textns = odf.Namespaces.textns,
+        textns = Namespaces.textns,
         /**@const*/
-        NEXT = core.StepDirection.NEXT,
-        /**@type{?odf.Formatting.StyleData}*/
+        NEXT = StepDirection.NEXT,
+        /**@type{?Formatting.StyleData}*/
         directCursorStyleProperties = null,
         // cached text settings
-        /**@type{!gui.DirectFormattingController.SelectionInfo}*/
+        /**@type{!DirectFormattingController.SelectionInfo}*/
         lastSignalledSelectionInfo,
-        /**@type {!core.LazyProperty.<!gui.DirectFormattingController.SelectionInfo>} */
+        /**@type {!LazyProperty.<!DirectFormattingController.SelectionInfo>} */
         selectionInfoCache;
 
     /**
      * Gets the current selection information style summary
-     * @return {!gui.StyleSummary}
+     * @return {!StyleSummary}
      */
     function getCachedStyleSummary() {
         return selectionInfoCache.value().styleSummary;
@@ -114,13 +136,13 @@ gui.DirectFormattingController = function DirectFormattingController(
     /**
      * Get all styles currently applied to the selected range. If the range is collapsed,
      * this will return the style the next inserted character will have
-     * @return {!gui.DirectFormattingController.SelectionInfo}
+     * @return {!DirectFormattingController.SelectionInfo}
      */
     function getSelectionInfo() {
         var cursor = odtDocument.getCursor(inputMemberId),
             range = cursor && cursor.getSelectedRange(),
             nodes = [],
-            /**@type{!Array.<!odf.Formatting.AppliedStyle>}*/
+            /**@type{!Array.<!Formatting.AppliedStyle>}*/
             selectionStyles = [],
             selectionContainsText = true,
             enabledFeatures = {
@@ -143,20 +165,20 @@ gui.DirectFormattingController = function DirectFormattingController(
                                                                     directCursorStyleProperties);
         }
 
-        if (sessionConstraints.getState(gui.CommonConstraints.EDIT.REVIEW_MODE) === true) {
+        if (sessionConstraints.getState(CommonConstraints.EDIT.REVIEW_MODE) === true) {
             enabledFeatures.directTextStyling = enabledFeatures.directParagraphStyling = /**@type{!boolean}*/(sessionContext.isLocalCursorWithinOwnAnnotation());
         }
 
         if (enabledFeatures.directTextStyling) {
             enabledFeatures.directTextStyling = selectionContainsText
                                                 && cursor !== undefined // cursor might not be registered
-                                                && cursor.getSelectionType() === ops.OdtCursor.RangeSelection;
+                                                && cursor.getSelectionType() === OdtCursor.RangeSelection;
         }
 
-        return /**@type{!gui.DirectFormattingController.SelectionInfo}*/({
+        return /**@type{!DirectFormattingController.SelectionInfo}*/({
             enabledFeatures: enabledFeatures,
             appliedStyles: selectionStyles,
-            styleSummary: new gui.StyleSummary(selectionStyles)
+            styleSummary: new StyleSummary(selectionStyles)
         });
     }
 
@@ -202,15 +224,15 @@ gui.DirectFormattingController = function DirectFormattingController(
         lastSignalledSelectionInfo = newSelectionInfo;
 
         if (enabledFeaturesChanged) {
-            eventNotifier.emit(gui.DirectFormattingController.enabledChanged, newEnabledFeatures);
+            eventNotifier.emit(DirectFormattingController.enabledChanged, newEnabledFeatures);
         }
 
         if (Object.keys(textStyleDiff).length > 0) {
-            eventNotifier.emit(gui.DirectFormattingController.textStylingChanged, textStyleDiff);
+            eventNotifier.emit(DirectFormattingController.textStylingChanged, textStyleDiff);
         }
 
         if (Object.keys(paragraphStyleDiff).length > 0) {
-            eventNotifier.emit(gui.DirectFormattingController.paragraphStylingChanged, paragraphStyleDiff);
+            eventNotifier.emit(DirectFormattingController.paragraphStylingChanged, paragraphStyleDiff);
         }
     }
 
@@ -224,7 +246,7 @@ gui.DirectFormattingController = function DirectFormattingController(
     }
 
     /**
-     * @param {!ops.OdtCursor|!string} cursorOrId
+     * @param {!OdtCursor|!string} cursorOrId
      * @return {undefined}
      */
     function onCursorEvent(cursorOrId) {
@@ -269,7 +291,7 @@ gui.DirectFormattingController = function DirectFormattingController(
     /**
      * Apply the supplied text properties to the current range. If no range is selected,
      * this styling will be applied to the next character entered.
-     * @param {!odf.Formatting.StyleData} textProperties
+     * @param {!Formatting.StyleData} textProperties
      * @return {undefined}
      */
     function formatTextSelection(textProperties) {
@@ -282,7 +304,7 @@ gui.DirectFormattingController = function DirectFormattingController(
             properties = {'style:text-properties' : textProperties};
 
         if (selection.length !== 0) {
-            op = new ops.OpApplyDirectStyling();
+            op = new OpApplyDirectStyling();
             op.init({
                 memberid: inputMemberId,
                 position: selection.position,
@@ -316,13 +338,13 @@ gui.DirectFormattingController = function DirectFormattingController(
      * @param {!number} position
      * @param {!number} length
      * @param {!boolean} useCachedStyle
-     * @return {ops.Operation}
+     * @return {Operation}
      */
     this.createCursorStyleOp = function (position, length, useCachedStyle) {
         var styleOp = null,
-            /**@type{!odf.Formatting.AppliedStyle|undefined}*/
+            /**@type{!Formatting.AppliedStyle|undefined}*/
             appliedStyles,
-            /**@type{?odf.Formatting.StyleData|undefined}*/
+            /**@type{?Formatting.StyleData|undefined}*/
             properties = directCursorStyleProperties;
 
         if (useCachedStyle) {
@@ -331,7 +353,7 @@ gui.DirectFormattingController = function DirectFormattingController(
         }
 
         if (properties && properties['style:text-properties']) {
-            styleOp = new ops.OpApplyDirectStyling();
+            styleOp = new OpApplyDirectStyling();
             styleOp.init({
                 memberid: inputMemberId,
                 position: position,
@@ -346,7 +368,7 @@ gui.DirectFormattingController = function DirectFormattingController(
 
     /**
      * Listen for local operations and clear the local cursor styling if necessary
-     * @param {!ops.Operation} op
+     * @param {!Operation} op
      */
     function clearCursorStyle(op) {
         var spec = op.spec();
@@ -425,7 +447,7 @@ gui.DirectFormattingController = function DirectFormattingController(
      * this will return the style the next inserted character will have.
      * (Note, this is not used internally by WebODF, but is provided as a convenience method
      * for external consumers)
-     * @return {!Array.<!odf.Formatting.AppliedStyle>}
+     * @return {!Array.<!Formatting.AppliedStyle>}
      */
     this.getAppliedStyles = function () {
         return selectionInfoCache.value().appliedStyles;
@@ -531,7 +553,7 @@ gui.DirectFormattingController = function DirectFormattingController(
     }
 
     /**
-     * @param {!function(!odf.Formatting.StyleData) : !odf.Formatting.StyleData} applyDirectStyling
+     * @param {!function(!Formatting.StyleData) : !Formatting.StyleData} applyDirectStyling
      * @return {undefined}
      */
     function applyParagraphDirectStyling(applyDirectStyling) {
@@ -549,7 +571,7 @@ gui.DirectFormattingController = function DirectFormattingController(
 
         paragraphs.forEach(function (paragraph) {
             var paragraphStartPoint = odtDocument.convertDomPointToCursorStep(paragraph, 0, NEXT),
-                paragraphStyleName = paragraph.getAttributeNS(odf.Namespaces.textns, "style-name"),
+                paragraphStyleName = paragraph.getAttributeNS(Namespaces.textns, "style-name"),
                 /**@type{string|undefined}*/
                 newParagraphStyleName,
                 opAddStyle,
@@ -576,7 +598,7 @@ gui.DirectFormattingController = function DirectFormattingController(
                 // The assumption is that applyDirectStyling will return the same transform given the same
                 // paragraph properties (e.g., there is nothing dependent on whether this is the 10th paragraph)
                 paragraphProperties = applyDirectStyling(paragraphProperties);
-                opAddStyle = new ops.OpAddStyle();
+                opAddStyle = new OpAddStyle();
                 opAddStyle.init({
                     memberid: inputMemberId,
                     styleName: newParagraphStyleName.toString(),
@@ -588,7 +610,7 @@ gui.DirectFormattingController = function DirectFormattingController(
             }
 
 
-            opSetParagraphStyle = new ops.OpSetParagraphStyle();
+            opSetParagraphStyle = new OpSetParagraphStyle();
             opSetParagraphStyle.init({
                 memberid: inputMemberId,
                 styleName: newParagraphStyleName.toString(),
@@ -601,12 +623,12 @@ gui.DirectFormattingController = function DirectFormattingController(
     }
 
     /**
-     * @param {!odf.Formatting.StyleData} styleOverrides
+     * @param {!Formatting.StyleData} styleOverrides
      * @return {undefined}
      */
     function applySimpleParagraphDirectStyling(styleOverrides) {
         applyParagraphDirectStyling(function (paragraphStyle) {
-            return /**@type {!odf.Formatting.StyleData}*/(utils.mergeObjects(paragraphStyle, styleOverrides));
+            return /**@type {!Formatting.StyleData}*/(utils.mergeObjects(paragraphStyle, styleOverrides));
         });
     }
 
@@ -652,8 +674,8 @@ gui.DirectFormattingController = function DirectFormattingController(
 
     /**
      * @param {!number} direction
-     * @param {!odf.Formatting.StyleData} paragraphStyle
-     * @return {!odf.Formatting.StyleData}
+     * @param {!Formatting.StyleData} paragraphStyle
+     * @return {!Formatting.StyleData}
      */
     function modifyParagraphIndent(direction, paragraphStyle) {
         var tabStopDistance = odtDocument.getFormatting().getDefaultTabStopDistance(),
@@ -673,7 +695,7 @@ gui.DirectFormattingController = function DirectFormattingController(
             newIndent = (direction * tabStopDistance.value) + tabStopDistance.unit;
         }
 
-        return /**@type {!odf.Formatting.StyleData}*/(utils.mergeObjects(paragraphStyle, {"style:paragraph-properties" : {"fo:margin-left" : newIndent}}));
+        return /**@type {!Formatting.StyleData}*/(utils.mergeObjects(paragraphStyle, {"style:paragraph-properties" : {"fo:margin-left" : newIndent}}));
     }
 
     /**
@@ -727,8 +749,8 @@ gui.DirectFormattingController = function DirectFormattingController(
             return true;
         }
 
-        textStyle = /**@type {!odf.Formatting.StyleData}*/(textStyle['style:text-properties']);
-        paragraphStyle = /**@type {!odf.Formatting.StyleData}*/(paragraphStyle['style:text-properties']);
+        textStyle = /**@type {!Formatting.StyleData}*/(textStyle['style:text-properties']);
+        paragraphStyle = /**@type {!Formatting.StyleData}*/(paragraphStyle['style:text-properties']);
         // <style:text-properties> only has attributes, so no need to look for child elements (as in: objects)
         return !Object.keys(textStyle).every(function (key) {
             return textStyle[key] === paragraphStyle[key];
@@ -740,7 +762,7 @@ gui.DirectFormattingController = function DirectFormattingController(
      * Generates operations that would create and apply the current direct cursor
      * styling to the paragraph at given position.
      * @param {number} position
-     * @return {!Array.<!ops.Operation>}
+     * @return {!Array.<!Operation>}
      */
     this.createParagraphStyleOps = function (position) {
         if (!getCachedEnabledFeatures().directParagraphStyling) {
@@ -791,7 +813,7 @@ gui.DirectFormattingController = function DirectFormattingController(
         }
 
         styleName = objectNameGenerator.generateStyleName();
-        op = new ops.OpAddStyle();
+        op = new OpAddStyle();
         op.init({
             memberid: inputMemberId,
             styleName: styleName,
@@ -801,7 +823,7 @@ gui.DirectFormattingController = function DirectFormattingController(
         });
         operations.push(op);
 
-        op = new ops.OpSetParagraphStyle();
+        op = new OpSetParagraphStyle();
         op.init({
             memberid: inputMemberId,
             styleName: styleName,
@@ -835,14 +857,14 @@ gui.DirectFormattingController = function DirectFormattingController(
      * @return {undefined}
      */
     this.destroy = function (callback) {
-        odtDocument.unsubscribe(ops.Document.signalCursorAdded, onCursorEvent);
-        odtDocument.unsubscribe(ops.Document.signalCursorRemoved, onCursorEvent);
-        odtDocument.unsubscribe(ops.Document.signalCursorMoved, onCursorEvent);
-        odtDocument.unsubscribe(ops.OdtDocument.signalParagraphStyleModified, onParagraphStyleModified);
-        odtDocument.unsubscribe(ops.OdtDocument.signalParagraphChanged, onParagraphChanged);
-        odtDocument.unsubscribe(ops.OdtDocument.signalOperationEnd, clearCursorStyle);
-        odtDocument.unsubscribe(ops.OdtDocument.signalProcessingBatchEnd, emitSelectionChanges);
-        sessionConstraints.unsubscribe(gui.CommonConstraints.EDIT.REVIEW_MODE, forceSelectionInfoRefresh);
+        odtDocument.unsubscribe(OpsDocument.signalCursorAdded, onCursorEvent);
+        odtDocument.unsubscribe(OpsDocument.signalCursorRemoved, onCursorEvent);
+        odtDocument.unsubscribe(OpsDocument.signalCursorMoved, onCursorEvent);
+        odtDocument.unsubscribe(OdtDocument.signalParagraphStyleModified, onParagraphStyleModified);
+        odtDocument.unsubscribe(OdtDocument.signalParagraphChanged, onParagraphChanged);
+        odtDocument.unsubscribe(OdtDocument.signalOperationEnd, clearCursorStyle);
+        odtDocument.unsubscribe(OdtDocument.signalProcessingBatchEnd, emitSelectionChanges);
+        sessionConstraints.unsubscribe(CommonConstraints.EDIT.REVIEW_MODE, forceSelectionInfoRefresh);
         callback();
     };
 
@@ -869,24 +891,24 @@ gui.DirectFormattingController = function DirectFormattingController(
     }
 
     /**
-     * @return {!gui.DirectFormattingController.SelectionInfo}
+     * @return {!DirectFormattingController.SelectionInfo}
      */
     function getCachedSelectionInfo() {
         return selectionInfoCache.value();
     }
 
     function init() {
-        odtDocument.subscribe(ops.Document.signalCursorAdded, onCursorEvent);
-        odtDocument.subscribe(ops.Document.signalCursorRemoved, onCursorEvent);
-        odtDocument.subscribe(ops.Document.signalCursorMoved, onCursorEvent);
-        odtDocument.subscribe(ops.OdtDocument.signalParagraphStyleModified, onParagraphStyleModified);
-        odtDocument.subscribe(ops.OdtDocument.signalParagraphChanged, onParagraphChanged);
-        odtDocument.subscribe(ops.OdtDocument.signalOperationEnd, clearCursorStyle);
-        odtDocument.subscribe(ops.OdtDocument.signalProcessingBatchEnd, emitSelectionChanges);
-        sessionConstraints.subscribe(gui.CommonConstraints.EDIT.REVIEW_MODE, forceSelectionInfoRefresh);
-        selectionInfoCache = new core.LazyProperty(getSelectionInfo);
+        odtDocument.subscribe(OpsDocument.signalCursorAdded, onCursorEvent);
+        odtDocument.subscribe(OpsDocument.signalCursorRemoved, onCursorEvent);
+        odtDocument.subscribe(OpsDocument.signalCursorMoved, onCursorEvent);
+        odtDocument.subscribe(OdtDocument.signalParagraphStyleModified, onParagraphStyleModified);
+        odtDocument.subscribe(OdtDocument.signalParagraphChanged, onParagraphChanged);
+        odtDocument.subscribe(OdtDocument.signalOperationEnd, clearCursorStyle);
+        odtDocument.subscribe(OdtDocument.signalProcessingBatchEnd, emitSelectionChanges);
+        sessionConstraints.subscribe(CommonConstraints.EDIT.REVIEW_MODE, forceSelectionInfoRefresh);
+        selectionInfoCache = new LazyProperty(getSelectionInfo);
         // Using a function rather than calling selectionInfoCache.value() directly because Closure Compiler's generics
-        // inference is quite limited and does not seem to recognise the core.LazyProperty type interface correctly
+        // inference is quite limited and does not seem to recognise the LazyProperty type interface correctly
         // within the function that creates the instance. Everywhere else in this file has no issues with it though...
         lastSignalledSelectionInfo = getCachedSelectionInfo();
 
@@ -918,15 +940,15 @@ gui.DirectFormattingController = function DirectFormattingController(
     init();
 };
 
-/**@const*/gui.DirectFormattingController.enabledChanged = "enabled/changed";
-/**@const*/gui.DirectFormattingController.textStylingChanged = "textStyling/changed";
-/**@const*/gui.DirectFormattingController.paragraphStylingChanged = "paragraphStyling/changed";
+/**@const*/DirectFormattingController.enabledChanged = "enabled/changed";
+/**@const*/DirectFormattingController.textStylingChanged = "textStyling/changed";
+/**@const*/DirectFormattingController.paragraphStylingChanged = "paragraphStyling/changed";
 
 /**
  * @constructor
  * @struct
  */
-gui.DirectFormattingController.SelectionInfo = function() {
+DirectFormattingController.SelectionInfo = function() {
     "use strict";
 
     /**
@@ -937,13 +959,15 @@ gui.DirectFormattingController.SelectionInfo = function() {
 
     /**
      * Applied styles in the selection
-     * @type {!Array.<!odf.Formatting.AppliedStyle>}
+     * @type {!Array.<!Formatting.AppliedStyle>}
      */
     this.appliedStyles;
 
     /**
      * Style summary for the selection
-     * @type {!gui.StyleSummary}
+     * @type {!StyleSummary}
      */
     this.styleSummary;
-};
+}
+/**@const*/
+exports.DirectFormattingController = DirectFormattingController;

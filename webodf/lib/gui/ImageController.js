@@ -22,17 +22,33 @@
  * @source: https://github.com/kogmbh/WebODF/
  */
 
-/*global runtime, core, gui, odf, ops */
+var runtime = require("../runtime").runtime;
+var Operation = require("../ops/Operation").Operation;
+var OdtCursor = require("../ops/OdtCursor").OdtCursor;
+var odfUtils = require("../odf/OdfUtils");
+var HyperlinkController = require("./HyperlinkController").HyperlinkController;
+var CommonConstraints = require("./CommonConstraints").CommonConstraints;
+var Session = require("../ops/Session").Session;
+var SessionConstraints = require("./SessionConstraints").SessionConstraints;
+var SessionContext = require("./SessionContext").SessionContext;
+var ObjectNameGenerator = require("../odf/ObjectNameGenerator").ObjectNameGenerator;
+var cssUnits = require("../core/CSSUnits");
+var OpInsertImage = require("../ops/OpInsertImage").OpInsertImage;
+var OpSetBlob = require("../ops/OpSetBlob").OpSetBlob;
+var OpAddStyle = require("../ops/OpAddStyle").OpAddStyle;
+var EventNotifier = require("../core/EventNotifier").EventNotifier;
+var OpsDocument = require("../ops/Document").Document;
+var Namespaces = require("../odf/Namespaces").Namespaces;
 
 /**
  * @constructor
- * @param {!ops.Session} session
- * @param {!gui.SessionConstraints} sessionConstraints
- * @param {!gui.SessionContext} sessionContext
+ * @param {!Session} session
+ * @param {!SessionConstraints} sessionConstraints
+ * @param {!SessionContext} sessionContext
  * @param {!string} inputMemberId
- * @param {!odf.ObjectNameGenerator} objectNameGenerator
+ * @param {!ObjectNameGenerator} objectNameGenerator
  */
-gui.ImageController = function ImageController(
+function ImageController(
     session,
     sessionConstraints,
     sessionContext,
@@ -50,12 +66,11 @@ gui.ImageController = function ImageController(
         },
         /**@const
            @type{!string}*/
-        textns = odf.Namespaces.textns,
+        textns = Namespaces.textns,
         odtDocument = session.getOdtDocument(),
-        odfUtils = odf.OdfUtils,
         formatting = odtDocument.getFormatting(),
-        eventNotifier = new core.EventNotifier([
-            gui.HyperlinkController.enabledChanged
+        eventNotifier = new EventNotifier([
+            HyperlinkController.enabledChanged
         ]),
         isEnabled = false;
 
@@ -65,18 +80,18 @@ gui.ImageController = function ImageController(
     function updateEnabledState() {
         var /**@type{!boolean}*/newIsEnabled = true;
 
-        if (sessionConstraints.getState(gui.CommonConstraints.EDIT.REVIEW_MODE) === true) {
+        if (sessionConstraints.getState(CommonConstraints.EDIT.REVIEW_MODE) === true) {
             newIsEnabled = /**@type{!boolean}*/(sessionContext.isLocalCursorWithinOwnAnnotation());
         }
 
         if (newIsEnabled !== isEnabled) {
             isEnabled = newIsEnabled;
-            eventNotifier.emit(gui.ImageController.enabledChanged, isEnabled);
+            eventNotifier.emit(ImageController.enabledChanged, isEnabled);
         }
     }
 
     /**
-     * @param {!ops.OdtCursor} cursor
+     * @param {!OdtCursor} cursor
      * @return {undefined}
      */
     function onCursorEvent(cursor) {
@@ -113,10 +128,10 @@ gui.ImageController = function ImageController(
 
     /**
      * @param {!string} name
-     * @return {!ops.Operation}
+     * @return {!Operation}
      */
     function createAddGraphicsStyleOp(name) {
-        var op = new ops.OpAddStyle();
+        var op = new OpAddStyle();
         op.init({
             memberid: inputMemberId,
             styleName: name,
@@ -143,10 +158,10 @@ gui.ImageController = function ImageController(
     /**
      * @param {!string} styleName
      * @param {!string} parentStyleName
-     * @return {!ops.Operation}
+     * @return {!Operation}
      */
     function createAddFrameStyleOp(styleName, parentStyleName) {
-        var op = new ops.OpAddStyle();
+        var op = new OpAddStyle();
         op.init({
             memberid: inputMemberId,
             styleName: styleName,
@@ -210,7 +225,7 @@ gui.ImageController = function ImageController(
         fileName = "Pictures/" + objectNameGenerator.generateImageName() + fileExtension;
 
         // TODO: eliminate duplicate image
-        op = new ops.OpSetBlob();
+        op = new OpSetBlob();
         op.init({
             memberid: inputMemberId,
             filename: fileName,
@@ -233,7 +248,7 @@ gui.ImageController = function ImageController(
         op = createAddFrameStyleOp(frameStyleName, graphicsStyleName);
         operations.push(op);
 
-        op = new ops.OpInsertImage();
+        op = new OpInsertImage();
         op.init({
             memberid: inputMemberId,
             position: odtDocument.getCursorPosition(inputMemberId),
@@ -288,8 +303,7 @@ gui.ImageController = function ImageController(
         var paragraphElement,
             styleName,
             pageContentSize,
-            imageSize,
-            cssUnits = new core.CSSUnits();
+            imageSize;
 
         runtime.assert(widthInPx > 0 && heightInPx > 0, "Both width and height of the image should be greater than 0px.");
         imageSize = {
@@ -319,17 +333,19 @@ gui.ImageController = function ImageController(
      * @return {undefined}
      */
     this.destroy = function (callback) {
-        odtDocument.unsubscribe(ops.Document.signalCursorMoved, onCursorEvent);
-        sessionConstraints.unsubscribe(gui.CommonConstraints.EDIT.REVIEW_MODE, updateEnabledState);
+        odtDocument.unsubscribe(OpsDocument.signalCursorMoved, onCursorEvent);
+        sessionConstraints.unsubscribe(CommonConstraints.EDIT.REVIEW_MODE, updateEnabledState);
         callback();
     };
 
     function init() {
-        odtDocument.subscribe(ops.Document.signalCursorMoved, onCursorEvent);
-        sessionConstraints.subscribe(gui.CommonConstraints.EDIT.REVIEW_MODE, updateEnabledState);
+        odtDocument.subscribe(OpsDocument.signalCursorMoved, onCursorEvent);
+        sessionConstraints.subscribe(CommonConstraints.EDIT.REVIEW_MODE, updateEnabledState);
         updateEnabledState();
     }
     init();
-};
+}
 
-/**@const*/gui.ImageController.enabledChanged = "enabled/changed";
+/**@const*/ImageController.enabledChanged = "enabled/changed";
+/**@const*/
+exports.ImageController = ImageController;

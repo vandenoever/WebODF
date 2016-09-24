@@ -22,26 +22,29 @@
  * @source: https://github.com/kogmbh/WebODF/
  */
 
-/*global ops */
 /*jslint emptyblock: true, unparam: true */
+
+var ZoomHelper = require("../gui/ZoomHelper").ZoomHelper;
 
 /**
  * @interface
  */
-ops.Canvas = function Canvas() { "use strict"; };
+function Canvas() { "use strict"; }
 /**
  * @return {number}
  */
-ops.Canvas.prototype.getZoomLevel = function () { "use strict"; };
+Canvas.prototype.getZoomLevel = function () { "use strict"; };
 /**
  * @return {!Element}
  */
-ops.Canvas.prototype.getElement = function () { "use strict"; };
+Canvas.prototype.getElement = function () { "use strict"; };
 /**
  * @return {!HTMLElement}
  */
-ops.Canvas.prototype.getSizer = function () { "use strict"; };
+Canvas.prototype.getSizer = function () { "use strict"; };
 /**
- * @return {!gui.ZoomHelper}
+ * @return {!ZoomHelper}
  */
-ops.Canvas.prototype.getZoomHelper = function () { "use strict"; };
+Canvas.prototype.getZoomHelper = function () { "use strict"; };
+/**@const*/
+exports.Canvas = Canvas;

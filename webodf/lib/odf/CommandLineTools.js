@@ -22,25 +22,23 @@
  * @source: https://github.com/kogmbh/WebODF/
  */
 
-/*global runtime, core, odf*/
-
 /**
  * @constructor
  */
-odf.CommandLineTools = function CommandLineTools() {
+function CommandLineTools() {
     "use strict";
     /**
      * @param {!string} inputfilepath
      * @param {!string} outputfilepath
      * @param {!function(string=):undefined} callback
-     * @return {!odf.OdfContainer}
+     * @return {!OdfContainer}
      */
     this.roundTrip = function (inputfilepath, outputfilepath, callback) {
         function onready(odfcontainer) {
-            if (odfcontainer.state === odf.OdfContainer.INVALID) {
+            if (odfcontainer.state === OdfContainer.INVALID) {
                 return callback("Document " + inputfilepath + " is invalid.");
             }
-            if (odfcontainer.state === odf.OdfContainer.DONE) {
+            if (odfcontainer.state === OdfContainer.DONE) {
                 odfcontainer.saveAs(outputfilepath, function (err) {
                     callback(err);
                 });
@@ -48,7 +46,7 @@ odf.CommandLineTools = function CommandLineTools() {
                 callback("Document was not completely loaded.");
             }
         }
-        var odfcontainer = new odf.OdfContainer(inputfilepath, onready);
+        var odfcontainer = new OdfContainer(inputfilepath, onready);
         return odfcontainer;
     };
     /**
@@ -60,11 +58,12 @@ odf.CommandLineTools = function CommandLineTools() {
     this.render = function (inputfilepath, document, callback) {
         var body = document.getElementsByTagName("body")[0],
             odfcanvas;
-        core.DomUtils.removeAllChildNodes(body);
-        odfcanvas = new odf.OdfCanvas(body);
+        domUtils.removeAllChildNodes(body);
+        odfcanvas = new OdfCanvas(body);
         odfcanvas.addListener("statereadychange", function (err) {
             callback(err);
         });
         odfcanvas.load(inputfilepath);
     };
-};
+}
+exports.CommandLineTools = CommandLineTools;

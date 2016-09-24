@@ -22,7 +22,19 @@
  * @source: https://github.com/kogmbh/WebODF/
  */
 
-/*global core, gui, odf, ops, runtime, Node*/
+/*global Node*/
+var runtime = require("../runtime").runtime;
+var Viewport = require("./Viewport").Viewport;
+var StepIterator = require("../core/StepIterator").StepIterator;
+var ScheduledTask = require("../core/ScheduledTask").ScheduledTask;
+var OdtDocument = require("../ops/OdtDocument").OdtDocument;
+var Destroyable = require("../core/Destroyable").Destroyable;
+var guiStepUtils = require("./GuiStepUtils");
+var Avatar = require("./Avatar").Avatar;
+var domUtils = require("../core/DomUtils");
+var task = require("../core/Task");
+var async = require("../core/Async");
+var OdtCursor = require("../ops/OdtCursor").OdtCursor;
 
 /**
  * Class that represents a caret in a document.
@@ -31,13 +43,13 @@
  * Blinking is done by switching the color of the border from transparent to
  * the member color and back.
  * @constructor
- * @implements {core.Destroyable}
- * @param {!ops.OdtCursor} cursor
- * @param {!gui.Viewport} viewport
+ * @implements {Destroyable}
+ * @param {!OdtCursor} cursor
+ * @param {!Viewport} viewport
  * @param {boolean} avatarInitiallyVisible Sets the initial visibility of the caret's avatar
  * @param {boolean} blinkOnRangeSelect Specify that the caret should blink if a non-collapsed range is selected
  */
-gui.Caret = function Caret(cursor, viewport, avatarInitiallyVisible, blinkOnRangeSelect) {
+function Caret(cursor, viewport, avatarInitiallyVisible, blinkOnRangeSelect) {
     "use strict";
     var /**@const*/
         cursorns = 'urn:webodf:names:cursor',
@@ -49,7 +61,7 @@ gui.Caret = function Caret(cursor, viewport, avatarInitiallyVisible, blinkOnRang
         caretOverlay,
         /**@type{!HTMLElement}*/
         caretElement,
-        /**@type{!gui.Avatar}*/
+        /**@type{!Avatar}*/
         avatar,
         /**@type{?Element}*/
         overlayElement,
@@ -58,13 +70,11 @@ gui.Caret = function Caret(cursor, viewport, avatarInitiallyVisible, blinkOnRang
         /**@type{!Range}*/
         caretSizerRange,
         canvas = cursor.getDocument().getCanvas(),
-        domUtils = core.DomUtils,
-        guiStepUtils = new gui.GuiStepUtils(),
-        /**@type{!core.StepIterator}*/
+        /**@type{!StepIterator}*/
         stepIterator,
-        /**@type{!core.ScheduledTask}*/
+        /**@type{!ScheduledTask}*/
         redrawTask,
-        /**@type{!core.ScheduledTask}*/
+        /**@type{!ScheduledTask}*/
         blinkTask,
         /**@type{boolean}*/
         shouldResetBlink = false,
@@ -259,7 +269,7 @@ gui.Caret = function Caret(cursor, viewport, avatarInitiallyVisible, blinkOnRang
      * @return {undefined}
      */
     function updateCaret() {
-        if (state.isShown === false || cursor.getSelectionType() !== ops.OdtCursor.RangeSelection
+        if (state.isShown === false || cursor.getSelectionType() !== OdtCursor.RangeSelection
                 || (!blinkOnRangeSelect && !cursor.getSelectedRange().collapsed)) {
             // Hide the caret entirely if:
             // - the caret is deliberately hidden (e.g., the parent window has lost focus)
@@ -379,7 +389,7 @@ gui.Caret = function Caret(cursor, viewport, avatarInitiallyVisible, blinkOnRang
         avatar.setColor(newColor);
     };
     /**
-     * @return {!ops.OdtCursor}}
+     * @return {!OdtCursor}}
      */
     this.getCursor = function () {
         return cursor;
@@ -464,11 +474,11 @@ gui.Caret = function Caret(cursor, viewport, avatarInitiallyVisible, blinkOnRang
      */
     this.destroy = function (callback) {
         var cleanup = [redrawTask.destroy, blinkTask.destroy, avatar.destroy, destroy];
-        core.Async.destroyAll(cleanup, callback);
+        async.destroyAll(cleanup, callback);
     };
 
     function init() {
-        var odtDocument = /**@type{!ops.OdtDocument}*/(cursor.getDocument()),
+        var odtDocument = /**@type{!OdtDocument}*/(cursor.getDocument()),
             positionFilters = [odtDocument.createRootFilter(cursor.getMemberId()), odtDocument.getPositionFilter()],
             dom = odtDocument.getDOMDocument(),
             editinfons = "urn:webodf:names:editinfo";
@@ -488,15 +498,17 @@ gui.Caret = function Caret(cursor, viewport, avatarInitiallyVisible, blinkOnRang
         caretElement.className = "caret";
         caretOverlay.appendChild(caretElement);
 
-        avatar = new gui.Avatar(caretOverlay, avatarInitiallyVisible);
+        avatar = new Avatar(caretOverlay, avatarInitiallyVisible);
 
         canvas.getSizer().appendChild(caretOverlay);
 
         stepIterator = odtDocument.createStepIterator(cursor.getNode(), 0, positionFilters, odtDocument.getRootNode());
 
-        redrawTask = core.Task.createRedrawTask(updateCaret);
-        blinkTask = core.Task.createTimeoutTask(blinkCaret, BLINK_PERIOD_MS);
+        redrawTask = task.createRedrawTask(updateCaret);
+        blinkTask = task.createTimeoutTask(blinkCaret, BLINK_PERIOD_MS);
         redrawTask.triggerImmediate();
     }
     init();
-};
+}
+/**@const*/
+exports.Caret = Caret;

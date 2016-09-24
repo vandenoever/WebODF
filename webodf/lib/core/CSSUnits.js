@@ -25,15 +25,10 @@
 /*global core*/
 /*jslint plusplus: true, bitwise: true */
 
-/**
- * @constructor
- */
-core.CSSUnits = function CSSUnits() {
     "use strict";
 
     // Unit values relative to 1 inch
-    var self = this,
-        sizemap = {
+    var sizemap = {
             "in": 1,
             "cm": 2.54,
             "mm": 25.4,
@@ -49,9 +44,10 @@ core.CSSUnits = function CSSUnits() {
      * @param {!string} newUnit
      * @return {!number}
      */
-    this.convert = function (value, oldUnit, newUnit) {
+    function convert(value, oldUnit, newUnit) {
         return value * sizemap[newUnit] / sizemap[oldUnit];
-    };
+    }
+exports.convert = convert;
 
     /**
      * Takes a measure such as "2cm" and returns it's measurement in the new unit, e.g. 20
@@ -59,21 +55,22 @@ core.CSSUnits = function CSSUnits() {
      * @param {!string} newUnit
      * @return {!number|undefined}
      */
-    this.convertMeasure = function (measure, newUnit) {
+    function convertMeasure(measure, newUnit) {
         var value, oldUnit, newMeasure;
         if (measure && newUnit) {
             value = parseFloat(measure);
             oldUnit = measure.replace(value.toString(), "");
 
-            newMeasure = self.convert(value, oldUnit, newUnit);
+            newMeasure = convert(value, oldUnit, newUnit);
         }
         return newMeasure;
-    };
+    }
+exports.convertMeasure = convertMeasure;
     /**
      * @param {!string} measure
      * @return {!string}
      */
-    this.getUnits = function (measure) {
+    function getUnits(measure) {
         return measure.substr(measure.length - 2, measure.length);
-    };
-};
+    }
+exports.getUnits = getUnits;

@@ -22,7 +22,10 @@
  * @source: https://github.com/kogmbh/WebODF/
  */
 
-/*global odf, runtime, core, Node*/
+/*global Node*/
+var Namespaces = require("./Namespaces").Namespaces;
+var OdfContainer = require("./OdfContainer").OdfContainer;
+var utils = require("../core/Utils");
 
 /**
  * Helper object for generating unique object names. Each name is only reported once per instance,
@@ -41,16 +44,15 @@
  * At step 2, as the session's queue implementation has no requirement that it immediately executes the operation from
  * step 1, it is likely that the style created in step 1 is not yet present in the document DOM.
  *
- * @param {!odf.OdfContainer} odfContainer
+ * @param {!OdfContainer} odfContainer
  * @param {!string} memberId
  * @constructor
  */
-odf.ObjectNameGenerator = function ObjectNameGenerator(odfContainer, memberId) {
+function ObjectNameGenerator(odfContainer, memberId) {
     "use strict";
-    var stylens = odf.Namespaces.stylens,
-        drawns = odf.Namespaces.drawns,
-        xlinkns = odf.Namespaces.xlinkns,
-        utils = new core.Utils(),
+    var stylens = Namespaces.stylens,
+        drawns = Namespaces.drawns,
+        xlinkns = Namespaces.xlinkns,
         memberIdHash = utils.hashString(memberId),
         styleNameGenerator = null,
         frameNameGenerator = null,
@@ -175,4 +177,6 @@ odf.ObjectNameGenerator = function ObjectNameGenerator(odfContainer, memberId) {
         }
         return imageNameGenerator.generateName();
     };
-};
+}
+/**@const*/
+exports.ObjectNameGenerator = ObjectNameGenerator;

@@ -22,19 +22,25 @@
  * @source: https://github.com/kogmbh/WebODF/
  */
 
-/*global gui, runtime, core, ops, odf*/
+var runtime = require("../runtime").runtime;
+var Destroyable = require("../core/Destroyable").Destroyable;
+var Session = require("../ops/Session").Session;
+var OpUpdateMetadata = require("../ops/OpUpdateMetadata").OpUpdateMetadata;
+var EventNotifier = require("../core/EventNotifier").EventNotifier;
+var Namespaces = require("../odf/Namespaces").Namespaces;
+var OdtDocument = require("../ops/OdtDocument").OdtDocument;
 
 /**
  * @constructor
- * @implements {core.Destroyable}
- * @param {!ops.Session} session
+ * @implements {Destroyable}
+ * @param {!Session} session
  * @param {!string} inputMemberId
  */
-gui.MetadataController = function MetadataController(session, inputMemberId) {
+function MetadataController(session, inputMemberId) {
     "use strict";
 
     var odtDocument = session.getOdtDocument(),
-        eventNotifier = new core.EventNotifier([gui.MetadataController.signalMetadataChanged]),
+        eventNotifier = new EventNotifier([MetadataController.signalMetadataChanged]),
         /** @const @type {!Array.<!string>} */
         readonlyProperties = [
             "dc:creator",
@@ -49,7 +55,7 @@ gui.MetadataController = function MetadataController(session, inputMemberId) {
      * @return {undefined}
      */
     function onMetadataUpdated(changes) {
-        eventNotifier.emit(gui.MetadataController.signalMetadataChanged, changes);
+        eventNotifier.emit(MetadataController.signalMetadataChanged, changes);
     }
 
     /**
@@ -103,7 +109,7 @@ gui.MetadataController = function MetadataController(session, inputMemberId) {
 
         if (filteredRemovedProperties.length > 0
                 || Object.keys(filteredSetProperties).length > 0) {
-            op = new ops.OpUpdateMetadata();
+            op = new OpUpdateMetadata();
             op.init({
                 memberid: inputMemberId,
                 setProperties: filteredSetProperties,
@@ -125,7 +131,7 @@ gui.MetadataController = function MetadataController(session, inputMemberId) {
         runtime.assert(typeof property === "string", "Property must be a string");
         parts = property.split(':');
         runtime.assert(parts.length === 2, "Property must be a namespace-prefixed string");
-        namespaceUri = odf.Namespaces.lookupNamespaceURI(parts[0]);
+        namespaceUri = Namespaces.lookupNamespaceURI(parts[0]);
         // TODO: support other namespaces
         runtime.assert(Boolean(namespaceUri), "Prefix must be for an ODF namespace.");
         return odtDocument.getOdfCanvas().odfContainer().getMetadata(/**@type{!string}*/(namespaceUri), parts[1]);
@@ -154,15 +160,17 @@ gui.MetadataController = function MetadataController(session, inputMemberId) {
      * @return {undefined}
      */
     this.destroy = function(callback) {
-        odtDocument.unsubscribe(ops.OdtDocument.signalMetadataUpdated, onMetadataUpdated);
+        odtDocument.unsubscribe(OdtDocument.signalMetadataUpdated, onMetadataUpdated);
         callback();
     };
 
     function init() {
-        odtDocument.subscribe(ops.OdtDocument.signalMetadataUpdated, onMetadataUpdated);
+        odtDocument.subscribe(OdtDocument.signalMetadataUpdated, onMetadataUpdated);
     }
 
     init();
-};
+}
 
-/**@const*/gui.MetadataController.signalMetadataChanged = "metadata/changed";
+/**@const*/MetadataController.signalMetadataChanged = "metadata/changed";
+/**@const*/
+exports.MetadataController = MetadataController;

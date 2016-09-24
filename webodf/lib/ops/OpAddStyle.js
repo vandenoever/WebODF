@@ -22,22 +22,30 @@
  * @source: https://github.com/kogmbh/WebODF/
  */
 
-/*global runtime, odf, ops*/
+var op = require("./Operation");
+var OdtCursor = require("./OdtCursor").OdtCursor;
+var OdtDocument = require("./OdtDocument").OdtDocument;
+var OpsDocument = require("./Document").Document;
+var Formatting = require("../odf/Formatting").Formatting;
+var Namespaces = require("../odf/Namespaces").Namespaces;
+
+/**@typedef{!Object.<!string,(!string|!Object.<!string,!string>)>}*/
+Formatting.StyleData;
 
 /**
  * @constructor
- * @implements ops.Operation
+ * @implements op.Operation
  */
-ops.OpAddStyle = function OpAddStyle() {
+function OpAddStyle() {
     "use strict";
 
     var memberid, timestamp,
         styleName, styleFamily, isAutomaticStyle,
-        /**@type{!odf.Formatting.StyleData}*/setProperties,
-        /** @const */stylens = odf.Namespaces.stylens;
+        /**@type{!Formatting.StyleData}*/setProperties,
+        /** @const */stylens = Namespaces.stylens;
 
     /**
-     * @param {!ops.OpAddStyle.InitSpec} data
+     * @param {!OpAddStyle.InitSpec} data
      */
     this.init = function (data) {
         memberid = data.memberid;
@@ -55,10 +63,10 @@ ops.OpAddStyle = function OpAddStyle() {
     this.group = undefined;
 
     /**
-     * @param {!ops.Document} document
+     * @param {!OpsDocument} document
      */
     this.execute = function (document) {
-        var odtDocument = /**@type{ops.OdtDocument}*/(document),
+        var odtDocument = /**@type{OdtDocument}*/(document),
             odfContainer = odtDocument.getOdfCanvas().odfContainer(),
             formatting = odtDocument.getFormatting(),
             dom = odtDocument.getDOMDocument(),
@@ -83,13 +91,13 @@ ops.OpAddStyle = function OpAddStyle() {
 
         odtDocument.getOdfCanvas().refreshCSS();
         if (!isAutomaticStyle) {
-            odtDocument.emit(ops.OdtDocument.signalCommonStyleCreated, {name: styleName, family: styleFamily});
+            odtDocument.emit(OdtDocument.signalCommonStyleCreated, {name: styleName, family: styleFamily});
         }
         return true;
     };
 
     /**
-     * @return {!ops.OpAddStyle.Spec}
+     * @return {!OpAddStyle.Spec}
      */
     this.spec = function () {
         return {
@@ -102,23 +110,28 @@ ops.OpAddStyle = function OpAddStyle() {
             setProperties: setProperties
         };
     };
-};
-/**@typedef{{
-    optype:string,
-    memberid:string,
-    timestamp:number,
-    styleName:string,
-    styleFamily:string,
-    isAutomaticStyle:boolean,
-    setProperties:odf.Formatting.StyleData
-}}*/
-ops.OpAddStyle.Spec;
-/**@typedef{{
-    memberid:string,
-    timestamp:(number|undefined),
-    styleName:string,
-    styleFamily:string,
-    isAutomaticStyle:(boolean|string),
-    setProperties:odf.Formatting.StyleData
-}}*/
-ops.OpAddStyle.InitSpec;
+}
+
+/**
+ * @record
+ * @extends {op.SpecBase}
+ */
+OpAddStyle.InitSpec = function() {}
+/**@type{!string}*/
+OpAddStyle.InitSpec.prototype.styleName;
+/**@type{!string}*/
+OpAddStyle.InitSpec.prototype.styleFamily;
+/**@type{(!boolean|!string)}*/
+OpAddStyle.InitSpec.prototype.isAutomaticStyle;
+/**@type{!Formatting.StyleData}*/
+OpAddStyle.InitSpec.prototype.setProperties;
+
+/**
+ * @record
+ * @extends {op.TypedOperationSpec}
+ * @extends {OpAddStyle.InitSpec}
+ */
+OpAddStyle.Spec = function() {}
+
+/**@const*/
+exports.OpAddStyle = OpAddStyle;

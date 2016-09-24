@@ -22,13 +22,22 @@
  * @source: https://github.com/kogmbh/WebODF/
  */
 
-/*global Node, NodeFilter, runtime, core, xmldom, odf, DOMParser, document, webodf */
+/*global Node, NodeFilter, DOMParser, document, webodf */
 
-(function () {
-    "use strict";
-    var styleInfo = new odf.StyleInfo(),
-        domUtils = core.DomUtils,
-        /**@const
+"use strict";
+var Base64 = require("../core/Base64").Base64;
+var domUtils = require("../core/DomUtils");
+var Zip = require("../core/Zip").Zip;
+var Namespaces = require("./Namespaces").Namespaces;
+var OdfNodeFilter = require("./OdfNodeFilter").OdfNodeFilter;
+var StyleInfo = require("./StyleInfo").StyleInfo;
+var runtime = require("../runtime").runtime;
+var LSSerializer = require("../xmldom/LSSerializer").LSSerializer;
+var LSSerializerFilter = require("../xmldom/LSSerializerFilter").LSSerializerFilter;
+
+var styleInfo = new StyleInfo();
+
+    var /**@const
            @type{!string}*/
         officens = "urn:oasis:names:tc:opendocument:xmlns:office:1.0",
         /**@const
@@ -39,7 +48,7 @@
         webodfns = "urn:webodf:names:scope",
         /**@const
            @type{!string}*/
-        stylens = odf.Namespaces.stylens,
+        stylens = Namespaces.stylens,
         /**@const
            @type{!Array.<!string>}*/
         nodeorder = ['meta', 'settings', 'scripts', 'font-face-decls', 'styles',
@@ -47,7 +56,7 @@
         /**@const
            @type{!string}*/
         automaticStylePrefix = Date.now() + "_webodf_",
-        base64 = new core.Base64(),
+        base64 = new Base64(),
         /**@const
            @type{!string}*/
         documentStylesScope = "document-styles",
@@ -75,13 +84,13 @@
      * Additionally all unused automatic styles are skipped, if a tree
      * of elements was passed to check the style usage in it.
      * @constructor
-     * @implements {xmldom.LSSerializerFilter}
+     * @implements {LSSerializerFilter}
      * @param {!Element} styleUsingElementsRoot root element of tree of elements using styles
      * @param {?Element=} automaticStyles root element of the automatic style definition tree
      */
     function OdfStylesFilter(styleUsingElementsRoot, automaticStyles) {
         var usedStyleList = new styleInfo.UsedStyleList(styleUsingElementsRoot, automaticStyles),
-            odfNodeFilter = new odf.OdfNodeFilter();
+            odfNodeFilter = new OdfNodeFilter();
 
         /**
          * @param {!Node} node
@@ -106,7 +115,7 @@
      * Class that extends OdfStylesFilter
      * Additionally, filter out ' ' within the <text:s> element and '\t' within the <text:tab> element
      * @constructor
-     * @implements {xmldom.LSSerializerFilter}
+     * @implements {LSSerializerFilter}
      * @param {!Element} styleUsingElementsRoot root element of tree of elements using styles
      * @param {?Element=} automaticStyles root element of the automatic style definition tree
      */
@@ -121,7 +130,7 @@
             var result = odfStylesFilter.acceptNode(node);
             if (result === NodeFilter.FILTER_ACCEPT
                     && node.parentNode
-                    && node.parentNode.namespaceURI === odf.Namespaces.textns
+                    && node.parentNode.namespaceURI === Namespaces.textns
                     && (node.parentNode.localName === 's' || node.parentNode.localName === 'tab')) {
                 result = NodeFilter.FILTER_REJECT;
             }
@@ -160,87 +169,89 @@
      * @constructor
      * @extends {Element}
      */
-    odf.ODFElement = function ODFElement() {
+    var ODFElement = function ODFElement() {
     };
     /**
      * The root element of an ODF document.
      * @constructor
-     * @extends {odf.ODFElement}
+     * @extends {ODFElement}
      */
-    odf.ODFDocumentElement = function ODFDocumentElement() {
-    };
+    function ODFDocumentElement() {}
+/**@const*/
+exports.ODFDocumentElement = ODFDocumentElement;
     /*jslint emptyblock: false*/
-    odf.ODFDocumentElement.prototype = new odf.ODFElement();
-    odf.ODFDocumentElement.prototype.constructor = odf.ODFDocumentElement;
+    ODFDocumentElement.prototype = new ODFElement();
+    ODFDocumentElement.prototype.constructor = ODFDocumentElement;
     /**
      * Optional tag <office:automatic-styles/>
      * If it is missing, it is created.
      * @type {!Element}
      */
-    odf.ODFDocumentElement.prototype.automaticStyles;
+    ODFDocumentElement.prototype.automaticStyles;
     /**
      * Required tag <office:body/>
      * @type {!Element}
      */
-    odf.ODFDocumentElement.prototype.body;
+    ODFDocumentElement.prototype.body;
     /**
      * Optional tag <office:font-face-decls/>
      * @type {Element}
      */
-    odf.ODFDocumentElement.prototype.fontFaceDecls = null;
+    ODFDocumentElement.prototype.fontFaceDecls = null;
     /**
      * @type {Element}
      */
-    odf.ODFDocumentElement.prototype.manifest = null;
+    ODFDocumentElement.prototype.manifest = null;
     /**
      * Optional tag <office:master-styles/>
      * If it is missing, it is created.
      * @type {!Element}
      */
-    odf.ODFDocumentElement.prototype.masterStyles;
+    ODFDocumentElement.prototype.masterStyles;
     /**
      * Optional tag <office:meta/>
      * @type {?Element}
      */
-    odf.ODFDocumentElement.prototype.meta;
+    ODFDocumentElement.prototype.meta;
     /**
      * Optional tag <office:settings/>
      * @type {Element}
      */
-    odf.ODFDocumentElement.prototype.settings = null;
+    ODFDocumentElement.prototype.settings = null;
     /**
      * Optional tag <office:styles/>
      * If it is missing, it is created.
      * @type {!Element}
      */
-    odf.ODFDocumentElement.prototype.styles;
-    odf.ODFDocumentElement.namespaceURI = officens;
-    odf.ODFDocumentElement.localName = 'document';
+    ODFDocumentElement.prototype.styles;
+    ODFDocumentElement.namespaceURI = officens;
+    ODFDocumentElement.localName = 'document';
 
     /*jslint emptyblock: true*/
     /**
      * An element that also has a pointer to the optional annotation end
      * @constructor
-     * @extends {odf.ODFElement}
+     * @extends {ODFElement}
      */
-    odf.AnnotationElement = function AnnotationElement() {
-    };
+    function AnnotationElement() {}
+/**@const*/
+exports.AnnotationElement = AnnotationElement;
     /*jslint emptyblock: false*/
 
     /**
     * @type {?Element}
     */
-    odf.AnnotationElement.prototype.annotationEndElement;
+    AnnotationElement.prototype.annotationEndElement;
 
     // private constructor
     /**
      * @constructor
      * @param {string} name
      * @param {string} mimetype
-     * @param {!odf.OdfContainer} container
-     * @param {core.Zip} zip
+     * @param {!OdfContainer} container
+     * @param {Zip} zip
      */
-    odf.OdfPart = function OdfPart(name, mimetype,  container, zip) {
+    function OdfPart(name, mimetype,  container, zip) {
         var self = this;
 
         // declare public variables
@@ -254,7 +265,7 @@
         this.mimetype = mimetype;
         this.document = null;
         this.onstatereadychange = null;
-        /**@type{?function(!odf.OdfPart)}*/
+        /**@type{?function(!OdfPart)}*/
         this.onchange;
         this.EMPTY = 0;
         this.LOADING = 1;
@@ -285,12 +296,14 @@
                 }
             });
         };
-    };
+    }
+/**@const*/
+exports.OdfPart = OdfPart;
     /*jslint emptyblock: true*/
-    odf.OdfPart.prototype.load = function () {
+    OdfPart.prototype.load = function () {
     };
     /*jslint emptyblock: false*/
-    odf.OdfPart.prototype.getUrl = function () {
+    OdfPart.prototype.getUrl = function () {
         if (this.data) {
             return 'data:;base64,' + base64.toBase64(this.data);
         }
@@ -304,13 +317,13 @@
      * a url and loaded from that url.
      *
      * @constructor
-     * @param {!string|!odf.OdfContainer.DocumentType} urlOrType
-     * @param {?function(!odf.OdfContainer)=} onstatereadychange
+     * @param {!string|!OdfContainer.DocumentType} urlOrType
+     * @param {?function(!OdfContainer)=} onstatereadychange
      * @return {?}
      */
-    odf.OdfContainer = function OdfContainer(urlOrType, onstatereadychange) {
+    function OdfContainer(urlOrType, onstatereadychange) {
         var self = this,
-            /**@type {!core.Zip}*/
+            /**@type {!Zip}*/
             zip,
             /**@type {!Object.<!string,!string>}*/
             partMimetypes = {},
@@ -329,7 +342,7 @@
         this.onchange = null;
         this.state = null;
         /**
-         * @type {!odf.ODFDocumentElement}
+         * @type {!ODFDocumentElement}
          */
         this.rootElement;
 
@@ -384,7 +397,7 @@
                         name = n.getAttributeNS(officens, 'name');
                         if (name) {
                             if (annotationStarts.hasOwnProperty(name)) {
-                                annotationStart = /** @type {!odf.AnnotationElement}*/(annotationStarts[name]);
+                                annotationStart = /** @type {!AnnotationElement}*/(annotationStarts[name]);
                                 if (!annotationStart.annotationEndElement) {
                                     // Linking annotation start & end
                                     annotationStart.annotationEndElement = n;
@@ -654,7 +667,7 @@
          */
         function setRootElement(root) {
             contentElement = null;
-            self.rootElement = /**@type{!odf.ODFDocumentElement}*/(root);
+            self.rootElement = /**@type{!ODFDocumentElement}*/(root);
             root.fontFaceDecls = domUtils.getDirectChild(root, officens, 'font-face-decls');
             root.styles = domUtils.getDirectChild(root, officens, 'styles');
             root.automaticStyles = domUtils.getDirectChild(root, officens, 'automatic-styles');
@@ -941,7 +954,7 @@
             function defineNamespace(prefix, ns) {
                 s += " xmlns:" + prefix + "=\"" + ns + "\"";
             }
-            odf.Namespaces.forEachPrefix(defineNamespace);
+            Namespaces.forEachPrefix(defineNamespace);
             return "<?xml version=\"1.0\" encoding=\"UTF-8\"?><office:" + name +
                     " " + s + " office:version=\"1.2\">";
         }
@@ -949,11 +962,11 @@
          * @return {!string}
          */
         function serializeMetaXml() {
-            var serializer = new xmldom.LSSerializer(),
+            var serializer = new LSSerializer(),
                 /**@type{!string}*/
                 s = createDocumentElement("document-meta");
-            serializer.filter = new odf.OdfNodeFilter();
-            s += serializer.writeToString(self.rootElement.meta, odf.Namespaces.namespaceMap);
+            serializer.filter = new OdfNodeFilter();
+            s += serializer.writeToString(self.rootElement.meta, Namespaces.namespaceMap);
             s += "</office:document-meta>";
             return s;
         }
@@ -977,7 +990,7 @@
                 xml = '<manifest:manifest xmlns:manifest="' + manifestns + '" manifest:version="1.2"></manifest:manifest>',
                 manifest = /**@type{!Document}*/(runtime.parseXML(xml)),
                 manifestRoot = manifest.documentElement,
-                serializer = new xmldom.LSSerializer(),
+                serializer = new LSSerializer(),
                 /**@type{string}*/
                 fullPath;
 
@@ -986,20 +999,20 @@
                     manifestRoot.appendChild(createManifestEntry(fullPath, partMimetypes[fullPath]));
                 }
             }
-            serializer.filter = new odf.OdfNodeFilter();
-            return header + serializer.writeToString(manifest, odf.Namespaces.namespaceMap);
+            serializer.filter = new OdfNodeFilter();
+            return header + serializer.writeToString(manifest, Namespaces.namespaceMap);
         }
         /**
          * @return {!string}
          */
         function serializeSettingsXml() {
-            var serializer = new xmldom.LSSerializer(),
+            var serializer = new LSSerializer(),
                 /**@type{!string}*/
                 s = createDocumentElement("document-settings");
             // <office:settings/> is optional, but if present must have at least one child element
             if (self.rootElement.settings && self.rootElement.settings.firstElementChild) {
-                serializer.filter = new odf.OdfNodeFilter();
-                s += serializer.writeToString(self.rootElement.settings, odf.Namespaces.namespaceMap);
+                serializer.filter = new OdfNodeFilter();
+                s += serializer.writeToString(self.rootElement.settings, Namespaces.namespaceMap);
             }
             return s + "</office:document-settings>";
         }
@@ -1008,8 +1021,8 @@
          */
         function serializeStylesXml() {
             var fontFaceDecls, automaticStyles, masterStyles,
-                nsmap = odf.Namespaces.namespaceMap,
-                serializer = new xmldom.LSSerializer(),
+                nsmap = Namespaces.namespaceMap,
+                serializer = new LSSerializer(),
                 /**@type{!string}*/
                 s = createDocumentElement("document-styles");
 
@@ -1041,8 +1054,8 @@
          */
         function serializeContentXml() {
             var fontFaceDecls, automaticStyles,
-                nsmap = odf.Namespaces.namespaceMap,
-                serializer = new xmldom.LSSerializer(),
+                nsmap = Namespaces.namespaceMap,
+                serializer = new LSSerializer(),
                 /**@type{!string}*/
                 s = createDocumentElement("document-content");
 
@@ -1171,10 +1184,10 @@
          * elements 'document-content', 'document-styles', 'document-meta', or
          * 'document-settings' will be returned respectively.
          * @param {string} partname
-         * @return {!odf.OdfPart}
+         * @return {!OdfPart}
          **/
         this.getPart = function (partname) {
-            return new odf.OdfPart(partname, partMimetypes[partname], self, zip);
+            return new OdfPart(partname, partMimetypes[partname], self, zip);
         };
         /**
          * @param {string} url
@@ -1195,10 +1208,10 @@
             var metaElement = getEnsuredMetaElement();
 
             if (setProperties) {
-                domUtils.mapKeyValObjOntoNode(metaElement, setProperties, odf.Namespaces.lookupNamespaceURI);
+                domUtils.mapKeyValObjOntoNode(metaElement, setProperties, Namespaces.lookupNamespaceURI);
             }
             if (removedPropertyNames) {
-                domUtils.removeKeyElementsFromNode(metaElement, removedPropertyNames, odf.Namespaces.lookupNamespaceURI);
+                domUtils.removeKeyElementsFromNode(metaElement, removedPropertyNames, Namespaces.lookupNamespaceURI);
             }
         }
         this.setMetadata = setMetadata;
@@ -1208,7 +1221,7 @@
          * @return {!number} new number of editing cycles
          */
         this.incrementEditingCycles = function () {
-            var currentValueString = getMetadata(odf.Namespaces.metans, "editing-cycles"),
+            var currentValueString = getMetadata(Namespaces.metans, "editing-cycles"),
                 currentCycles = currentValueString ? parseInt(currentValueString, 10) : 0;
 
             if (isNaN(currentCycles)) {
@@ -1232,7 +1245,7 @@
             var generatorString,
                 window = runtime.getWindow();
 
-            generatorString = "WebODF/" + webodf.Version;
+            generatorString = "WebODF/" + "?";//runtime.Version;
 
             if (window) {
                 generatorString = generatorString + " " + window.navigator.userAgent;
@@ -1244,10 +1257,10 @@
         /**
          * @param {!string} type
          * @param {!boolean=} isTemplate  Default value is false.
-         * @return {!core.Zip}
+         * @return {!Zip}
          */
         function createEmptyDocument(type, isTemplate) {
-            var emptyzip = new core.Zip("", null),
+            var emptyzip = new Zip("", null),
                 mimetype = "application/vnd.oasis.opendocument." + type + (isTemplate === true ? "-template" : ""),
                 data = runtime.byteArrayFromString(
                     mimetype,
@@ -1386,30 +1399,30 @@
         };
         // initialize public variables
         this.state = OdfContainer.LOADING;
-        this.rootElement = /**@type{!odf.ODFDocumentElement}*/(
+        this.rootElement = /**@type{!ODFDocumentElement}*/(
             createElement({
-                Type: odf.ODFDocumentElement,
-                namespaceURI: odf.ODFDocumentElement.namespaceURI,
-                localName: odf.ODFDocumentElement.localName
+                Type: ODFDocumentElement,
+                namespaceURI: ODFDocumentElement.namespaceURI,
+                localName: ODFDocumentElement.localName
             })
         );
 
         // initialize private variables
-        if (urlOrType === odf.OdfContainer.DocumentType.TEXT) {
+        if (urlOrType === OdfContainer.DocumentType.TEXT) {
             zip = createEmptyDocument("text");
-        } else if (urlOrType === odf.OdfContainer.DocumentType.TEXT_TEMPLATE) {
+        } else if (urlOrType === OdfContainer.DocumentType.TEXT_TEMPLATE) {
             zip = createEmptyDocument("text", true);
-        } else if (urlOrType === odf.OdfContainer.DocumentType.PRESENTATION) {
+        } else if (urlOrType === OdfContainer.DocumentType.PRESENTATION) {
             zip = createEmptyDocument("presentation");
-        } else if (urlOrType === odf.OdfContainer.DocumentType.PRESENTATION_TEMPLATE) {
+        } else if (urlOrType === OdfContainer.DocumentType.PRESENTATION_TEMPLATE) {
             zip = createEmptyDocument("presentation", true);
-        } else if (urlOrType === odf.OdfContainer.DocumentType.SPREADSHEET) {
+        } else if (urlOrType === OdfContainer.DocumentType.SPREADSHEET) {
             zip = createEmptyDocument("spreadsheet");
-        } else if (urlOrType === odf.OdfContainer.DocumentType.SPREADSHEET_TEMPLATE) {
+        } else if (urlOrType === OdfContainer.DocumentType.SPREADSHEET_TEMPLATE) {
             zip = createEmptyDocument("spreadsheet", true);
         } else {
             url = /**@type{!string}*/(urlOrType);
-            zip = new core.Zip(url, function (err, zipobject) {
+            zip = new Zip(url, function (err, zipobject) {
                 zip = zipobject;
                 if (err) {
                     loadFromXML(url, function (xmlerr) {
@@ -1424,24 +1437,23 @@
             });
         }
     };
-    odf.OdfContainer.EMPTY = 0;
-    odf.OdfContainer.LOADING = 1;
-    odf.OdfContainer.DONE = 2;
-    odf.OdfContainer.INVALID = 3;
-    odf.OdfContainer.SAVING = 4;
-    odf.OdfContainer.MODIFIED = 5;
+    OdfContainer.EMPTY = 0;
+    OdfContainer.LOADING = 1;
+    OdfContainer.DONE = 2;
+    OdfContainer.INVALID = 3;
+    OdfContainer.SAVING = 4;
+    OdfContainer.MODIFIED = 5;
     /**
      * @param {!string} url
-     * @return {!odf.OdfContainer}
+     * @return {!OdfContainer}
      */
-    odf.OdfContainer.getContainer = function (url) {
-        return new odf.OdfContainer(url, null);
+    OdfContainer.getContainer = function (url) {
+        return new OdfContainer(url, null);
     };
-}());
 /**
  * @enum {number}
  */
-odf.OdfContainer.DocumentType = {
+OdfContainer.DocumentType = {
     TEXT:                  1,
     TEXT_TEMPLATE:         2,
     PRESENTATION:          3,
@@ -1449,3 +1461,5 @@ odf.OdfContainer.DocumentType = {
     SPREADSHEET:           5,
     SPREADSHEET_TEMPLATE:  6
 };
+/**@const*/
+exports.OdfContainer = OdfContainer;

@@ -22,21 +22,24 @@
  * @source: https://github.com/kogmbh/WebODF/
  */
 
-/*global ops, odf, core, runtime */
+var runtime = require("../runtime").runtime;
+var op = require("./Operation");
+var OpsDocument = require("./Document").Document;
+var OdtDocument = require("./OdtDocument").OdtDocument;
+var domUtils = require("../core/DomUtils");
+var odfUtils = require("../odf/OdfUtils");
 
 /**
  * @constructor
- * @implements ops.Operation
+ * @implements op.Operation
  */
-ops.OpRemoveHyperlink = function OpRemoveHyperlink() {
+function OpRemoveHyperlink() {
     "use strict";
 
-    var memberid, timestamp, position, length,
-        domUtils = core.DomUtils,
-        odfUtils = odf.OdfUtils;
+    var memberid, timestamp, position, length;
 
     /**
-     * @param {!ops.OpRemoveHyperlink.InitSpec} data
+     * @param {!OpRemoveHyperlink.InitSpec} data
      */
     this.init = function (data) {
         memberid = data.memberid;
@@ -49,10 +52,10 @@ ops.OpRemoveHyperlink = function OpRemoveHyperlink() {
     this.group = undefined;
 
     /**
-     * @param {!ops.Document} document
+     * @param {!OpsDocument} document
      */
     this.execute = function (document) {
-        var odtDocument = /**@type{ops.OdtDocument}*/(document),
+        var odtDocument = /**@type{OdtDocument}*/(document),
             range = odtDocument.convertCursorToDomRange(position, length),
             links = odfUtils.getHyperlinkElements(range),
             node;
@@ -64,7 +67,7 @@ ops.OpRemoveHyperlink = function OpRemoveHyperlink() {
         odtDocument.fixCursorPositions();
         odtDocument.getOdfCanvas().refreshSize();
         odtDocument.getOdfCanvas().rerenderAnnotations();
-        odtDocument.emit(ops.OdtDocument.signalParagraphChanged, {
+        odtDocument.emit(OdtDocument.signalParagraphChanged, {
             paragraphElement: odfUtils.getParagraphElement(node),
             memberId: memberid,
             timeStamp: timestamp
@@ -73,7 +76,7 @@ ops.OpRemoveHyperlink = function OpRemoveHyperlink() {
     };
 
     /**
-     * @return {!ops.OpRemoveHyperlink.Spec}
+     * @return {!OpRemoveHyperlink.Spec}
      */
     this.spec = function () {
         return {
@@ -84,19 +87,24 @@ ops.OpRemoveHyperlink = function OpRemoveHyperlink() {
             length: length
         };
     };
-};
-/**@typedef{{
-    optype:string,
-    memberid:string,
-    timestamp:number,
-    position:number,
-    length:number
-}}*/
-ops.OpRemoveHyperlink.Spec;
-/**@typedef{{
-    memberid:string,
-    timestamp:(number|undefined),
-    position:number,
-    length:number
-}}*/
-ops.OpRemoveHyperlink.InitSpec;
+}
+
+/**
+ * @record
+ * @extends {op.SpecBase}
+ */
+OpRemoveHyperlink.InitSpec = function() {}
+/**@type{!number}*/
+OpRemoveHyperlink.InitSpec.prototype.position;
+/**@type{!number}*/
+OpRemoveHyperlink.InitSpec.prototype.length;
+
+/**
+ * @record
+ * @extends {op.TypedOperationSpec}
+ * @extends {OpRemoveHyperlink.InitSpec}
+ */
+OpRemoveHyperlink.Spec = function() {}
+
+/**@const*/
+exports.OpRemoveHyperlink = OpRemoveHyperlink;

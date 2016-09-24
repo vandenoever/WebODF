@@ -22,29 +22,31 @@
  * @source: https://github.com/kogmbh/WebODF/
  */
 
-/*global ops*/
+var Operation = require("./Operation").Operation;
+var OperationFactory = require("./OperationFactory").OperationFactory;
+
 /*jslint emptyblock: true, unparam: true*/
 
 /**
  * @interface
  */
-ops.OperationRouter = function OperationRouter() {"use strict"; };
+function OperationRouter() {"use strict"; }
 
 /**
  * Sets the factory to use to create operation instances from operation specs.
  *
- * @param {!ops.OperationFactory} f
+ * @param {!OperationFactory} f
  * @return {undefined}
  */
-ops.OperationRouter.prototype.setOperationFactory = function (f) {"use strict"; };
+OperationRouter.prototype.setOperationFactory = function (f) {"use strict"; };
 
 /**
  * Sets the method which should be called to apply operations.
  *
- * @param {!function(!ops.Operation):boolean} playback_func
+ * @param {!function(!Operation):boolean} playback_func
  * @return {undefined}
  */
-ops.OperationRouter.prototype.setPlaybackFunction = function (playback_func) {"use strict"; };
+OperationRouter.prototype.setPlaybackFunction = function (playback_func) {"use strict"; };
 
 /**
  * Brings the locally created operations into the game.
@@ -54,10 +56,10 @@ ops.OperationRouter.prototype.setPlaybackFunction = function (playback_func) {"u
  * so it might make sense to not create any operations outside of the operation router at all
  * and instead just create specs and pass them to this push method?
  *
- * @param {!Array.<!ops.Operation>} operations
+ * @param {!Array.<!Operation>} operations
  * @return {undefined}
  */
-ops.OperationRouter.prototype.push = function (operations) {"use strict"; };
+OperationRouter.prototype.push = function (operations) {"use strict"; };
 
 /**
  * Requests a gracefull shutdown of the Operation Router.
@@ -67,7 +69,7 @@ ops.OperationRouter.prototype.push = function (operations) {"use strict"; };
  * @param {!function(!Object=)} callback
  * @return {undefined}
  */
-ops.OperationRouter.prototype.close = function (callback) {"use strict"; };
+OperationRouter.prototype.close = function (callback) {"use strict"; };
 
 /**
  * The passed cb will be called on every event of type eventId.
@@ -76,7 +78,7 @@ ops.OperationRouter.prototype.close = function (callback) {"use strict"; };
  * @param {!Function} cb
  * @return {undefined}
  */
-ops.OperationRouter.prototype.subscribe = function (eventId, cb) {"use strict"; };
+OperationRouter.prototype.subscribe = function (eventId, cb) {"use strict"; };
 
 /**
  * Undoes the subscription done with subscribe(...).
@@ -85,7 +87,7 @@ ops.OperationRouter.prototype.subscribe = function (eventId, cb) {"use strict"; 
  * @param {!Function} cb
  * @return {undefined}
  */
-ops.OperationRouter.prototype.unsubscribe = function (eventId, cb) {"use strict"; };
+OperationRouter.prototype.unsubscribe = function (eventId, cb) {"use strict"; };
 
 /**
  * Returns if there are operations done locally that have not yet been
@@ -93,25 +95,27 @@ ops.OperationRouter.prototype.unsubscribe = function (eventId, cb) {"use strict"
  *
  * @return {!boolean}
  */
-ops.OperationRouter.prototype.hasLocalUnsyncedOps = function () {"use strict"; };
+OperationRouter.prototype.hasLocalUnsyncedOps = function () {"use strict"; };
 
 /**
  * Returns if the connection to the host of the session is currently existing.
  *
  * @return {!boolean}
  */
-ops.OperationRouter.prototype.hasSessionHostConnection = function () {"use strict"; };
+OperationRouter.prototype.hasSessionHostConnection = function () {"use strict"; };
 
 /**
  * Signal that the operation router is about to process a batch of operations.
  * @const
  * @type {string}
  */
-ops.OperationRouter.signalProcessingBatchStart = "router/batchstart";
+OperationRouter.signalProcessingBatchStart = "router/batchstart";
 
 /**
  * Signal that the operation router has just completed processing a batch of operations.
  * @const
  * @type {string}
  */
-ops.OperationRouter.signalProcessingBatchEnd = "router/batchend";
+OperationRouter.signalProcessingBatchEnd = "router/batchend";
+/**@const*/
+exports.OperationRouter = OperationRouter;

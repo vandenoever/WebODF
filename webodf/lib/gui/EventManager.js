@@ -22,7 +22,11 @@
  * @source: https://github.com/kogmbh/WebODF/
  */
 
-/*global runtime, gui, core, Node */
+/*global Node */
+var runtime = require("../runtime").runtime;
+var Destroyable = require("../core/Destroyable").Destroyable;
+var EventNotifier = require("../core/EventNotifier").EventNotifier;
+var OdtDocument = require("../ops/OdtDocument").OdtDocument;
 
 /**
  * Event wiring and management abstraction layer
@@ -30,10 +34,10 @@
  * class provides a mechanism for returning event focus back to the SessionController when it has been lost to
  * an external source.
  * @constructor
- * @implements {core.Destroyable}
- * @param {!ops.OdtDocument} odtDocument
+ * @implements {Destroyable}
+ * @param {!OdtDocument} odtDocument
  */
-gui.EventManager = function EventManager(odtDocument) {
+function EventManager(odtDocument) {
     "use strict";
     var window = /**@type{!Window}*/(runtime.getWindow()),
         /**@type{!Object.<string,boolean>}*/
@@ -79,7 +83,7 @@ gui.EventManager = function EventManager(odtDocument) {
     function EventDelegate(eventName) {
         var self = this,
             recentEvents = [],
-            subscribers = new core.EventNotifier([eventName]);
+            subscribers = new EventNotifier([eventName]);
 
         /**
          * @param {!Element|!Window} eventTarget
@@ -203,7 +207,7 @@ gui.EventManager = function EventManager(odtDocument) {
     function CompoundEvent(eventName, dependencies, eventProxy) {
         var /**@type{!Object}*/
             cachedState = {},
-            subscribers = new core.EventNotifier([eventName]);
+            subscribers = new EventNotifier([eventName]);
 
         /**
          * @param {!Event} event
@@ -661,4 +665,6 @@ gui.EventManager = function EventManager(odtDocument) {
         subscribe("touchstart", declareTouchEnabled);
     }
     init();
-};
+}
+/**@const*/
+exports.EventManager = EventManager;

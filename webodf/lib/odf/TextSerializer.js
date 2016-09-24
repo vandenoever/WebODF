@@ -22,7 +22,10 @@
  * @source: https://github.com/kogmbh/WebODF/
  */
 
-/*global odf, xmldom, Node, NodeFilter, runtime*/
+/*global Node, NodeFilter*/
+
+var LSSerializerFilter = require("../xmldom/LSSerializerFilter").LSSerializerFilter;
+var odfUtils = require("./OdfUtils");
 
 /**
  * Serializes a provided node structure into plain text, eliminating everything
@@ -31,10 +34,9 @@
  * at new paragraphs
  * @constructor
  */
-odf.TextSerializer = function TextSerializer() {
+function TextSerializer() {
     "use strict";
-    var self = this,
-        odfUtils = odf.OdfUtils;
+    var self = this;
 
     /**
      * @param {!Node} node
@@ -64,7 +66,7 @@ odf.TextSerializer = function TextSerializer() {
         return s;
     }
     /**
-     * @type {xmldom.LSSerializerFilter}
+     * @type {LSSerializerFilter}
      */
     this.filter = null;
 
@@ -87,4 +89,6 @@ odf.TextSerializer = function TextSerializer() {
         }
         return plainText;
     };
-};
+}
+/**@const*/
+exports.TextSerializer = TextSerializer;

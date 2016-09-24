@@ -22,34 +22,39 @@
  * @source: https://github.com/kogmbh/WebODF/
  */
 
-/*global Node, odf, runtime, core*/
+/*global Node*/
+
+"use strict";
+var cssUnits = require("../core/CSSUnits");
+var domUtils = require("../core/DomUtils");
+var utils = require("../core/Utils");
+var Namespaces = require("./Namespaces").Namespaces;
+var OdfContainer = require("./OdfContainer").OdfContainer;
+var odfUtils = require("./OdfUtils");
+var StyleInfo = require("./StyleInfo").StyleInfo;
+var runtime = require("../runtime").runtime;
+/**@type{StyleInfo}*/
+var styleInfo = new StyleInfo();
 
 /**
  * @constructor
  */
-odf.Formatting = function Formatting() {
-    "use strict";
-    var /**@type{odf.OdfContainer}*/
+function Formatting() {
+    var /**@type{OdfContainer}*/
         odfContainer,
-        /**@type{odf.StyleInfo}*/
-        styleInfo = new odf.StyleInfo(),
         /**@const*/
-        svgns = odf.Namespaces.svgns,
+        svgns = Namespaces.svgns,
         /**@const*/
-        stylens = odf.Namespaces.stylens,
+        stylens = Namespaces.stylens,
         /**@const*/
-        textns = odf.Namespaces.textns,
+        textns = Namespaces.textns,
         /**@const*/
-        numberns = odf.Namespaces.numberns,
+        numberns = Namespaces.numberns,
         /**@const*/
-        fons = odf.Namespaces.fons,
-        odfUtils = odf.OdfUtils,
-        domUtils = core.DomUtils,
-        utils = new core.Utils(),
-        cssUnits = new core.CSSUnits(),
+        fons = Namespaces.fons,
         // TODO: needs to be extended. Possibly created together with CSS from sone default description?
         /**@const
-           @type {!Object.<!string,!odf.Formatting.StyleData>}*/
+           @type {!Object.<!string,!Formatting.StyleData>}*/
         builtInDefaultStyleAttributesByFamily = {
             'paragraph' : {
                 'style:paragraph-properties': {
@@ -71,11 +76,11 @@ odf.Formatting = function Formatting() {
      * Creates a deep copy, so the result can be modified by the callee.
      * If there are no such attributes, null is returned.
      * @param {string} styleFamily
-     * @return {!odf.Formatting.StyleData}
+     * @return {!Formatting.StyleData}
      */
     function getSystemDefaultStyleAttributes(styleFamily) {
         var result,
-            /**@type{!odf.Formatting.StyleData|undefined}*/
+            /**@type{!Formatting.StyleData|undefined}*/
             builtInDefaultStyleAttributes = builtInDefaultStyleAttributesByFamily[styleFamily];
 
         if (builtInDefaultStyleAttributes) {
@@ -90,7 +95,7 @@ odf.Formatting = function Formatting() {
     this.getSystemDefaultStyleAttributes = getSystemDefaultStyleAttributes;
 
     /**
-     * @param {!odf.OdfContainer} odfcontainer
+     * @param {!OdfContainer} odfcontainer
      * @return {undefined}
      */
     this.setOdfContainer = function (odfcontainer) {
@@ -168,7 +173,7 @@ odf.Formatting = function Formatting() {
             root = odfContainer.rootElement;
 
         hasDerivedStyles = styleInfo.hasDerivedStyles(root,
-            odf.Namespaces.lookupNamespaceURI, styleElement);
+            Namespaces.lookupNamespaceURI, styleElement);
 
         isUsed =
             new styleInfo.UsedStyleList(root.styles).uses(styleElement)
@@ -244,7 +249,7 @@ odf.Formatting = function Formatting() {
     /**
      * Returns a JSON representation of the style attributes of a given style element
      * @param {!Element} styleNode
-     * @return {!odf.Formatting.StyleData}
+     * @return {!Formatting.StyleData}
      */
     function getStyleAttributes(styleNode) {
         var i, a, map, ai,
@@ -277,7 +282,7 @@ odf.Formatting = function Formatting() {
      * inherited from it's ancestry - up to and including the document's default style for the family.
      * @param {!Element} styleNode
      * @param {!boolean=} includeSystemDefault True by default. Specify false to suppress inclusion of system defaults
-     * @return {!odf.Formatting.StyleData}
+     * @return {!Formatting.StyleData}
      */
     function getInheritedStyleAttributes(styleNode, includeSystemDefault) {
         var styleListElement = odfContainer.rootElement.styles,
@@ -424,7 +429,7 @@ odf.Formatting = function Formatting() {
      * Takes a provided style chain and calculates the resulting inherited style, starting from the outer-most to the
      * inner-most style
      * @param {!Array.<!Object>} styleChain Ordered list starting from inner-most style to outer-most style
-     * @return {!odf.Formatting.AppliedStyle}
+     * @return {!Formatting.AppliedStyle}
      */
     function calculateAppliedStyle(styleChain) {
         var mergedChildStyle = { orderedStyles: [], styleProperties: {} };
@@ -462,10 +467,10 @@ odf.Formatting = function Formatting() {
     /**
      * Returns an array of all unique styles in the given text nodes
      * @param {!Array.<!Node>} nodes
-     * @param {!Object.<!string, !odf.Formatting.AppliedStyle>=} calculatedStylesCache Short-lived cache of calculated styles.
+     * @param {!Object.<!string, !Formatting.AppliedStyle>=} calculatedStylesCache Short-lived cache of calculated styles.
      *      Useful if a function is looking up the style information for multiple nodes without updating
      *      any style definitions.
-     * @return {!Array.<!odf.Formatting.AppliedStyle>}
+     * @return {!Array.<!Formatting.AppliedStyle>}
      */
     function getAppliedStyles(nodes, calculatedStylesCache) {
         var styleChains = {},
@@ -491,10 +496,10 @@ odf.Formatting = function Formatting() {
     /**
      * Returns a the applied style to the current node
      * @param {!Node} node
-     * @param {!Object.<!string, !odf.Formatting.AppliedStyle>=} calculatedStylesCache Short-lived cache of calculated styles.
+     * @param {!Object.<!string, !Formatting.AppliedStyle>=} calculatedStylesCache Short-lived cache of calculated styles.
      *      Useful if a function is looking up the style information for multiple nodes without updating
      *      any style definitions.
-     * @return {!odf.Formatting.AppliedStyle|undefined}
+     * @return {!Formatting.AppliedStyle|undefined}
      */
     this.getAppliedStylesForElement = function (node, calculatedStylesCache) {
         return getAppliedStyles([node], calculatedStylesCache)[0];
@@ -504,14 +509,14 @@ odf.Formatting = function Formatting() {
      * Overrides the specific properties on the styleNode from the values in the supplied properties Object.
      * If a newStylePrefix is supplied, this method will automatically generate a unique name for the style node
      * @param {!Element} styleNode
-     * @param {!odf.Formatting.StyleData} properties Prefix to put in front of new auto styles
+     * @param {!Formatting.StyleData} properties Prefix to put in front of new auto styles
      */
     this.updateStyle = function (styleNode, properties) {
         var fontName, fontFaceNode, textProperties;
 
-        domUtils.mapObjOntoNode(styleNode, properties, odf.Namespaces.lookupNamespaceURI);
+        domUtils.mapObjOntoNode(styleNode, properties, Namespaces.lookupNamespaceURI);
 
-        textProperties = /**@type {!odf.Formatting.StyleData|undefined}*/(properties["style:text-properties"]);
+        textProperties = /**@type {!Formatting.StyleData|undefined}*/(properties["style:text-properties"]);
         fontName = /**@type {!string}*/(textProperties && textProperties["style:font-name"]);
         if (fontName && !getFontMap().hasOwnProperty(fontName)) {
             fontFaceNode = styleNode.ownerDocument.createElementNS(stylens, 'style:font-face');
@@ -527,8 +532,8 @@ odf.Formatting = function Formatting() {
      * This contains logic for simulating inheritance for automatic styles
      * @param {!string} parentStyleName
      * @param {!string} family
-     * @param {!odf.Formatting.StyleData} overrides
-     * @return {!odf.Formatting.StyleData}
+     * @param {!Formatting.StyleData} overrides
+     * @return {!Formatting.StyleData}
      */
     this.createDerivedStyleObject = function(parentStyleName, family, overrides) {
         var originalStyleElement = /**@type{!Element}*/(getStyleElement(parentStyleName, family)),
@@ -735,21 +740,28 @@ odf.Formatting = function Formatting() {
             height: pageHeight - marginTop - marginBottom - paddingTop - paddingBottom
         };
     };
-};
+}
 
-/**@typedef{{
-    name:!string,
-    family:!string,
-    displayName:(!string|undefined),
-    isCommonStyle:!boolean
-}}*/
-odf.Formatting.StyleMetadata;
+/**@record*/
+Formatting.StyleMetadata = function() {}
+/**@type{!string}*/
+Formatting.StyleMetadata.prototype.name;
+/**@type{!string}*/
+Formatting.StyleMetadata.prototype.family;
+/**@type{(!string|undefined)}*/
+Formatting.StyleMetadata.prototype.displayName;
+/**@type{!boolean}*/
+Formatting.StyleMetadata.prototype.isCommonStyle;
 
 /**@typedef{!Object.<!string,(!string|!Object.<!string,!string>)>}*/
-odf.Formatting.StyleData;
+Formatting.StyleData;
 
-/**@typedef{{
-    orderedStyles:!Array.<!odf.Formatting.StyleMetadata>,
-    styleProperties:!odf.Formatting.StyleData
-}}*/
-odf.Formatting.AppliedStyle;
+/**@record*/
+Formatting.AppliedStyle = function () {}
+/**@type{!Array.<!Formatting.StyleMetadata>}*/
+Formatting.AppliedStyle.prototype.orderedStyles;
+/**@type{!Formatting.StyleData}*/
+Formatting.AppliedStyle.prototype.styleProperties;
+
+/**@const*/
+exports.Formatting = Formatting;

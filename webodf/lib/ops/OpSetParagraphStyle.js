@@ -22,7 +22,12 @@
  * @source: https://github.com/kogmbh/WebODF/
  */
 
-/*global ops, odf, runtime*/
+var runtime = require("../runtime").runtime;
+var op = require("./Operation");
+var OpsDocument = require("./Document").Document;
+var OdtDocument = require("./OdtDocument").OdtDocument;
+var odfUtils = require("../odf/OdfUtils");
+var PositionIterator = require("../core/PositionIterator").PositionIterator;
 
 /**
  * Sets the paragraph style name of the specified paragraph.
@@ -30,17 +35,16 @@
  * step within the paragraph.
  *
  * @constructor
- * @implements ops.Operation
+ * @implements op.Operation
  */
-ops.OpSetParagraphStyle = function OpSetParagraphStyle() {
+function OpSetParagraphStyle() {
     "use strict";
 
     var memberid, timestamp, position, styleName,
-        textns = "urn:oasis:names:tc:opendocument:xmlns:text:1.0",
-        odfUtils = odf.OdfUtils;
+        textns = "urn:oasis:names:tc:opendocument:xmlns:text:1.0";
 
     /**
-     * @param {!ops.OpSetParagraphStyle.InitSpec} data
+     * @param {!OpSetParagraphStyle.InitSpec} data
      */
     this.init = function (data) {
         memberid = data.memberid;
@@ -55,9 +59,9 @@ ops.OpSetParagraphStyle = function OpSetParagraphStyle() {
     /**
      * Returns true if the iterator is set to the first step within the paragraph
      *
-     * @param {!ops.OdtDocument} odtDocument
+     * @param {!OdtDocument} odtDocument
      * @param {!Node} paragraphNode
-     * @param {!core.PositionIterator} iterator
+     * @param {!PositionIterator} iterator
      * @return {!boolean}
      */
     function isFirstStep(odtDocument, paragraphNode, iterator) {
@@ -70,10 +74,10 @@ ops.OpSetParagraphStyle = function OpSetParagraphStyle() {
     }
 
     /**
-     * @param {!ops.Document} document
+     * @param {!OpsDocument} document
      */
     this.execute = function (document) {
-        var odtDocument = /**@type{ops.OdtDocument}*/(document),
+        var odtDocument = /**@type{OdtDocument}*/(document),
             iterator,
             paragraphNode;
 
@@ -89,7 +93,7 @@ ops.OpSetParagraphStyle = function OpSetParagraphStyle() {
             }
 
             odtDocument.getOdfCanvas().refreshSize();
-            odtDocument.emit(ops.OdtDocument.signalParagraphChanged, {
+            odtDocument.emit(OdtDocument.signalParagraphChanged, {
                 paragraphElement: paragraphNode,
                 timeStamp: timestamp,
                 memberId: memberid
@@ -102,7 +106,7 @@ ops.OpSetParagraphStyle = function OpSetParagraphStyle() {
     };
 
     /**
-     * @return {!ops.OpSetParagraphStyle.Spec}
+     * @return {!OpSetParagraphStyle.Spec}
      */
     this.spec = function () {
         return {
@@ -113,19 +117,24 @@ ops.OpSetParagraphStyle = function OpSetParagraphStyle() {
             styleName: styleName
         };
     };
-};
-/**@typedef{{
-    optype:string,
-    memberid:string,
-    timestamp:number,
-    position:number,
-    styleName:string
-}}*/
-ops.OpSetParagraphStyle.Spec;
-/**@typedef{{
-    memberid:string,
-    timestamp:(number|undefined),
-    position:number,
-    styleName:string
-}}*/
-ops.OpSetParagraphStyle.InitSpec;
+}
+
+/**
+ * @record
+ * @extends {op.SpecBase}
+ */
+OpSetParagraphStyle.InitSpec = function() {}
+/**@type{!number}*/
+OpSetParagraphStyle.InitSpec.prototype.position;
+/**@type{!string}*/
+OpSetParagraphStyle.InitSpec.prototype.styleName;
+
+/**
+ * @record
+ * @extends {op.TypedOperationSpec}
+ * @extends {OpSetParagraphStyle.InitSpec}
+ */
+OpSetParagraphStyle.Spec = function() {}
+
+/**@const*/
+exports.OpSetParagraphStyle = OpSetParagraphStyle;

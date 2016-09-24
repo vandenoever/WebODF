@@ -22,24 +22,47 @@
  * @source: https://github.com/kogmbh/WebODF/
  */
 
-/*global runtime, ops */
+var Operation = require("./Operation").Operation;
+var OpAddMember = require("./OpAddMember").OpAddMember;
+var OpUpdateMember = require("./OpUpdateMember").OpUpdateMember;
+var OpRemoveMember = require("./OpRemoveMember").OpRemoveMember;
+var OpAddCursor = require("./OpAddCursor").OpAddCursor;
+var OpApplyDirectStyling = require("./OpApplyDirectStyling").OpApplyDirectStyling;
+var OpSetBlob = require("./OpSetBlob").OpSetBlob;
+var OpRemoveBlob = require("./OpRemoveBlob").OpRemoveBlob;
+var OpInsertImage = require("./OpInsertImage").OpInsertImage;
+var OpInsertTable = require("./OpInsertTable").OpInsertTable;
+var OpInsertText = require("./OpInsertText").OpInsertText;
+var OpRemoveText = require("./OpRemoveText").OpRemoveText;
+var OpMergeParagraph = require("./OpMergeParagraph").OpMergeParagraph;
+var OpSplitParagraph = require("./OpSplitParagraph").OpSplitParagraph;
+var OpSetParagraphStyle = require("./OpSetParagraphStyle").OpSetParagraphStyle;
+var OpUpdateParagraphStyle = require("./OpUpdateParagraphStyle").OpUpdateParagraphStyle;
+var OpAddStyle = require("./OpAddStyle").OpAddStyle;
+var OpRemoveStyle = require("./OpRemoveStyle").OpRemoveStyle;
+var OpMoveCursor = require("./OpMoveCursor").OpMoveCursor;
+var OpRemoveCursor = require("./OpRemoveCursor").OpRemoveCursor;
+var OpAddAnnotation = require("./OpAddAnnotation").OpAddAnnotation;
+var OpRemoveAnnotation = require("./OpRemoveAnnotation").OpRemoveAnnotation;
+var OpUpdateMetadata = require("./OpUpdateMetadata").OpUpdateMetadata;
+var OpApplyHyperlink = require("./OpApplyHyperlink").OpApplyHyperlink;
+var OpRemoveHyperlink = require("./OpRemoveHyperlink").OpRemoveHyperlink;
 
 /*
  * create specific operation instances.
  */
 
-
 /**
  * @constructor
  */
-ops.OperationFactory = function OperationFactory() {
+function OperationFactory() {
     "use strict";
-    var /**@type{!Object.<!string, !ops.OperationFactory.SpecConstructor>}*/
+    var /**@type{!Object.<!string, !OperationFactory.SpecConstructor>}*/
         specs;
 
     /**
-     * @param {!function(new:ops.Operation)} Constructor
-     * @return {!ops.OperationFactory.SpecConstructor}
+     * @param {!function(new:Operation)} Constructor
+     * @return {!OperationFactory.SpecConstructor}
      */
     /*jslint unparam:true*/
     function construct(Constructor) {
@@ -52,7 +75,7 @@ ops.OperationFactory = function OperationFactory() {
     /**
      * Registers an operation constructor with this operation factory
      * @param {!string} specName
-     * @param {!ops.OperationFactory.SpecConstructor} specConstructor
+     * @param {!OperationFactory.SpecConstructor} specConstructor
      * @return {undefined}
      */
     this.register = function (specName, specConstructor) {
@@ -62,10 +85,10 @@ ops.OperationFactory = function OperationFactory() {
     /**
      * Create an instance of an operation based on the provided spec
      * @param {!{optype:string}} spec
-     * @return {ops.Operation}
+     * @return {Operation}
      */
     this.create = function (spec) {
-        var /**@type{ops.Operation}*/
+        var /**@type{Operation}*/
             op = null,
             constructor = specs[spec.optype];
         if (constructor) {
@@ -77,38 +100,39 @@ ops.OperationFactory = function OperationFactory() {
 
     function init() {
         specs = {
-            AddMember: construct(ops.OpAddMember),
-            UpdateMember: construct(ops.OpUpdateMember),
-            RemoveMember: construct(ops.OpRemoveMember),
-            AddCursor: construct(ops.OpAddCursor),
-            ApplyDirectStyling: construct(ops.OpApplyDirectStyling),
-            SetBlob: construct(ops.OpSetBlob),
-            RemoveBlob: construct(ops.OpRemoveBlob),
-            InsertImage: construct(ops.OpInsertImage),
-            InsertTable: construct(ops.OpInsertTable),
-            InsertText: construct(ops.OpInsertText),
-            RemoveText: construct(ops.OpRemoveText),
-            MergeParagraph: construct(ops.OpMergeParagraph),
-            SplitParagraph: construct(ops.OpSplitParagraph),
-            SetParagraphStyle: construct(ops.OpSetParagraphStyle),
-            UpdateParagraphStyle: construct(ops.OpUpdateParagraphStyle),
-            AddStyle: construct(ops.OpAddStyle),
-            RemoveStyle: construct(ops.OpRemoveStyle),
-            MoveCursor: construct(ops.OpMoveCursor),
-            RemoveCursor: construct(ops.OpRemoveCursor),
-            AddAnnotation: construct(ops.OpAddAnnotation),
-            RemoveAnnotation: construct(ops.OpRemoveAnnotation),
-            UpdateMetadata: construct(ops.OpUpdateMetadata),
-            ApplyHyperlink: construct(ops.OpApplyHyperlink),
-            RemoveHyperlink: construct(ops.OpRemoveHyperlink)
+            AddMember: construct(OpAddMember),
+            UpdateMember: construct(OpUpdateMember),
+            RemoveMember: construct(OpRemoveMember),
+            AddCursor: construct(OpAddCursor),
+            ApplyDirectStyling: construct(OpApplyDirectStyling),
+            SetBlob: construct(OpSetBlob),
+            RemoveBlob: construct(OpRemoveBlob),
+            InsertImage: construct(OpInsertImage),
+            InsertTable: construct(OpInsertTable),
+            InsertText: construct(OpInsertText),
+            RemoveText: construct(OpRemoveText),
+            MergeParagraph: construct(OpMergeParagraph),
+            SplitParagraph: construct(OpSplitParagraph),
+            SetParagraphStyle: construct(OpSetParagraphStyle),
+            UpdateParagraphStyle: construct(OpUpdateParagraphStyle),
+            AddStyle: construct(OpAddStyle),
+            RemoveStyle: construct(OpRemoveStyle),
+            MoveCursor: construct(OpMoveCursor),
+            RemoveCursor: construct(OpRemoveCursor),
+            AddAnnotation: construct(OpAddAnnotation),
+            RemoveAnnotation: construct(OpRemoveAnnotation),
+            UpdateMetadata: construct(OpUpdateMetadata),
+            ApplyHyperlink: construct(OpApplyHyperlink),
+            RemoveHyperlink: construct(OpRemoveHyperlink)
         };
     }
 
     init();
-};
-
+}
 
 /**
- * @typedef {!function(!{optype:!string}):!ops.Operation}
+ * @typedef {!function(!{optype:!string}):!Operation}
  */
-ops.OperationFactory.SpecConstructor;
+OperationFactory.SpecConstructor;
+/**@const*/
+exports.OperationFactory = OperationFactory;

@@ -22,15 +22,8 @@
  * @source: https://github.com/kogmbh/WebODF/
  */
 
-/*global core*/
-
-(function() {
     "use strict";
 
-    /**
-     * @return {!{forEach:!function(!Array.<*>,!function(*, !function(!string):undefined):undefined,!function(?string)):undefined, destroyAll:function(!Array.<!function(!function(!Error=))>,!function(!Error=)):undefined}}
-     */
-    function createASyncSingleton() {
         /**
          * @param {!Array.<*>} items
          * @param {!function(*, !function(!string):undefined):undefined} f
@@ -88,16 +81,6 @@
             destroy(0, undefined);
         }
 
-        return {
-            forEach: forEach,
-            destroyAll: destroyAll
-        };
-    }
-
-    /**
-     * Wrapper for Async functions
-     * @const
-     * @type {!{forEach:!function(!Array.<*>,!function(*, !function(!string):undefined):undefined,!function(?string)):undefined, destroyAll:function(!Array.<!function(!function(!Error=))>,!function(!Error=)):undefined}}
-     */
-    core.Async = createASyncSingleton();
-}());
+/**@const*/
+exports.forEach = forEach;
+exports.destroyAll = destroyAll;

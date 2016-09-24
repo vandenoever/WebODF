@@ -22,16 +22,19 @@
  * @source: https://github.com/kogmbh/WebODF/
  */
 
-/*global gui, odf*/
+var Destroyable = require("../core/Destroyable").Destroyable;
+var OdfCanvas = require("../odf/OdfCanvas").OdfCanvas;
+var odfSchema = require("../odf/OdfSchema");
+var Namespaces = require("../odf/Namespaces").Namespaces;
 
 /**
  * Show ODF fields in an ODT document.
  *
  * @constructor
- * @implements {core.Destroyable}
- * @param {!odf.OdfCanvas} odfCanvas
+ * @implements {Destroyable}
+ * @param {!OdfCanvas} odfCanvas
  */
-gui.OdfFieldView = function(odfCanvas) {
+function OdfFieldView(odfCanvas) {
     "use strict";
     var /**@type{!HTMLStyleElement}*/
         style,
@@ -48,7 +51,7 @@ gui.OdfFieldView = function(odfCanvas) {
 
         sheet.type = 'text/css';
         sheet.media = 'screen, print, handheld, projection';
-        odf.Namespaces.forEachPrefix(function(prefix, ns) {
+        Namespaces.forEachPrefix(function(prefix, ns) {
             text += "@namespace " + prefix + " url(" + ns + ");\n";
         });
         sheet.appendChild(document.createTextNode(text));
@@ -86,7 +89,7 @@ gui.OdfFieldView = function(odfCanvas) {
      */
     function generateFieldCSS() {
         var /**@type{!Array.<!string>}*/
-            cssSelectors = odf.OdfSchema.getFields().map(function(prefixedName) { return prefixedName.replace(":", "|"); }),
+            cssSelectors = odfSchema.getFields().map(function(prefixedName) { return prefixedName.replace(":", "|"); }),
             highlightFields = createRule(cssSelectors, "{ background-color: #D0D0D0; }"),
             emptyCssSelectors = cssSelectors.map(function(selector) { return selector + ":empty::after"; }),
             // Ensure fields are always visible even if they contain no content
@@ -126,4 +129,6 @@ gui.OdfFieldView = function(odfCanvas) {
         style = newStyleSheet();
     }
     init();
-};
+}
+/**@const*/
+exports.OdfFieldView = OdfFieldView;

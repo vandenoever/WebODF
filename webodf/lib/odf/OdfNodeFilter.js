@@ -22,14 +22,16 @@
  * @source: https://github.com/kogmbh/WebODF/
  */
 
-/*global Node, NodeFilter, odf*/
+/*global Node, NodeFilter*/
+
+var LSSerializerFilter = require("../xmldom/LSSerializerFilter").LSSerializerFilter;
 
 /**
  * Class that filters runtime specific nodes from the DOM.
  * @constructor
- * @implements {xmldom.LSSerializerFilter}
+ * @implements {LSSerializerFilter}
  */
-odf.OdfNodeFilter = function OdfNodeFilter() {
+function OdfNodeFilter() {
     "use strict";
 
     /**
@@ -48,4 +50,6 @@ odf.OdfNodeFilter = function OdfNodeFilter() {
         }
         return result;
     };
-};
+}
+/**@const*/
+exports.OdfNodeFilter = OdfNodeFilter;

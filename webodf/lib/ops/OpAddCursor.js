@@ -22,19 +22,22 @@
  * @source: https://github.com/kogmbh/WebODF/
  */
 
-/*global ops*/
+var op = require("./Operation");
+var OdtCursor = require("./OdtCursor").OdtCursor;
+var OpsDocument = require("./Document").Document;
+var OdtDocument = require("./OdtDocument").OdtDocument;
 
 /**
  * @constructor
- * @implements ops.Operation
+ * @implements op.Operation
  */
-ops.OpAddCursor = function OpAddCursor() {
+function OpAddCursor() {
     "use strict";
 
     var memberid, timestamp;
 
     /**
-     * @param {!ops.OpAddCursor.InitSpec} data
+     * @param {!OpAddCursor.InitSpec} data
      */
     this.init = function (data) {
         memberid = data.memberid;
@@ -45,10 +48,10 @@ ops.OpAddCursor = function OpAddCursor() {
     this.group = undefined;
 
     /**
-     * @param {!ops.Document} document
+     * @param {!OpsDocument} document
      */
     this.execute = function (document) {
-        var odtDocument = /**@type{ops.OdtDocument}*/(document),
+        var odtDocument = /**@type{OdtDocument}*/(document),
             cursor = odtDocument.getCursor(memberid);
 
         // there should be none
@@ -56,14 +59,14 @@ ops.OpAddCursor = function OpAddCursor() {
             return false;
         }
 
-        cursor = new ops.OdtCursor(memberid, odtDocument);
+        cursor = new OdtCursor(memberid, odtDocument);
         odtDocument.addCursor(cursor);
-        odtDocument.emit(ops.Document.signalCursorAdded, cursor);
+        odtDocument.emit(OpsDocument.signalCursorAdded, cursor);
         return true;
     };
 
     /**
-     * @return {!ops.OpAddCursor.Spec}
+     * @return {!OpAddCursor.Spec}
      */
     this.spec = function () {
         return {
@@ -72,15 +75,19 @@ ops.OpAddCursor = function OpAddCursor() {
             timestamp: timestamp
         };
     };
-};
-/**@typedef{{
-    optype:string,
-    memberid:string,
-    timestamp:number
-}}*/
-ops.OpAddCursor.Spec;
-/**@typedef{{
-    memberid:string,
-    timestamp:(number|undefined)
-}}*/
-ops.OpAddCursor.InitSpec;
+}
+
+/**
+ * @record
+ * @extends {op.SpecBase}
+ */
+OpAddCursor.InitSpec = function() {}
+
+/**
+ * @record
+ * @extends {op.TypedOperationSpec}
+ * @extends {OpAddCursor.InitSpec}
+ */
+OpAddCursor.Spec = function() {}
+/**@const*/
+exports.OpAddCursor = OpAddCursor;

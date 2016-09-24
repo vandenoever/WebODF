@@ -22,16 +22,16 @@
  * @source: https://github.com/kogmbh/WebODF/
  */
 
-/*global gui, runtime */
+var runtime = require("../runtime").runtime;
 /*jslint bitwise: true*/
 
 /**
  * @constructor
  * @return {?}
  */
-gui.KeyboardHandler = function KeyboardHandler() {
+function KeyboardHandler() {
     "use strict";
-    var modifier = gui.KeyboardHandler.Modifier,
+    var modifier = KeyboardHandler.Modifier,
         /**@type{?function(!KeyboardEvent):boolean}*/
         defaultBinding = null,
         /**@type{!Object.<string,function():boolean>}*/
@@ -67,18 +67,18 @@ gui.KeyboardHandler = function KeyboardHandler() {
         //
         // Easiest way to cope with this is to manually normalize these events.
         switch (keyCode) {
-            case gui.KeyboardHandler.KeyCode.LeftMeta:
-            case gui.KeyboardHandler.KeyCode.RightMeta:
-            case gui.KeyboardHandler.KeyCode.MetaInMozilla:
+            case KeyboardHandler.KeyCode.LeftMeta:
+            case KeyboardHandler.KeyCode.RightMeta:
+            case KeyboardHandler.KeyCode.MetaInMozilla:
                 modifiers |= modifier.Meta;
                 break;
-            case gui.KeyboardHandler.KeyCode.Ctrl:
+            case KeyboardHandler.KeyCode.Ctrl:
                 modifiers |= modifier.Ctrl;
                 break;
-            case gui.KeyboardHandler.KeyCode.Alt:
+            case KeyboardHandler.KeyCode.Alt:
                 modifiers |= modifier.Alt;
                 break;
-            case gui.KeyboardHandler.KeyCode.Shift:
+            case KeyboardHandler.KeyCode.Shift:
                 modifiers |= modifier.Shift;
                 break;
         }
@@ -151,10 +151,10 @@ gui.KeyboardHandler = function KeyboardHandler() {
             }
         }
     };
-};
+}
 
 /**@const*/
-gui.KeyboardHandler.Modifier = {
+KeyboardHandler.Modifier = {
     None: 0,
     Meta: 1,
     Ctrl: 2,
@@ -167,7 +167,7 @@ gui.KeyboardHandler.Modifier = {
 };
 
 /**@const*/
-gui.KeyboardHandler.KeyCode = {
+KeyboardHandler.KeyCode = {
     Backspace: 8,
     Tab: 9,
     Clear: 12,
@@ -212,3 +212,5 @@ gui.KeyboardHandler.KeyCode = {
     RightMeta: 93,
     MetaInMozilla: 224
 };
+/**@const*/
+exports.KeyboardHandler = KeyboardHandler;

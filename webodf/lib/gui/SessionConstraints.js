@@ -22,7 +22,8 @@
  * @source: https://github.com/kogmbh/WebODF/
  */
 
-/*global core, runtime, gui*/
+var runtime = require("../runtime").runtime;
+var EventNotifier = require("../core/EventNotifier").EventNotifier;
 
 /**
  * This class allows handling of 'constraints', which are modelled
@@ -31,11 +32,11 @@
  * states.
  * @constructor
  */
-gui.SessionConstraints = function SessionConstraints() {
+function SessionConstraints() {
     "use strict";
 
     var constraints = {},
-        constraintNotifier = new core.EventNotifier();
+        constraintNotifier = new EventNotifier();
 
     /**
      * Register a constraint.
@@ -99,4 +100,6 @@ gui.SessionConstraints = function SessionConstraints() {
         runtime.assert(constraints.hasOwnProperty(constraint) === true, "No such constraint");
         return constraints[constraint];
     };
-};
+}
+/**@const*/
+exports.SessionConstraints = SessionConstraints;

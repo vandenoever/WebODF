@@ -22,25 +22,38 @@
  * @source: https://github.com/kogmbh/WebODF/
  */
 
-/*global runtime, odf*/
+var GraphicProperties = require("./GraphicProperties").GraphicProperties;
+var ComputedGraphicProperties = require("./GraphicProperties").ComputedGraphicProperties;
+var Namespaces = require("./Namespaces").Namespaces;
+var ODFDocumentElement = require("./OdfContainer").ODFDocumentElement;
+var PageLayout = require("./PageLayoutProperties").PageLayout;
+var PageLayoutCache = require("./PageLayoutProperties").PageLayoutCache;
+var ComputedParagraphProperties = require("./ParagraphProperties").ComputedParagraphProperties;
+var ParagraphProperties = require("./ParagraphProperties").ParagraphProperties;
+var StyleInfo = require("./StyleInfo").StyleInfo;
+var styleParseUtils = require("./StyleParseUtils");
+var ComputedTextProperties = require("./TextProperties").ComputedTextProperties;
+var TextProperties = require("./TextProperties").TextProperties;
+var runtime = require("../runtime").runtime;
+
 /*jslint emptyblock: false, unparam: false*/
 
 /**
  * @constructor
  * @param {?Element} element
- * @param {!odf.PageLayoutCache} pageLayoutCache
+ * @param {!PageLayoutCache} pageLayoutCache
  */
-odf.MasterPage = function (element, pageLayoutCache) {
+function MasterPage(element, pageLayoutCache) {
     "use strict";
     var self = this;
     /**
-     * @type {!odf.PageLayout}
+     * @type {!PageLayout}
      */
     this.pageLayout;
     function init() {
         var pageLayoutName;
         if (element) {
-            pageLayoutName = element.getAttributeNS(odf.Namespaces.stylens,
+            pageLayoutName = element.getAttributeNS(Namespaces.stylens,
                     "page-layout-name");
             self.pageLayout = pageLayoutCache.getPageLayout(pageLayoutName);
         } else {
@@ -48,44 +61,43 @@ odf.MasterPage = function (element, pageLayoutCache) {
         }
     }
     init();
-};
+}
 /*jslint emptyblock: true, unparam: true*/
 /**
  * @interface
  */
-odf.MasterPageCache = function () {"use strict"; };
+function MasterPageCache() {"use strict"; };
 /**
  * @param {!string} name
- * @return {?odf.MasterPage}
+ * @return {?MasterPage}
  */
-odf.MasterPageCache.prototype.getMasterPage = function (name) {"use strict"; };
+MasterPageCache.prototype.getMasterPage = function (name) {"use strict"; };
 /*jslint emptyblock: false, unparam: false*/
 /**
  * @constructor
  * @param {!Element} element
- * @param {!odf.StyleParseUtils} styleParseUtils
- * @param {!odf.MasterPageCache} masterPageCache
- * @param {!odf.StylePileEntry=} parent
+ * @param {!MasterPageCache} masterPageCache
+ * @param {!StylePileEntry=} parent
  */
-odf.StylePileEntry = function (element, styleParseUtils, masterPageCache, parent) {
+function StylePileEntry(element, masterPageCache, parent) {
     "use strict";
     /**
-     * @type {!odf.TextProperties|undefined}
+     * @type {!TextProperties|undefined}
      */
     this.text;
     /**
-     * @type {!odf.ParagraphProperties|undefined}
+     * @type {!ParagraphProperties|undefined}
      */
     this.paragraph;
     /**
-     * @type {!odf.GraphicProperties|undefined}
+     * @type {!GraphicProperties|undefined}
      */
     this.graphic;
     /**
-     * @return {?odf.MasterPage}
+     * @return {?MasterPage}
      */
     this.masterPage = function () {
-        var masterPageName = element.getAttributeNS(odf.Namespaces.stylens,
+        var masterPageName = element.getAttributeNS(Namespaces.stylens,
                     "master-page-name"),
             masterPage = null;
         if (masterPageName) {
@@ -94,19 +106,18 @@ odf.StylePileEntry = function (element, styleParseUtils, masterPageCache, parent
         return masterPage;
     };
     /**
-     * @param {!odf.StylePileEntry} self
+     * @param {!StylePileEntry} self
      * @return {undefined}
      */
     function init(self) {
-        var stylens = odf.Namespaces.stylens,
+        var stylens = Namespaces.stylens,
             family = element.getAttributeNS(stylens, "family"),
             e = null;
         if (family === "graphic" || family === "chart") {
             self.graphic = parent === undefined ? undefined : parent.graphic;
             e = styleParseUtils.getPropertiesElement("graphic-properties", element, e);
             if (e !== null) {
-                self.graphic = new odf.GraphicProperties(e, styleParseUtils,
-                    self.graphic);
+                self.graphic = new GraphicProperties(e, self.graphic);
             }
         }
         if (family === "paragraph" || family === "table-cell"
@@ -115,8 +126,7 @@ odf.StylePileEntry = function (element, styleParseUtils, masterPageCache, parent
             self.paragraph = parent === undefined ? undefined : parent.paragraph;
             e = styleParseUtils.getPropertiesElement("paragraph-properties", element, e);
             if (e !== null) {
-                self.paragraph = new odf.ParagraphProperties(e, styleParseUtils,
-                    self.paragraph);
+                self.paragraph = new ParagraphProperties(e, self.paragraph);
             }
         }
         if (family === "text" || family === "paragraph"
@@ -125,38 +135,37 @@ odf.StylePileEntry = function (element, styleParseUtils, masterPageCache, parent
             self.text = parent === undefined ? undefined : parent.text;
             e = styleParseUtils.getPropertiesElement("text-properties", element, e);
             if (e !== null) {
-                self.text = new odf.TextProperties(e, styleParseUtils, self.text);
+                self.text = new TextProperties(e, self.text);
             }
         }
     }
     init(this);
-};
+}
 /**
  * Collection of all the styles in the document for one style family.
  * There are separate style piles for family 'text', 'paragraph', 'graphic' etc.
  * @constructor
- * @param {!odf.StyleParseUtils} styleParseUtils
- * @param {!odf.MasterPageCache} masterPageCache
+ * @param {!MasterPageCache} masterPageCache
  */
-odf.StylePile = function (styleParseUtils, masterPageCache) {
+function StylePile(masterPageCache) {
     "use strict";
-    var stylens = odf.Namespaces.stylens,
+    var stylens = Namespaces.stylens,
         /**@type{!Object.<!string,!Element>}*/
         commonStyles = {},
         /**@type{!Object.<!string,!Element>}*/
         automaticStyles = {},
-        /**@type{!odf.StylePileEntry|undefined}*/
+        /**@type{!StylePileEntry|undefined}*/
         defaultStyle,
-        /**@type{!Object.<!string,!odf.StylePileEntry>}*/
+        /**@type{!Object.<!string,!StylePileEntry>}*/
         parsedCommonStyles = {},
-        /**@type{!Object.<!string,!odf.StylePileEntry>}*/
+        /**@type{!Object.<!string,!StylePileEntry>}*/
         parsedAutomaticStyles = {},
-        /**@type{!function(!string,!Array.<!string>):(!odf.StylePileEntry|undefined)}*/
+        /**@type{!function(!string,!Array.<!string>):(!StylePileEntry|undefined)}*/
         getCommonStyle;
     /**
      * @param {!Element} element
      * @param {!Array.<!string>} visitedStyles track visited styles to avoid loops
-     * @return {!odf.StylePileEntry}
+     * @return {!StylePileEntry}
      */
     function parseStyle(element, visitedStyles) {
         var parent,
@@ -168,13 +177,13 @@ odf.StylePile = function (styleParseUtils, masterPageCache) {
                 parent = getCommonStyle(parentName, visitedStyles);
             }
         }
-        style = new odf.StylePileEntry(element, styleParseUtils, masterPageCache, parent);
+        style = new StylePileEntry(element, masterPageCache, parent);
         return style;
     }
     /**
      * @param {!string} styleName
      * @param {!Array.<!string>} visitedStyles track visited styles to avoid loops
-     * @return {!odf.StylePileEntry|undefined}
+     * @return {!StylePileEntry|undefined}
      */
     getCommonStyle = function (styleName, visitedStyles) {
         var style = parsedCommonStyles[styleName],
@@ -191,7 +200,7 @@ odf.StylePile = function (styleParseUtils, masterPageCache) {
     };
     /**
      * @param {!string} styleName
-     * @return {!odf.StylePileEntry|undefined}
+     * @return {!StylePileEntry|undefined}
      */
     function getStyle(styleName) {
         var style = parsedAutomaticStyles[styleName]
@@ -249,54 +258,54 @@ odf.StylePile = function (styleParseUtils, masterPageCache) {
         }
     };
     /**
-     * @return {!odf.StylePileEntry|undefined}
+     * @return {!StylePileEntry|undefined}
      */
     this.getDefaultStyle = function () {
         return defaultStyle;
     };
-};
+}
 /**
  * @constructor
  */
-odf.ComputedGraphicStyle = function () {
+function ComputedGraphicStyle() {
     "use strict";
     /**
-     * @type {!odf.ComputedTextProperties}
+     * @type {!ComputedTextProperties}
      */
-    this.text = new odf.ComputedTextProperties();
+    this.text = new ComputedTextProperties();
     /**
-     * @type {!odf.ComputedParagraphProperties}
+     * @type {!ComputedParagraphProperties}
      */
-    this.paragraph = new odf.ComputedParagraphProperties();
+    this.paragraph = new ComputedParagraphProperties();
     /**
-     * @type {!odf.ComputedGraphicProperties}
+     * @type {!ComputedGraphicProperties}
      */
-    this.graphic = new odf.ComputedGraphicProperties();
-};
+    this.graphic = new ComputedGraphicProperties();
+}
 /**
  * @constructor
  */
-odf.ComputedParagraphStyle = function () {
+function ComputedParagraphStyle() {
     "use strict";
     /**
-     * @type {!odf.ComputedTextProperties}
+     * @type {!ComputedTextProperties}
      */
-    this.text = new odf.ComputedTextProperties();
+    this.text = new ComputedTextProperties();
     /**
-     * @type {!odf.ComputedParagraphProperties}
+     * @type {!ComputedParagraphProperties}
      */
-    this.paragraph = new odf.ComputedParagraphProperties();
-};
+    this.paragraph = new ComputedParagraphProperties();
+}
 /**
  * @constructor
  */
-odf.ComputedTextStyle = function () {
+function ComputedTextStyle() {
     "use strict";
     /**
-     * @type {!odf.ComputedTextProperties}
+     * @type {!ComputedTextProperties}
      */
-    this.text = new odf.ComputedTextProperties();
-};
+    this.text = new ComputedTextProperties();
+}
 /**
  * Fast and type-safe access to styling properties of an ODF document.
  * When the document changes, update() has to be called to update the
@@ -361,42 +370,41 @@ odf.ComputedTextStyle = function () {
  * XML element or attribute is missing or invalid.
  *
  * @constructor
- * @implements {odf.MasterPageCache}
- * @implements {odf.PageLayoutCache}
- * @param {!odf.ODFDocumentElement} odfroot
+ * @implements {MasterPageCache}
+ * @implements {PageLayoutCache}
+ * @param {!ODFDocumentElement} odfroot
  */
-odf.StyleCache = function (odfroot) {
+function StyleCache(odfroot) {
     "use strict";
     var self = this,
-        /**@type{!{text:!odf.StylePile,paragraph:!odf.StylePile}}*/
+        /**@type{!{text:!StylePile,paragraph:!StylePile}}*/
         stylePiles,
-        /**@type{!Object.<!string,!odf.ComputedTextStyle>}*/
+        /**@type{!Object.<!string,!ComputedTextStyle>}*/
         textStyleCache,
-        /**@type{!Object.<!string,!odf.ComputedParagraphStyle>}*/
+        /**@type{!Object.<!string,!ComputedParagraphStyle>}*/
         paragraphStyleCache,
-        /**@type{!Object.<!string,!odf.ComputedGraphicStyle>}*/
+        /**@type{!Object.<!string,!ComputedGraphicStyle>}*/
         graphicStyleCache,
-        /**@type{!odf.StylePile}*/
+        /**@type{!StylePile}*/
         textStylePile,
-        /**@type{!odf.StylePile}*/
+        /**@type{!StylePile}*/
         paragraphStylePile,
-        /**@type{!odf.StylePile}*/
+        /**@type{!StylePile}*/
         graphicStylePile,
-        textns = odf.Namespaces.textns,
-        stylens = odf.Namespaces.stylens,
-        styleInfo = new odf.StyleInfo(),
-        styleParseUtils = new odf.StyleParseUtils(),
+        textns = Namespaces.textns,
+        stylens = Namespaces.stylens,
+        styleInfo = new StyleInfo(),
         /**@type{!Object.<!string,!Element>}*/
         masterPages,
-        /**@type{!Object.<!string,!odf.MasterPage>}*/
+        /**@type{!Object.<!string,!MasterPage>}*/
         parsedMasterPages,
-        /**@type{!odf.MasterPage}*/
+        /**@type{!MasterPage}*/
         defaultMasterPage,
-        /**@type{!odf.PageLayout}*/
+        /**@type{!PageLayout}*/
         defaultPageLayout,
         /**@type{!Object.<!string,!Element>}*/
         pageLayouts,
-        /**@type{!Object.<!string,!odf.PageLayout>}*/
+        /**@type{!Object.<!string,!PageLayout>}*/
         parsedPageLayouts;
     /**
      * @param {!string} family
@@ -463,7 +471,7 @@ odf.StyleCache = function (odfroot) {
         for (i = 0; i < styleChain.length; i += 2) {
             family =  styleChain[i];
             styleName = styleChain[i + 1];
-            pile = /**@type{!odf.StylePile}*/(stylePiles[family]);
+            pile = /**@type{!StylePile}*/(stylePiles[family]);
             style = pile.getStyle(styleName);
             if (style !== undefined) {
                 properties = /**@type{!Object|undefined}*/(style[propertiesName]);
@@ -473,7 +481,7 @@ odf.StyleCache = function (odfroot) {
                 }
             }
         }
-        pile = /**@type{!odf.StylePile}*/(stylePiles[defaultFamily]);
+        pile = /**@type{!StylePile}*/(stylePiles[defaultFamily]);
         style = pile.getDefaultStyle();
         if (style) {
             properties = /**@type{!Object|undefined}*/(style[propertiesName]);
@@ -486,7 +494,7 @@ odf.StyleCache = function (odfroot) {
     /**
      * Return the paragraph style for the given content element.
      * @param {!Element} element
-     * @return {!odf.ComputedGraphicStyle}
+     * @return {!ComputedGraphicStyle}
      */
     this.getComputedGraphicStyle = function (element) {
         var styleChain = getGraphicStyleChain(element, []),
@@ -494,14 +502,14 @@ odf.StyleCache = function (odfroot) {
             computedStyle = graphicStyleCache[key];
         runtime.assert(styleChain.length % 2 === 0, "Invalid style chain.");
         if (computedStyle === undefined) {
-            computedStyle = new odf.ComputedGraphicStyle();
-            computedStyle.graphic.setGraphicProperties(/**@type{!odf.GraphicProperties|undefined}*/(
+            computedStyle = new ComputedGraphicStyle();
+            computedStyle.graphic.setGraphicProperties(/**@type{!GraphicProperties|undefined}*/(
                 createPropertiesChain(styleChain, "graphic", "graphic")[0]
             ));
-            computedStyle.text.setStyleChain(/**@type{!Array.<!odf.TextProperties>}*/(
+            computedStyle.text.setStyleChain(/**@type{!Array.<!TextProperties>}*/(
                 createPropertiesChain(styleChain, "text", "graphic")
             ));
-            computedStyle.paragraph.setStyleChain(/**@type{!Array.<!odf.ParagraphProperties>}*/(
+            computedStyle.paragraph.setStyleChain(/**@type{!Array.<!ParagraphProperties>}*/(
                 createPropertiesChain(styleChain, "paragraph", "graphic")
             ));
             graphicStyleCache[key] = computedStyle;
@@ -511,7 +519,7 @@ odf.StyleCache = function (odfroot) {
     /**
      * Return the paragraph style for the given content element.
      * @param {!Element} element
-     * @return {!odf.ComputedParagraphStyle}
+     * @return {!ComputedParagraphStyle}
      */
     this.getComputedParagraphStyle = function (element) {
         var styleChain = getParagraphStyleChain(element, []),
@@ -519,11 +527,11 @@ odf.StyleCache = function (odfroot) {
             computedStyle = paragraphStyleCache[key];
         runtime.assert(styleChain.length % 2 === 0, "Invalid style chain.");
         if (computedStyle === undefined) {
-            computedStyle = new odf.ComputedParagraphStyle();
-            computedStyle.text.setStyleChain(/**@type{!Array.<!odf.TextProperties>}*/(
+            computedStyle = new ComputedParagraphStyle();
+            computedStyle.text.setStyleChain(/**@type{!Array.<!TextProperties>}*/(
                 createPropertiesChain(styleChain, "text", "paragraph")
             ));
-            computedStyle.paragraph.setStyleChain(/**@type{!Array.<!odf.ParagraphProperties>}*/(
+            computedStyle.paragraph.setStyleChain(/**@type{!Array.<!ParagraphProperties>}*/(
                 createPropertiesChain(styleChain, "paragraph", "paragraph")
             ));
             paragraphStyleCache[key] = computedStyle;
@@ -560,7 +568,7 @@ odf.StyleCache = function (odfroot) {
     /**
      * Return the text style for the given content element.
      * @param {!Element} element
-     * @return {!odf.ComputedTextStyle}
+     * @return {!ComputedTextStyle}
      */
     this.getComputedTextStyle = function (element) {
         var styleChain = getTextStyleChain(element, []),
@@ -568,8 +576,8 @@ odf.StyleCache = function (odfroot) {
             computedStyle = textStyleCache[key];
         runtime.assert(styleChain.length % 2 === 0, "Invalid style chain.");
         if (computedStyle === undefined) {
-            computedStyle = new odf.ComputedTextStyle();
-            computedStyle.text.setStyleChain(/**@type{!Array.<!odf.TextProperties>}*/(
+            computedStyle = new ComputedTextStyle();
+            computedStyle.text.setStyleChain(/**@type{!Array.<!TextProperties>}*/(
                 createPropertiesChain(styleChain, "text", "text")
             ));
             textStyleCache[key] = computedStyle;
@@ -578,7 +586,7 @@ odf.StyleCache = function (odfroot) {
     };
     /**
      * @param {!Element} element
-     * @return {!odf.StylePile|undefined}
+     * @return {!StylePile|undefined}
      */
     function getPileFromElement(element) {
         var family = element.getAttributeNS(stylens, "family");
@@ -596,14 +604,14 @@ odf.StyleCache = function (odfroot) {
     }
     /**
      * @param {!string} name
-     * @return {!odf.PageLayout}
+     * @return {!PageLayout}
      */
     function getPageLayout(name) {
         var pageLayout = parsedPageLayouts[name], e;
         if (!pageLayout) {
             e = pageLayouts[name];
             if (e) {
-                pageLayout = new odf.PageLayout(e, styleParseUtils, defaultPageLayout);
+                pageLayout = new PageLayout(e, defaultPageLayout);
                 parsedPageLayouts[name] = pageLayout;
             } else {
                 pageLayout = defaultPageLayout;
@@ -613,14 +621,14 @@ odf.StyleCache = function (odfroot) {
     }
     this.getPageLayout = getPageLayout;
     /**
-     * @return {!odf.PageLayout}
+     * @return {!PageLayout}
      */
     this.getDefaultPageLayout = function () {
         return defaultPageLayout;
     };
     /**
      * @param {!string} name
-     * @return {?odf.MasterPage}
+     * @return {?MasterPage}
      */
     function getMasterPage(name) {
         var masterPage = parsedMasterPages[name],
@@ -628,7 +636,7 @@ odf.StyleCache = function (odfroot) {
         if (masterPage === undefined) {
             element = masterPages[name];
             if (element) {
-                masterPage = new odf.MasterPage(element, self);
+                masterPage = new MasterPage(element, self);
                 parsedMasterPages[name] = masterPage;
             } else {
                 masterPage = null;
@@ -638,7 +646,7 @@ odf.StyleCache = function (odfroot) {
     }
     this.getMasterPage = getMasterPage;
     /**
-     * @return {!odf.MasterPage}
+     * @return {!MasterPage}
      */
     this.getDefaultMasterPage = function () {
         return defaultMasterPage;
@@ -658,9 +666,9 @@ odf.StyleCache = function (odfroot) {
         parsedMasterPages = {};
         parsedPageLayouts = {};
         pageLayouts = {};
-        textStylePile = new odf.StylePile(styleParseUtils, self);
-        paragraphStylePile = new odf.StylePile(styleParseUtils, self);
-        graphicStylePile = new odf.StylePile(styleParseUtils, self);
+        textStylePile = new StylePile(self);
+        paragraphStylePile = new StylePile(self);
+        graphicStylePile = new StylePile(self);
         stylePiles = {
             text: textStylePile,
             paragraph: paragraphStylePile,
@@ -683,8 +691,7 @@ odf.StyleCache = function (odfroot) {
             }
             e = e.nextElementSibling;
         }
-        defaultPageLayout = new odf.PageLayout(defaultPageLayoutElement,
-                styleParseUtils);
+        defaultPageLayout = new PageLayout(defaultPageLayoutElement);
         // go through <office:automatic-styles/>
         e = odfroot.automaticStyles.firstElementChild;
         while (e) {
@@ -707,7 +714,9 @@ odf.StyleCache = function (odfroot) {
             }
             e = e.nextElementSibling;
         }
-        defaultMasterPage = new odf.MasterPage(defaultMasterPageElement, self);
+        defaultMasterPage = new MasterPage(defaultMasterPageElement, self);
     }
     this.update = update;
-};
+}
+/**@const*/
+exports.StyleCache = StyleCache;

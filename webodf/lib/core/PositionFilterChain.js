@@ -22,29 +22,31 @@
  * @source: https://github.com/kogmbh/WebODF/
  */
 
-/*global runtime, core*/
 /*jslint emptyblock: true, unparam: true*/
+
+var PositionIterator = require("./PositionIterator").PositionIterator;
+var PositionFilter = require("./PositionFilter").PositionFilter;
 
 /**
  * A structure that acts like a filter for all purposes,
  * and also can be combined with other instances of it's own kind or other filters.
  * @constructor
- * @implements {core.PositionFilter}
+ * @implements {PositionFilter}
  */
-core.PositionFilterChain = function PositionFilterChain() {
+function PositionFilterChain() {
     "use strict";
 
-    var /**@type{!Array.<!core.PositionFilter|!core.PositionFilterChain>}*/
+    var /**@type{!Array.<!PositionFilter|!PositionFilterChain>}*/
         filterChain = [],
         /**@const*/
-        FILTER_ACCEPT = core.PositionFilter.FilterResult.FILTER_ACCEPT,
+        FILTER_ACCEPT = PositionFilter.FilterResult.FILTER_ACCEPT,
         /**@const*/
-        FILTER_REJECT  = core.PositionFilter.FilterResult.FILTER_REJECT;
+        FILTER_REJECT  = PositionFilter.FilterResult.FILTER_REJECT;
 
     /**
      * Returns accept if all filters in the chain accept the position, else reject.
-     * @param {!core.PositionIterator} iterator
-     * @return {!core.PositionFilter.FilterResult}
+     * @param {!PositionIterator} iterator
+     * @return {!PositionFilter.FilterResult}
      */
     this.acceptPosition = function (iterator) {
         var i;
@@ -58,11 +60,12 @@ core.PositionFilterChain = function PositionFilterChain() {
 
     /**
      * Adds a filter to the filter chain.
-     * @param {!core.PositionFilter|!core.PositionFilterChain} filterInstance
+     * @param {!PositionFilter|!PositionFilterChain} filterInstance
      * @return {undefined}
      */
     this.addFilter = function (filterInstance) {
         filterChain.push(filterInstance);
     };
-
-};
+}
+/**@const*/
+exports.PositionFilterChain = PositionFilterChain;

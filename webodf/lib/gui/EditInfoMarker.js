@@ -22,21 +22,24 @@
  * @source: https://github.com/kogmbh/WebODF/
  */
 
-/*global core, gui, runtime*/
+var runtime = require("../runtime").runtime;
+var Destroyable = require("../core/Destroyable").Destroyable;
+var EditInfo = require("../ops/EditInfo").EditInfo;
+var EditInfoHandle = require("./EditInfoHandle").EditInfoHandle;
 
 /**
  * @constructor
- * @implements {core.Destroyable}
- * @param {!ops.EditInfo} editInfo  marker takes ownership
+ * @implements {Destroyable}
+ * @param {!EditInfo} editInfo  marker takes ownership
  * @param {boolean} initialVisibility Sets the initial edit info marker visibility
  */
-gui.EditInfoMarker = function EditInfoMarker(editInfo, initialVisibility) {
+function EditInfoMarker(editInfo, initialVisibility) {
     "use strict";
 
     var self = this,
         /**@type{!Element}*/
         editInfoNode,
-        /**@type{!gui.EditInfoHandle}*/
+        /**@type{!EditInfoHandle}*/
         handle,
         /**@type{!HTMLDivElement}*/
         marker,
@@ -179,11 +182,13 @@ gui.EditInfoMarker = function EditInfoMarker(editInfo, initialVisibility) {
 
         editInfoNode = editInfo.getNode();
         editInfoNode.appendChild(marker);
-        handle = new gui.EditInfoHandle(editInfoNode);
+        handle = new EditInfoHandle(editInfoNode);
         if (!initialVisibility) {
             self.hide();
         }
     }
 
     init();
-};
+}
+/**@const*/
+exports.EditInfoMarker = EditInfoMarker;

@@ -22,10 +22,14 @@
  * @source: https://github.com/kogmbh/WebODF/
  */
 
-/*global runtime, core, ops, Node*/
+/*global Node*/
 
-(function() {
-    "use strict";
+"use strict";
+var runtime = require("../runtime").runtime;
+var domUtils = require("../core/DomUtils");
+var PositionIterator = require("../core/PositionIterator").PositionIterator;
+var LoopWatchDog = require("../core/LoopWatchDog").LoopWatchDog;
+
     // Multiple cached translators may exist in the same runtime. Therefore, each node id should
     // be globally unique, so they can be safely re-used by multiple translators
     var /**@type{number}*/
@@ -42,7 +46,7 @@
      *
      * A visual example of the cache during various states is as follows:
      * legend: -=good bookmark, x=damaged bookmark, !=indeterminate bookmark, ?=requested step,
-     *          @=current iterator position
+     *          \@=current iterator position
      * 
      * [--------------] <-- cache before steps change
      * [----x!!!!!!!!!] <-- damage occurs (e.g., a step is deleted) which means all bookmarks after the damage point are
@@ -67,19 +71,18 @@
      * @constructor
      * @param {!Element} rootElement
      * @param {!number} bucketSize  Minimum number of steps between cache points
-     * @param {!function(!number, !core.PositionIterator):undefined} restoreBookmarkPosition Fine-tune the iterator position after
+     * @param {!function(!number, !PositionIterator):undefined} restoreBookmarkPosition Fine-tune the iterator position after
      *      it is set to a specific bookmark location.
      */
-    ops.StepsCache = function StepsCache(rootElement, bucketSize, restoreBookmarkPosition) {
+    function StepsCache(rootElement, bucketSize, restoreBookmarkPosition) {
         var coordinatens = "urn:webodf:names:steps",
             // Note, our coding standards usually require a key of !string for a dictionary.
             // As I'm often assigning numbers as well (which JS quite happily converts for me)
             // using both types saves me a lot of extra typing
-            /**@type{!Object.<(!string|!number), !ops.StepsCache.Bookmark>}*/
+            /**@type{!Object.<(!string|!number), !StepsCache.Bookmark>}*/
             stepToDomPoint = {},
-            /**@type{!Object.<!string, !ops.StepsCache.Bookmark>}*/
+            /**@type{!Object.<!string, !StepsCache.Bookmark>}*/
             nodeToBookmark = {},
-            domUtils = core.DomUtils,
             /**@type{!RootBookmark}*/
             basePoint,
             /**@type{!number|undefined}*/
@@ -101,7 +104,7 @@
          * @param {!string} nodeId
          * @param {!Element} bookmarkNode
          *
-         * @implements {ops.StepsCache.Bookmark}
+         * @implements {StepsCache.Bookmark}
          */
         function NodeBookmark(nodeId, bookmarkNode) {
             var self = this;
@@ -112,7 +115,7 @@
             this.previousBookmark = null;
 
             /**
-             * @param {!core.PositionIterator} iterator
+             * @param {!PositionIterator} iterator
              * @return {undefined}
              */
             this.setIteratorPosition = function(iterator) {
@@ -128,7 +131,7 @@
          * @param {!number} steps
          * @param {!Node} rootNode
          *
-         * @implements {ops.StepsCache.Bookmark}
+         * @implements {StepsCache.Bookmark}
          */
         function RootBookmark(nodeId, steps, rootNode) {
             var self = this;
@@ -139,7 +142,7 @@
             this.previousBookmark = null;
 
             /**
-             * @param {!core.PositionIterator} iterator
+             * @param {!PositionIterator} iterator
              * @return {undefined}
              */
             this.setIteratorPosition = function (iterator) {
@@ -150,8 +153,8 @@
 
         /**
          * Return a summary string of the supplied bookmark node id(s)
-         * @param {!ops.StepsCache.Bookmark} bookmark1
-         * @param {?ops.StepsCache.Bookmark=} bookmark2
+         * @param {!StepsCache.Bookmark} bookmark1
+         * @param {?StepsCache.Bookmark=} bookmark2
          * @return {!string}
          */
         function inspectBookmarks(bookmark1, bookmark2) {
@@ -164,7 +167,7 @@
 
         /**
          * Returns true if the specified bookmark is undamaged
-         * @param {!ops.StepsCache.Bookmark} bookmark
+         * @param {!StepsCache.Bookmark} bookmark
          * @return {!boolean}
          */
         function isUndamagedBookmark(bookmark) {
@@ -180,7 +183,7 @@
          * @return {undefined}
          */
         function verifyCache() {
-            if (ops.StepsCache.ENABLE_CACHE_VERIFICATION !== true) {
+            if (StepsCache.ENABLE_CACHE_VERIFICATION !== true) {
                 return;
             }
 
@@ -188,7 +191,7 @@
                 previousBookmark,
                 nextBookmark,
                 documentPosition,
-                loopCheck = new core.LoopWatchDog(0, 100000),
+                loopCheck = new LoopWatchDog(0, 100000),
                 /**@type{!Object.<!string, !string>}*/
                 stepToDomPointNodeIds = {};
 
@@ -302,7 +305,7 @@
          * The element might have been cloned from another part of the document and have a stale or duplicate
          * nodeId
          * @param {!Node} node
-         * @param {!ops.StepsCache.Bookmark} bookmark
+         * @param {!StepsCache.Bookmark} bookmark
          * @return {!boolean} True if the bookmark is actually for the supplied node
          */
         function isValidBookmarkForNode(node, bookmark) {
@@ -313,7 +316,7 @@
          * Fetches (or creates) a bookmark for the specified node.
          *
          * @param {!Element} node
-         * @return {!ops.StepsCache.Bookmark}
+         * @return {!StepsCache.Bookmark}
          */
         function getNodeBookmark(node) {
             var nodeId = getNodeId(node) || setNodeId(node),
@@ -332,12 +335,12 @@
         /**
          * Returns the closest undamaged bookmark before or at the specified step
          * @param {!number} steps
-         * @return {!ops.StepsCache.Bookmark}
+         * @return {!StepsCache.Bookmark}
          */
         function getClosestBookmark(steps) {
             var cacheBucket,
                 cachePoint,
-                loopGuard = new core.LoopWatchDog(0, 10000);
+                loopGuard = new LoopWatchDog(0, 10000);
 
             // This function promises to return an undamaged bookmark at all times.
             // Easiest way to ensure this is don't allow requests to damaged sections
@@ -365,8 +368,8 @@
 
         /**
          * Returns the closest undamaged bookmark before (or equal to) the supplied bookmark
-         * @param {!ops.StepsCache.Bookmark} bookmark
-         * @return {!ops.StepsCache.Bookmark}
+         * @param {!StepsCache.Bookmark} bookmark
+         * @return {!StepsCache.Bookmark}
          */
         function getUndamagedBookmark(bookmark) {
             // Based on logic in the repairCacheUpToStep, a damaged bookmark is guaranteed to have it's
@@ -380,7 +383,7 @@
 
         /**
          * Remove a bookmark from the cache chain
-         * @param {!ops.StepsCache.Bookmark} currentBookmark
+         * @param {!StepsCache.Bookmark} currentBookmark
          * @return {undefined}
          */
         function removeBookmark(currentBookmark) {
@@ -395,8 +398,8 @@
 
         /**
          * Returns true if the newBookmark is already directly on or after the previous bookmark
-         * @param {!ops.StepsCache.Bookmark} previousBookmark
-         * @param {!ops.StepsCache.Bookmark} newBookmark
+         * @param {!StepsCache.Bookmark} previousBookmark
+         * @param {!StepsCache.Bookmark} newBookmark
          * @return {!boolean}
          */
         function isAlreadyInOrder(previousBookmark, newBookmark) {
@@ -405,8 +408,8 @@
 
         /**
          * Insert a bookmark into the cache chain just after the previous bookmark
-         * @param {!ops.StepsCache.Bookmark} previousBookmark
-         * @param {!ops.StepsCache.Bookmark} newBookmark
+         * @param {!StepsCache.Bookmark} previousBookmark
+         * @param {!StepsCache.Bookmark} newBookmark
          * @return {undefined}
          */
         function insertBookmark(previousBookmark, newBookmark) {
@@ -422,7 +425,7 @@
                     while ((newBookmark.node.compareDocumentPosition(previousBookmark.node) & DOCUMENT_POSITION_FOLLOWING) !== 0
                             && previousBookmark !== basePoint) {
                         // if the previous bookmark FOLLOWS the new bookmark, navigate back one
-                        previousBookmark = /**@type{!ops.StepsCache.Bookmark}*/(previousBookmark.previousBookmark);
+                        previousBookmark = /**@type{!StepsCache.Bookmark}*/(previousBookmark.previousBookmark);
                     }
                     /*jslint bitwise:false*/
                 }
@@ -449,7 +452,7 @@
          * removed nodes and invalid bookmarks to be removed from the cache. This function will return the closest
          * undamaged bookmark just at or prior to the supplied step.
          * @param {!number} currentIteratorStep
-         * @return {!ops.StepsCache.Bookmark}
+         * @return {!StepsCache.Bookmark}
          */
         function repairCacheUpToStep(currentIteratorStep) {
             var damagedBookmark,
@@ -540,7 +543,7 @@
          * Set the iterator to the closest known position before or at the requested step, returning the number of steps
          * from position 0.
          * @param {!number} steps
-         * @param {!core.PositionIterator} iterator
+         * @param {!PositionIterator} iterator
          * @return {!number} Corresponding step for the current iterator position
          */
         this.setToClosestStep = function (steps, iterator) {
@@ -554,7 +557,7 @@
         /**
          * Finds the nearest ancestor node that has an associated bookmark
          * @param {!Node} node
-         * @return {?ops.StepsCache.Bookmark}
+         * @return {?StepsCache.Bookmark}
          */
         function findBookmarkedAncestor(node) {
             var currentNode = node,
@@ -583,11 +586,11 @@
          * of steps from position 0.
          * @param {!Node} node
          * @param {!number} offset
-         * @param {!core.PositionIterator} iterator
+         * @param {!PositionIterator} iterator
          * @return {!number} Corresponding step for the current iterator position
          */
         this.setToClosestDomPoint = function (node, offset, iterator) {
-            var /**@type{?ops.StepsCache.Bookmark}*/
+            var /**@type{?StepsCache.Bookmark}*/
                 bookmark,
                 b,
                 /**@type{string|number}*/
@@ -653,42 +656,43 @@
      * This is primarily used in testing or during interactive diagnostics
      * @type {!boolean}
      */
-    ops.StepsCache.ENABLE_CACHE_VERIFICATION = false;
+    StepsCache.ENABLE_CACHE_VERIFICATION = false;
 
     /*jslint emptyblock: true, unparam: true*/
     /**
      * @interface
      */
-    ops.StepsCache.Bookmark = function Bookmark() { };
+    StepsCache.Bookmark = function Bookmark() { };
 
     /**
      * @type {!string}
      */
-    ops.StepsCache.Bookmark.prototype.nodeId;
+    StepsCache.Bookmark.prototype.nodeId;
 
     /**
      * @type {!Node}
      */
-    ops.StepsCache.Bookmark.prototype.node;
+    StepsCache.Bookmark.prototype.node;
 
     /**
      * @type {!number}
      */
-    ops.StepsCache.Bookmark.prototype.steps;
+    StepsCache.Bookmark.prototype.steps;
 
     /**
-     * @type {?ops.StepsCache.Bookmark}
+     * @type {?StepsCache.Bookmark}
      */
-    ops.StepsCache.Bookmark.prototype.previousBookmark;
+    StepsCache.Bookmark.prototype.previousBookmark;
 
     /**
-     * @type {?ops.StepsCache.Bookmark}
+     * @type {?StepsCache.Bookmark}
      */
-    ops.StepsCache.Bookmark.prototype.nextBookmark;
+    StepsCache.Bookmark.prototype.nextBookmark;
 
     /**
-     * @param {!core.PositionIterator} iterator
+     * @param {!PositionIterator} iterator
      * @return {undefined}
      */
-    ops.StepsCache.Bookmark.prototype.setIteratorPosition = function(iterator) { };
-}());
+    StepsCache.Bookmark.prototype.setIteratorPosition = function(iterator) { };
+/**@const*/
+exports.StepsCache = StepsCache;

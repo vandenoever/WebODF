@@ -22,7 +22,17 @@
  * @source: https://github.com/kogmbh/WebODF/
  */
 
-/*global ops, runtime, odf, core, Node, NodeFilter*/
+/*global Node, NodeFilter*/
+
+var runtime = require("../runtime").runtime;
+var op = require("./Operation");
+var OpsDocument = require("./Document").Document;
+var OdtDocument = require("./OdtDocument").OdtDocument;
+var odfUtils = require("../odf/OdfUtils");
+var domUtils = require("../core/DomUtils");
+var StepIterator = require("../core/StepIterator").StepIterator;
+var CollapsingRules = require("../odf/CollapsingRules").CollapsingRules;
+var Namespaces = require("../odf/Namespaces").Namespaces;
 
 /**
  * Merges two adjacent paragraphs together into the first paragraph. The destination paragraph
@@ -31,9 +41,9 @@
  * the source paragraph and any collapsible parents will be cleaned up.
  *
  * @constructor
- * @implements ops.Operation
+ * @implements op.Operation
  */
-ops.OpMergeParagraph = function OpMergeParagraph() {
+function OpMergeParagraph() {
     "use strict";
 
     var memberid, timestamp,
@@ -45,13 +55,11 @@ ops.OpMergeParagraph = function OpMergeParagraph() {
         sourceStartPosition,
         /**@type{!number}*/
         destinationStartPosition,
-        odfUtils = odf.OdfUtils,
-        domUtils = core.DomUtils,
         /**@const*/
-        textns = odf.Namespaces.textns;
+        textns = Namespaces.textns;
 
     /**
-     * @param {!ops.OpMergeParagraph.InitSpec} data
+     * @param {!OpMergeParagraph.InitSpec} data
      */
     this.init = function (data) {
         memberid = data.memberid;
@@ -71,7 +79,7 @@ ops.OpMergeParagraph = function OpMergeParagraph() {
      * @return {!number}
      */
     function filterEmptyGroupingElementToRemove(element) {
-        if (odf.OdfUtils.isInlineRoot(element)) {
+        if (odfUtils.isInlineRoot(element)) {
             return NodeFilter.FILTER_SKIP;
         }
         return odfUtils.isGroupingElement(element) && odfUtils.hasNoODFContent(element) ? NodeFilter.FILTER_REJECT : NodeFilter.FILTER_ACCEPT;
@@ -156,7 +164,7 @@ ops.OpMergeParagraph = function OpMergeParagraph() {
     /**
      * Discard insignificant whitespace between the start of the paragraph node and the first step in the paragraph
      *
-     * @param {!core.StepIterator} stepIterator
+     * @param {!StepIterator} stepIterator
      * @param {!Element} paragraphElement
      * @return {undefined}
      */
@@ -172,7 +180,7 @@ ops.OpMergeParagraph = function OpMergeParagraph() {
     /**
      * Discard insignificant whitespace between the last step in the paragraph and the end of the paragraph node
      *
-     * @param {!core.StepIterator} stepIterator
+     * @param {!StepIterator} stepIterator
      * @param {!Element} paragraphElement
      * @return {undefined}
      */
@@ -189,9 +197,9 @@ ops.OpMergeParagraph = function OpMergeParagraph() {
      * Fetch the paragraph at the specified step. In addition, if a stepIterator is provided,
      * set the step iterator position to the exact DOM point of the requested step.
      *
-     * @param {!ops.OdtDocument} odtDocument
+     * @param {!OdtDocument} odtDocument
      * @param {!number} steps
-     * @param {!core.StepIterator=} stepIterator
+     * @param {!StepIterator=} stepIterator
      * @return {!Element}
      */
     function getParagraphAtStep(odtDocument, steps, stepIterator) {
@@ -205,16 +213,16 @@ ops.OpMergeParagraph = function OpMergeParagraph() {
     }
 
     /**
-     * @param {!ops.Document} document
+     * @param {!OpsDocument} document
      * @return {!boolean}
      */
     this.execute = function (document) {
-        var odtDocument = /**@type{!ops.OdtDocument}*/(document),
+        var odtDocument = /**@type{!OdtDocument}*/(document),
             sourceParagraph,
             destinationParagraph,
             cursor = odtDocument.getCursor(memberid),
             rootNode = odtDocument.getRootNode(),
-            collapseRules = new odf.CollapsingRules(rootNode),
+            collapseRules = new CollapsingRules(rootNode),
             stepIterator = odtDocument.createStepIterator(rootNode, 0, [odtDocument.getPositionFilter()], rootNode),
             downgradeOffset;
 
@@ -244,7 +252,7 @@ ops.OpMergeParagraph = function OpMergeParagraph() {
         collapseRules.mergeChildrenIntoParent(sourceParagraph);
 
         // Merging removes a single step between the boundary of the two paragraphs
-        odtDocument.emit(ops.OdtDocument.signalStepsRemoved, {position: sourceStartPosition - 1});
+        odtDocument.emit(OdtDocument.signalStepsRemoved, {position: sourceStartPosition - 1});
 
         // Downgrade trailing spaces at the end of the destination paragraph, and the beginning of the source paragraph.
         // These are the only two places that might need downgrading as a result of the merge.
@@ -267,13 +275,13 @@ ops.OpMergeParagraph = function OpMergeParagraph() {
 
         if (cursor && moveCursor) {
             odtDocument.moveCursor(memberid, sourceStartPosition - 1, 0);
-            odtDocument.emit(ops.Document.signalCursorMoved, cursor);
+            odtDocument.emit(OpsDocument.signalCursorMoved, cursor);
         }
 
         odtDocument.fixCursorPositions();
         odtDocument.getOdfCanvas().refreshSize();
         // TODO: signal also the deleted paragraphs, so e.g. SessionView can clean up the EditInfo
-        odtDocument.emit(ops.OdtDocument.signalParagraphChanged, {
+        odtDocument.emit(OdtDocument.signalParagraphChanged, {
             paragraphElement: destinationParagraph,
             memberId: memberid,
             timeStamp: timestamp
@@ -284,7 +292,7 @@ ops.OpMergeParagraph = function OpMergeParagraph() {
     };
 
     /**
-     * @return {!ops.OpMergeParagraph.Spec}
+     * @return {!OpMergeParagraph.Spec}
      */
     this.spec = function () {
         return {
@@ -297,23 +305,28 @@ ops.OpMergeParagraph = function OpMergeParagraph() {
             destinationStartPosition: destinationStartPosition
         };
     };
-};
-/**@typedef{{
-    optype:string,
-    memberid:string,
-    timestamp:number,
-    moveCursor: !boolean,
-    paragraphStyleName: !string,
-    sourceStartPosition: !number,
-    destinationStartPosition: !number
-}}*/
-ops.OpMergeParagraph.Spec;
-/**@typedef{{
-    memberid:string,
-    timestamp:(number|undefined),
-    moveCursor: !boolean,
-    paragraphStyleName: !string,
-    sourceStartPosition: !number,
-    destinationStartPosition: !number
-}}*/
-ops.OpMergeParagraph.InitSpec;
+}
+
+/**
+ * @record
+ * @extends {op.SpecBase}
+ */
+OpMergeParagraph.InitSpec = function() {}
+/**@type{!boolean}*/
+OpMergeParagraph.InitSpec.prototype.moveCursor;
+/**@type{!string}*/
+OpMergeParagraph.InitSpec.prototype.paragraphStyleName;
+/**@type{!number}*/
+OpMergeParagraph.InitSpec.prototype.sourceStartPosition;
+/**@type{!number}*/
+OpMergeParagraph.InitSpec.prototype.destinationStartPosition;
+
+/**
+ * @record
+ * @extends {op.TypedOperationSpec}
+ * @extends {OpMergeParagraph.InitSpec}
+ */
+OpMergeParagraph.Spec = function() {}
+
+/**@const*/
+exports.OpMergeParagraph = OpMergeParagraph;

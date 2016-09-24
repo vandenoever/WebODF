@@ -22,19 +22,36 @@
  * @source: https://github.com/kogmbh/WebODF/
  */
 
-/*global core, ops, gui, odf, runtime*/
+var runtime = require("../runtime").runtime;
+var Namespaces = require("../odf/Namespaces").Namespaces;
+var domUtils = require("../core/DomUtils");
+var odfUtils = require("../odf/OdfUtils");
+var SessionConstraints = require("./SessionConstraints").SessionConstraints;
+var SessionContext = require("./SessionContext").SessionContext;
+var CommonConstraints = require("./CommonConstraints").CommonConstraints;
+var Destroyable = require("../core/Destroyable").Destroyable;
+var StepIterator = require("../core/StepIterator").StepIterator;
+var StepDirection = require("../core/enums").StepDirection;
+var Operation = require("../ops/Operation").Operation;
+var OpMergeParagraph = require("../ops/OpMergeParagraph").OpMergeParagraph;
+var OpRemoveText = require("../ops/OpRemoveText").OpRemoveText;
+var OpSplitParagraph = require("../ops/OpSplitParagraph").OpSplitParagraph;
+var OpInsertText = require("../ops/OpInsertText").OpInsertText;
+var OpsDocument = require("../ops/Document").Document;
+var OdtCursor = require("../ops/OdtCursor").OdtCursor;
+var Session = require("../ops/Session").Session;
 
 /**
  * @constructor
- * @implements {core.Destroyable}
- * @param {!ops.Session} session
- * @param {!gui.SessionConstraints} sessionConstraints
- * @param {!gui.SessionContext} sessionContext
+ * @implements {Destroyable}
+ * @param {!Session} session
+ * @param {!SessionConstraints} sessionConstraints
+ * @param {!SessionContext} sessionContext
  * @param {!string} inputMemberId
- * @param {function(!number, !number, !boolean):ops.Operation} directStyleOp
- * @param {function(!number):!Array.<!ops.Operation>} paragraphStyleOps
+ * @param {function(!number, !number, !boolean):Operation} directStyleOp
+ * @param {function(!number):!Array.<!Operation>} paragraphStyleOps
  */
-gui.TextController = function TextController(
+function TextController(
     session,
     sessionConstraints,
     sessionContext,
@@ -45,8 +62,6 @@ gui.TextController = function TextController(
     "use strict";
 
     var odtDocument = session.getOdtDocument(),
-        odfUtils = odf.OdfUtils,
-        domUtils = core.DomUtils,
         /**
          * @const
          * @type {!boolean}
@@ -59,15 +74,15 @@ gui.TextController = function TextController(
         FORWARD = true,
         isEnabled = false,
         /** @const */
-        textns = odf.Namespaces.textns,
+        textns = Namespaces.textns,
         /**@const*/
-        NEXT = core.StepDirection.NEXT;
+        NEXT = StepDirection.NEXT;
 
     /**
      * @return {undefined}
      */
     function updateEnabledState() {
-        if (sessionConstraints.getState(gui.CommonConstraints.EDIT.REVIEW_MODE) === true) {
+        if (sessionConstraints.getState(CommonConstraints.EDIT.REVIEW_MODE) === true) {
             isEnabled = /**@type{!boolean}*/(sessionContext.isLocalCursorWithinOwnAnnotation());
         } else {
             isEnabled = true;
@@ -75,7 +90,7 @@ gui.TextController = function TextController(
     }
 
     /**
-     * @param {!ops.OdtCursor} cursor
+     * @param {!OdtCursor} cursor
      * @return {undefined}
      */
     function onCursorEvent(cursor) {
@@ -138,7 +153,7 @@ gui.TextController = function TextController(
      * Creates operations to remove the provided selection and update the destination
      * paragraph's style if necessary.
      * @param {!Range} range
-     * @return {!Array.<!ops.Operation>}
+     * @return {!Array.<!Operation>}
      */
     function createRemoveSelectionOps(range) {
         var firstParagraph,
@@ -155,14 +170,14 @@ gui.TextController = function TextController(
             if (odfUtils.hasNoODFContent(firstParagraph)) {
                 // If the first paragraph is empty, the last paragraph's style wins, otherwise the first wins.
                 lastParagraph = paragraphs[paragraphs.length - 1];
-                mergedParagraphStyleName = lastParagraph.getAttributeNS(odf.Namespaces.textns, 'style-name') || "";
+                mergedParagraphStyleName = lastParagraph.getAttributeNS(Namespaces.textns, 'style-name') || "";
 
                 // Side note:
                 // According to https://developer.mozilla.org/en-US/docs/Web/API/element.getAttributeNS, if there is no
                 // explicitly defined style, getAttributeNS might return either "" or null or undefined depending on the
                 // implementation. Simplify the operation by combining all these cases to be ""
             } else {
-                mergedParagraphStyleName = firstParagraph.getAttributeNS(odf.Namespaces.textns, 'style-name') || "";
+                mergedParagraphStyleName = firstParagraph.getAttributeNS(Namespaces.textns, 'style-name') || "";
             }
         }
 
@@ -179,7 +194,7 @@ gui.TextController = function TextController(
             paragraphRange.collapse(true);
             paragraphStart = domToCursorRange(paragraphRange, paragraph, false).position;
             if (index > 0) {
-                mergeOp = new ops.OpMergeParagraph();
+                mergeOp = new OpMergeParagraph();
                 mergeOp.init({
                     memberid: inputMemberId,
                     paragraphStyleName: mergedParagraphStyleName,
@@ -201,7 +216,7 @@ gui.TextController = function TextController(
                 removeLimits = domToCursorRange(intersectionRange, paragraph, true);
 
                 if (removeLimits.length > 0) {
-                    removeOp = new ops.OpRemoveText();
+                    removeOp = new OpRemoveText();
                     removeOp.init({
                         memberid: inputMemberId,
                         position: removeLimits.position,
@@ -250,7 +265,7 @@ gui.TextController = function TextController(
             operations = operations.concat(createRemoveSelectionOps(range));
         }
 
-        op = new ops.OpSplitParagraph();
+        op = new OpSplitParagraph();
         op.init({
             memberid: inputMemberId,
             position: selection.position,
@@ -264,10 +279,10 @@ gui.TextController = function TextController(
         /*
          if (isAtEndOfParagraph) {
             paragraphNode = odfUtils.getParagraphElement(odtDocument.getCursor(inputMemberId).getNode());
-            nextStyleName = odtDocument.getFormatting().getParagraphStyleAttribute(styleName, odf.Namespaces.stylens, 'next-style-name');
+            nextStyleName = odtDocument.getFormatting().getParagraphStyleAttribute(styleName, Namespaces.stylens, 'next-style-name');
 
             if (nextStyleName && nextStyleName !== styleName) {
-                op = new ops.OpSetParagraphStyle();
+                op = new OpSetParagraphStyle();
                 op.init({
                     memberid: inputMemberId,
                     position: position + 1, // +1 should be at the start of the new paragraph
@@ -292,7 +307,7 @@ gui.TextController = function TextController(
      * The iterator is constrained within the root element for the current cursor position so
      * iteration will stop once the root is entirely walked in the requested direction
      * @param {!Element} cursorNode
-     * @return {!core.StepIterator}
+     * @return {!StepIterator}
      */
     function createStepIterator(cursorNode) {
         var cursorRoot = odtDocument.getRootElement(cursorNode),
@@ -400,7 +415,7 @@ gui.TextController = function TextController(
             useCachedStyle = true;
         }
 
-        op = new ops.OpInsertText();
+        op = new OpInsertText();
         op.init({
             memberid: inputMemberId,
             position: selection.position,
@@ -423,15 +438,17 @@ gui.TextController = function TextController(
      * @return {undefined}
      */
     this.destroy = function (callback) {
-        odtDocument.unsubscribe(ops.Document.signalCursorMoved, onCursorEvent);
-        sessionConstraints.unsubscribe(gui.CommonConstraints.EDIT.REVIEW_MODE, updateEnabledState);
+        odtDocument.unsubscribe(OpsDocument.signalCursorMoved, onCursorEvent);
+        sessionConstraints.unsubscribe(CommonConstraints.EDIT.REVIEW_MODE, updateEnabledState);
         callback();
     };
 
     function init() {
-        odtDocument.subscribe(ops.Document.signalCursorMoved, onCursorEvent);
-        sessionConstraints.subscribe(gui.CommonConstraints.EDIT.REVIEW_MODE, updateEnabledState);
+        odtDocument.subscribe(OpsDocument.signalCursorMoved, onCursorEvent);
+        sessionConstraints.subscribe(CommonConstraints.EDIT.REVIEW_MODE, updateEnabledState);
         updateEnabledState();
     }
     init();
-};
+}
+/**@const*/
+exports.TextController = TextController;

@@ -22,24 +22,27 @@
  * @source: https://github.com/kogmbh/WebODF/
  */
 
-/*global runtime, gui, odf, xmldom */
+var Destroyable = require("../core/Destroyable").Destroyable;
+var KeyboardHandler = require("./KeyboardHandler").KeyboardHandler;
+var xpath = require("../xmldom/XPath");
+var odfUtils = require("../odf/OdfUtils");
+var runtime = require("../runtime").runtime;
+var Namespaces = require("../odf/Namespaces").Namespaces;
 
 /**
  * @constructor
- * @implements {core.Destroyable}
+ * @implements {Destroyable}
  * @param {!function():!HTMLElement} getContainer Fetch the surrounding HTML container
- * @param {!gui.KeyboardHandler} keyDownHandler
- * @param {!gui.KeyboardHandler} keyUpHandler
+ * @param {!KeyboardHandler} keyDownHandler
+ * @param {!KeyboardHandler} keyUpHandler
  */
-gui.HyperlinkClickHandler = function HyperlinkClickHandler(getContainer, keyDownHandler, keyUpHandler) {
+function HyperlinkClickHandler(getContainer, keyDownHandler, keyUpHandler) {
     "use strict";
     var /**@const
          @type{!string}*/
         inactiveLinksCssClass = "webodf-inactiveLinks",
-        modifier = gui.KeyboardHandler.Modifier,
-        keyCode = gui.KeyboardHandler.KeyCode,
-        xpath = xmldom.XPath,
-        odfUtils = odf.OdfUtils,
+        modifier = KeyboardHandler.Modifier,
+        keyCode = KeyboardHandler.KeyCode,
         window = /**@type{!Window}*/(runtime.getWindow()),
         /**@type{!number}*/
         activeModifier = modifier.None,
@@ -103,12 +106,12 @@ gui.HyperlinkClickHandler = function HyperlinkClickHandler(getContainer, keyDown
             rootNode = getContainer();
             bookmarks = xpath.getODFElementsWithXPath(rootNode,
                 "//text:bookmark-start[@text:name='" + url + "']",
-                odf.Namespaces.lookupNamespaceURI);
+                Namespaces.lookupNamespaceURI);
 
             if (bookmarks.length === 0) {
                 bookmarks = xpath.getODFElementsWithXPath(rootNode,
                     "//text:bookmark[@text:name='" + url + "']",
-                    odf.Namespaces.lookupNamespaceURI);
+                    Namespaces.lookupNamespaceURI);
             }
 
             if (bookmarks.length > 0) {
@@ -219,7 +222,7 @@ gui.HyperlinkClickHandler = function HyperlinkClickHandler(getContainer, keyDown
 
     /**
      * Get the currently active modifier key. This will be equivalent to a value
-     * found in gui.KeyboardHandler.Modifier
+     * found in KeyboardHandler.Modifier
      * @return {!number}
      */
     this.getModifier = function() {
@@ -237,4 +240,6 @@ gui.HyperlinkClickHandler = function HyperlinkClickHandler(getContainer, keyDown
         cleanupEventBindings();
         callback();
     };
-};
+}
+/**@const*/
+exports.HyperlinkClickHandler = HyperlinkClickHandler;

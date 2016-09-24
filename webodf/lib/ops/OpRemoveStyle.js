@@ -22,19 +22,21 @@
  * @source: https://github.com/kogmbh/WebODF/
  */
 
-/*global ops*/
+var op = require("./Operation");
+var OpsDocument = require("./Document").Document;
+var OdtDocument = require("./OdtDocument").OdtDocument;
 
 /**
  * @constructor
- * @implements ops.Operation
+ * @implements op.Operation
  */
-ops.OpRemoveStyle = function OpRemoveStyle() {
+function OpRemoveStyle() {
     "use strict";
 
     var memberid, timestamp, styleName, styleFamily;
 
     /**
-     * @param {!ops.OpRemoveStyle.InitSpec} data
+     * @param {!OpRemoveStyle.InitSpec} data
      */
     this.init = function (data) {
         memberid = data.memberid;
@@ -47,10 +49,10 @@ ops.OpRemoveStyle = function OpRemoveStyle() {
     this.group = undefined;
 
     /**
-     * @param {!ops.Document} document
+     * @param {!OpsDocument} document
      */
     this.execute = function (document) {
-        var odtDocument = /**@type{ops.OdtDocument}*/(document),
+        var odtDocument = /**@type{OdtDocument}*/(document),
             styleNode = odtDocument.getFormatting().getStyleElement(styleName, styleFamily);
 
         if (!styleNode) {
@@ -60,12 +62,12 @@ ops.OpRemoveStyle = function OpRemoveStyle() {
         styleNode.parentNode.removeChild(styleNode);
 
         odtDocument.getOdfCanvas().refreshCSS();
-        odtDocument.emit(ops.OdtDocument.signalCommonStyleDeleted, {name: styleName, family: styleFamily});
+        odtDocument.emit(OdtDocument.signalCommonStyleDeleted, {name: styleName, family: styleFamily});
         return true;
     };
 
     /**
-     * @return {!ops.OpRemoveStyle.Spec}
+     * @return {!OpRemoveStyle.Spec}
      */
     this.spec = function () {
         return {
@@ -76,19 +78,24 @@ ops.OpRemoveStyle = function OpRemoveStyle() {
             styleFamily: styleFamily
         };
     };
-};
-/**@typedef{{
-    optype:string,
-    memberid:string,
-    timestamp:number,
-    styleName:string,
-    styleFamily:string
- }}*/
-ops.OpRemoveStyle.Spec;
-/**@typedef{{
-    memberid:string,
-    timestamp:(number|undefined),
-    styleName:string,
-    styleFamily:string
- }}*/
-ops.OpRemoveStyle.InitSpec;
+}
+
+/**
+ * @record
+ * @extends {op.SpecBase}
+ */
+OpRemoveStyle.InitSpec = function() {}
+/**@type{!string}*/
+OpRemoveStyle.InitSpec.prototype.styleName;
+/**@type{!string}*/
+OpRemoveStyle.InitSpec.prototype.styleFamily;
+
+/**
+ * @record
+ * @extends {op.TypedOperationSpec}
+ * @extends {OpRemoveStyle.InitSpec}
+ */
+OpRemoveStyle.Spec = function() {}
+
+/**@const*/
+exports.OpRemoveStyle = OpRemoveStyle;

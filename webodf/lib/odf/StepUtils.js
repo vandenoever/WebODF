@@ -22,21 +22,21 @@
  * @source: https://github.com/kogmbh/WebODF/
  */
 
-/*global runtime, odf, Node*/
+/*global Node*/
+"use strict";
+var runtime = require("../runtime").runtime;
+var StepIterator = require("../core/StepIterator").StepIterator;
 
 /**
  * Helper functions to retrieve information about an ODF document using a step iterator
- * @constructor
  */
-odf.StepUtils = function StepUtils() {
-    "use strict";
 
     /**
      * Fetch the content bounds related to the step iterator's current position. This will return the text element, or
      * the content element immediately to the left of the step. Will return undefined if there is no content to the left
      * of the step.
      *
-     * @param {!core.StepIterator} stepIterator
+     * @param {!StepIterator} stepIterator
      * @return {!{container: !Node, startOffset: !number, endOffset: !number}|undefined}
      */
     function getContentBounds(stepIterator) {
@@ -78,5 +78,5 @@ odf.StepUtils = function StepUtils() {
 
         return contentBounds;
     }
-    this.getContentBounds = getContentBounds;
-};
+/**@const*/
+exports.getContentBounds = getContentBounds;

@@ -22,21 +22,22 @@
  * @source: https://github.com/kogmbh/WebODF/
  */
 
-/*global core*/
+/*global*/
 /*jslint emptyblock: true, unparam: true*/
 
 /**
  * An operation that can be performed on a document.
  * @interface
  */
-core.Destroyable = function Destroyable() {
+function Destroyable() {
     "use strict";
-};
+}
 /**
  * Destroy the object.
  * Do not access any member of this object after this call.
  * @param {function(!Error=):undefined} callback
  * @return {undefined}
  */
-core.Destroyable.prototype.destroy = function (callback) {"use strict"; };
-
+Destroyable.prototype.destroy = function (callback) {"use strict"; };
+/**@const*/
+exports.Destroyable = Destroyable;

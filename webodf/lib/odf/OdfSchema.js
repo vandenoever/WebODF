@@ -22,19 +22,15 @@
  * @source: https://github.com/kogmbh/WebODF/
  */
 
-/*global odf, runtime*/
+"use strict";
+var runtime = require("../runtime").runtime;
+var Namespaces = require("../odf/Namespaces").Namespaces;
 
-(function() {
-    "use strict";
-
-    /**
+    /*
      * A collection of query interfaces to determine attributes about a node such as whether it
      * can contain text content, or is a field. This should be accessed via the singleton
-     * instance "odf.OdfSchema".
-     *
-     * @constructor
+     * instance "OdfSchema".
      */
-    odf.OdfSchemaImpl = function () {
         var TEXT = "text", // Editable & selectable text
             FIELD = "field", // Non-editable or selectable text
             OBJECT = "object", // Non-text object
@@ -161,7 +157,7 @@
          * @param {!string} localName
          * @return {!boolean}
          */
-        this.isTextContainer = function (namespaceURI, localName) {
+exports.isTextContainer = function (namespaceURI, localName) {
             return cache[namespaceURI + ":" + localName] === TEXT;
         };
 
@@ -172,7 +168,7 @@
          * @param {!string} localName
          * @return {!boolean}
          */
-        this.isField = function (namespaceURI, localName) {
+exports.isField = function (namespaceURI, localName) {
             return cache[namespaceURI + ":" + localName] === FIELD;
         };
 
@@ -182,7 +178,7 @@
          *
          * @return {!Array.<!string>}
          */
-        this.getFields = function() {
+exports.getFields = function() {
             return containers.filter(function(containerInfo) { return containerInfo[1] === FIELD; })
                 .map(function(containerInfo) { return containerInfo[0]; });
         };
@@ -194,7 +190,7 @@
                     nameParts = name.split(":"),
                     prefix = nameParts[0],
                     localName = nameParts[1],
-                    namespaceURI = odf.Namespaces.lookupNamespaceURI(prefix);
+                    namespaceURI = Namespaces.lookupNamespaceURI(prefix);
 
                 if (namespaceURI) {
                     cache[namespaceURI + ":" + localName] = type;
@@ -204,11 +200,3 @@
             });
         }
         init();
-    };
-
-    /**
-     * @type {!odf.OdfSchemaImpl}
-     */
-    odf.OdfSchema = new odf.OdfSchemaImpl();
-}());
-

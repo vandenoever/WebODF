@@ -22,8 +22,6 @@
  * @source: https://github.com/kogmbh/WebODF/
  */
 
-/*global core*/
-
 // TODO Apparently newer closure compilers do a better job with generics
 
 /**
@@ -36,7 +34,7 @@
  * @template T
  * @param {!function():Object} valueLoader Property value loader
  */
-core.LazyProperty = function (valueLoader) {
+function LazyProperty(valueLoader) {
     "use strict";
     var cachedValue,
         valueLoaded = false;
@@ -58,4 +56,6 @@ core.LazyProperty = function (valueLoader) {
     this.reset = function() {
         valueLoaded = false;
     };
-};
+}
+/**@const*/
+exports.LazyProperty = LazyProperty;

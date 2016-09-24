@@ -22,43 +22,40 @@
  * @source: https://github.com/kogmbh/WebODF/
  */
 
-/*global Node, xmldom, XPathResult, runtime*/
+/*global Node, XPathResult*/
 /*jslint emptyblock: true*/
+
+"use strict";
 
 /**
  * Iterator over nodes uses in the xpath implementation
  * @class
  * @interface
  */
-xmldom.XPathIterator = function XPathIterator() {"use strict"; };
+function XPathIterator() {"use strict"; };
 /**
  * @return {?Node}
  */
-xmldom.XPathIterator.prototype.next = function () {"use strict"; };
+XPathIterator.prototype.next = function () {"use strict"; };
 /**
  * @return {undefined}
  */
-xmldom.XPathIterator.prototype.reset = function () {"use strict"; };
+XPathIterator.prototype.reset = function () {"use strict"; };
 /*jslint emptyblock: false*/
 
 /**
  * @typedef{{
     steps: !Array.<{
-        predicates: !Array.<!xmldom.XPathAtom>,
+        predicates: !Array.<!XPathAtom>,
         location:   string
     }>,
     value: *
 }}*/
-xmldom.XPathAtom;
+var XPathAtom;
 
-/**
- * @return {!{getODFElementsWithXPath:function(!Element,!string,!function(string):?string):!Array.<!Element>}}
- */
-function createXPathSingleton() {
-    "use strict";
-    var /**@type{function(!xmldom.XPathIterator,!xmldom.XPathAtom,!Function):!xmldom.XPathIterator}*/
+    var /**@type{function(!XPathIterator,!XPathAtom,!Function):!XPathIterator}*/
         createXPathPathIterator,
-        /**@type{function(string,number,!Array.<!xmldom.XPathAtom>):number}*/
+        /**@type{function(string,number,!Array.<!XPathAtom>):number}*/
         parsePredicates;
     /**
      * @param {!number} a
@@ -107,10 +104,10 @@ function createXPathSingleton() {
     }
     /**
      * @param {string} xpath
-     * @return {!xmldom.XPathAtom}
+     * @return {!XPathAtom}
      */
     function parseXPath(xpath) {
-        var /**@type{!Array.<{predicates: !Array.<!xmldom.XPathAtom>,location:string}>}*/
+        var /**@type{!Array.<{predicates: !Array.<!XPathAtom>,location:string}>}*/
             steps = [],
             p = 0,
             end = xpath.length,
@@ -136,7 +133,7 @@ function createXPathSingleton() {
     /**
      * @param {string} xpath
      * @param {number} start
-     * @param {!Array.<!xmldom.XPathAtom>} predicates
+     * @param {!Array.<!XPathAtom>} predicates
      * @return {number}
      */
     parsePredicates = function parsePredicates(xpath, start, predicates) {
@@ -162,8 +159,8 @@ function createXPathSingleton() {
     /**
      * @class
      * @constructor
-     * @augments xmldom.XPathIterator
-     * @implements {xmldom.XPathIterator}
+     * @augments XPathIterator
+     * @implements {XPathIterator}
      */
     function XPathNodeIterator() {
         var /**@type{?Node}*/
@@ -195,9 +192,9 @@ function createXPathSingleton() {
     /**
      * @class
      * @constructor
-     * @augments xmldom.XPathIterator
-     * @implements {xmldom.XPathIterator}
-     * @param {xmldom.XPathIterator} it
+     * @augments XPathIterator
+     * @implements {XPathIterator}
+     * @param {XPathIterator} it
      * @param {!string} namespace
      * @param {!string} localName
      */
@@ -228,9 +225,9 @@ function createXPathSingleton() {
     /**
      * @class
      * @constructor
-     * @augments xmldom.XPathIterator
-     * @implements {xmldom.XPathIterator}
-     * @param {xmldom.XPathIterator} it
+     * @augments XPathIterator
+     * @implements {XPathIterator}
+     * @param {XPathIterator} it
      * @param {boolean} recurse
      */
     function AllChildElementIterator(it, recurse) {
@@ -275,9 +272,9 @@ function createXPathSingleton() {
     /**
      * @class
      * @constructor
-     * @augments xmldom.XPathIterator
-     * @implements {xmldom.XPathIterator}
-     * @param {xmldom.XPathIterator} it
+     * @augments XPathIterator
+     * @implements {XPathIterator}
+     * @param {XPathIterator} it
      * @param {function(Node):boolean} condition
      */
     function ConditionIterator(it, condition) {
@@ -293,7 +290,7 @@ function createXPathSingleton() {
         };
     }
     /**
-     * @param {xmldom.XPathIterator} it
+     * @param {XPathIterator} it
      * @param {string} name
      * @param {function(string):?string} namespaceResolver
      * @return {!ConditionIterator}
@@ -308,8 +305,8 @@ function createXPathSingleton() {
         });
     }
     /**
-     * @param {xmldom.XPathIterator} it
-     * @param {!xmldom.XPathAtom} p
+     * @param {XPathIterator} it
+     * @param {!XPathAtom} p
      * @param {function(string):?string} namespaceResolver
      * @return {!ConditionIterator}
      */
@@ -333,18 +330,18 @@ function createXPathSingleton() {
         });
     }
     /**
-     * @param {!Array.<!xmldom.XPathAtom>} p
+     * @param {!Array.<!XPathAtom>} p
      * @param {!number} i
-     * @return {!xmldom.XPathAtom}
+     * @return {!XPathAtom}
      */
     function item(p, i) {
         return p[i];
     }
     /**
-     * @param {!xmldom.XPathIterator} it
-     * @param {!xmldom.XPathAtom} xpath
+     * @param {!XPathIterator} it
+     * @param {!XPathAtom} xpath
      * @param {!function(string):?string} namespaceResolver
-     * @return {!xmldom.XPathIterator}
+     * @return {!XPathIterator}
      */
     createXPathPathIterator = function createXPathPathIterator(it, xpath,
                 namespaceResolver) {
@@ -422,13 +419,4 @@ function createXPathSingleton() {
         }
         return elements;
     }
-    return {
-        getODFElementsWithXPath: getODFElementsWithXPath
-    };
-}
-/**
- * Wrapper for XPath functions
- * @const
- * @type {!{getODFElementsWithXPath:function(!Element,!string,!function(string):?string):!Array.<!Element>}}
- */
-xmldom.XPath = createXPathSingleton();
+exports.getODFElementsWithXPath = getODFElementsWithXPath;

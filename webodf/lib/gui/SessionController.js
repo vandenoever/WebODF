@@ -22,15 +22,51 @@
  * @source: https://github.com/kogmbh/WebODF/
  */
 
-/*global runtime, core, gui, Node, ops, odf */
+/*global Node*/
+"use strict";
+
+var runtime = require("../runtime").runtime;
+var Session = require("../ops/Session").Session;
+var Operation = require("../ops/Operation").Operation;
+var ScheduledTask = require("../core/ScheduledTask").ScheduledTask;
+var Namespaces = require("../odf/Namespaces").Namespaces;
+var PositionFilter = require("../core/PositionFilter").PositionFilter;
+var OdtCursor = require("../ops/OdtCursor").OdtCursor;
+var UndoManager = require("./UndoManager").UndoManager;
+var OpsDocument = require("../ops/Document").Document;
+var OdtDocument = require("../ops/OdtDocument").OdtDocument;
+var task = require("../core/Task");
+var async = require("../core/Async");
+var domUtils = require("../core/DomUtils");
+var odfUtils = require("../odf/OdfUtils");
+var SessionConstraints = require("./SessionConstraints").SessionConstraints;
+var SessionContext = require("./SessionContext").SessionContext;
+var MimeDataExporter = require("./MimeDataExporter").MimeDataExporter;
+var Clipboard = require("./Clipboard").Clipboard;
+var KeyboardHandler = require("./KeyboardHandler").KeyboardHandler;
+var ObjectNameGenerator = require("../odf/ObjectNameGenerator").ObjectNameGenerator;
+var EventManager = require("./EventManager").EventManager;
+var Destroyable = require("../core/Destroyable").Destroyable;
+var IOSSafariSupport = require("./IOSSafariSupport").IOSSafariSupport;
+var OpRemoveCursor = require("../ops/OpRemoveCursor").OpRemoveCursor;
+var OpAddCursor = require("../ops/OpAddCursor").OpAddCursor;
+var SelectionController = require("./SelectionController").SelectionController;
+var MetadataController = require("./MetadataController").MetadataController;
+var HyperlinkController = require("./HyperlinkController").HyperlinkController;
+var HyperlinkClickHandler = require("./HyperlinkClickHandler").HyperlinkClickHandler;
+var InputMethodEditor = require("./InputMethodEditor").InputMethodEditor;
+var ImageSelector = require("./ImageSelector").ImageSelector;
+var ImageController = require("./ImageController").ImageController;
+var PasteController = require("./PasteController").PasteController;
+var TextController = require("./TextController").TextController;
+var AnnotationController = require("./AnnotationController").AnnotationController;
+var DirectFormattingController = require("./DirectFormattingController").DirectFormattingController;
 
 /**
  * @constructor
  * @struct
  */
-gui.SessionControllerOptions = function () {
-    "use strict";
-
+function SessionControllerOptions() {
     /**
      * Sets whether direct paragraph styling should be enabled.
      * @type {!boolean}
@@ -46,70 +82,66 @@ gui.SessionControllerOptions = function () {
      * @type {!boolean}
      */
     this.annotationsEnabled = false;
-};
+}
 
-(function () {
-    "use strict";
 
-    var /**@const*/FILTER_ACCEPT = core.PositionFilter.FilterResult.FILTER_ACCEPT;
+    var /**@const*/FILTER_ACCEPT = PositionFilter.FilterResult.FILTER_ACCEPT;
 
     /**
      * @constructor
-     * @implements {core.Destroyable}
-     * @param {!ops.Session} session
+     * @implements {Destroyable}
+     * @param {!Session} session
      * @param {!string} inputMemberId
-     * @param {!ops.OdtCursor} shadowCursor
-     * @param {!gui.SessionControllerOptions} args
+     * @param {!OdtCursor} shadowCursor
+     * @param {!SessionControllerOptions} args
      */
-    gui.SessionController = function SessionController(session, inputMemberId, shadowCursor, args) {
+    function SessionController(session, inputMemberId, shadowCursor, args) {
         var /**@type{!Window}*/window = /**@type{!Window}*/(runtime.getWindow()),
             odtDocument = session.getOdtDocument(),
-            sessionConstraints = new gui.SessionConstraints(),
-            sessionContext = new gui.SessionContext(session, inputMemberId),
-            domUtils = core.DomUtils,
-            odfUtils = odf.OdfUtils,
-            mimeDataExporter = new gui.MimeDataExporter(),
-            clipboard = new gui.Clipboard(mimeDataExporter),
-            keyDownHandler = new gui.KeyboardHandler(),
-            keyPressHandler = new gui.KeyboardHandler(),
-            keyUpHandler = new gui.KeyboardHandler(),
+            sessionConstraints = new SessionConstraints(),
+            sessionContext = new SessionContext(session, inputMemberId),
+            mimeDataExporter = new MimeDataExporter(),
+            clipboard = new Clipboard(mimeDataExporter),
+            keyDownHandler = new KeyboardHandler(),
+            keyPressHandler = new KeyboardHandler(),
+            keyUpHandler = new KeyboardHandler(),
             /**@type{boolean}*/
             clickStartedWithinCanvas = false,
-            objectNameGenerator = new odf.ObjectNameGenerator(odtDocument.getOdfCanvas().odfContainer(), inputMemberId),
+            objectNameGenerator = new ObjectNameGenerator(odtDocument.getOdfCanvas().odfContainer(), inputMemberId),
             isMouseMoved = false,
-            /**@type{core.PositionFilter}*/
+            /**@type{PositionFilter}*/
             mouseDownRootFilter = null,
             handleMouseClickTimeoutId,
             undoManager = null,
-            eventManager = new gui.EventManager(odtDocument),
+            eventManager = new EventManager(odtDocument),
             annotationsEnabled = args.annotationsEnabled,
-            annotationController = new gui.AnnotationController(session, sessionConstraints, inputMemberId),
-            directFormattingController = new gui.DirectFormattingController(session, sessionConstraints, sessionContext, inputMemberId, objectNameGenerator,
+            annotationController = new AnnotationController(session, sessionConstraints, inputMemberId),
+            directFormattingController = new DirectFormattingController(session, sessionConstraints, sessionContext, inputMemberId, objectNameGenerator,
                                                                             args.directTextStylingEnabled, args.directParagraphStylingEnabled),
-            createCursorStyleOp = /**@type {function (!number, !number, !boolean):ops.Operation}*/ (directFormattingController.createCursorStyleOp),
-            createParagraphStyleOps = /**@type {function (!number):!Array.<!ops.Operation>}*/ (directFormattingController.createParagraphStyleOps),
-            textController = new gui.TextController(session, sessionConstraints, sessionContext, inputMemberId, createCursorStyleOp, createParagraphStyleOps),
-            imageController = new gui.ImageController(session, sessionConstraints, sessionContext, inputMemberId, objectNameGenerator),
-            imageSelector = new gui.ImageSelector(odtDocument.getOdfCanvas()),
+            createCursorStyleOp = /**@type {function (!number, !number, !boolean):Operation}*/ (directFormattingController.createCursorStyleOp),
+            createParagraphStyleOps = /**@type {function (!number):!Array.<!Operation>}*/ (directFormattingController.createParagraphStyleOps),
+            textController = new TextController(session, sessionConstraints, sessionContext, inputMemberId, createCursorStyleOp, createParagraphStyleOps),
+            imageController = new ImageController(session, sessionConstraints, sessionContext, inputMemberId, objectNameGenerator),
+            imageSelector = new ImageSelector(odtDocument.getOdfCanvas()),
             shadowCursorIterator = odtDocument.createPositionIterator(odtDocument.getRootNode()),
-            /**@type{!core.ScheduledTask}*/
+            /**@type{!ScheduledTask}*/
             drawShadowCursorTask,
-            /**@type{!core.ScheduledTask}*/
+            /**@type{!ScheduledTask}*/
             redrawRegionSelectionTask,
-            pasteController = new gui.PasteController(session, sessionConstraints, sessionContext, inputMemberId),
-            inputMethodEditor = new gui.InputMethodEditor(inputMemberId, eventManager),
+            pasteController = new PasteController(session, sessionConstraints, sessionContext, inputMemberId),
+            inputMethodEditor = new InputMethodEditor(inputMemberId, eventManager),
             /**@type{number}*/
             clickCount = 0,
-            hyperlinkClickHandler = new gui.HyperlinkClickHandler(odtDocument.getOdfCanvas().getElement,
+            hyperlinkClickHandler = new HyperlinkClickHandler(odtDocument.getOdfCanvas().getElement,
                                                                     keyDownHandler, keyUpHandler),
-            hyperlinkController = new gui.HyperlinkController(session, sessionConstraints, sessionContext, inputMemberId),
-            selectionController = new gui.SelectionController(session, inputMemberId),
-            metadataController = new gui.MetadataController(session, inputMemberId),
-            modifier = gui.KeyboardHandler.Modifier,
-            keyCode = gui.KeyboardHandler.KeyCode,
+            hyperlinkController = new HyperlinkController(session, sessionConstraints, sessionContext, inputMemberId),
+            selectionController = new SelectionController(session, inputMemberId),
+            metadataController = new MetadataController(session, inputMemberId),
+            modifier = KeyboardHandler.Modifier,
+            keyCode = KeyboardHandler.KeyCode,
             isMacOS = window.navigator.appVersion.toLowerCase().indexOf("mac") !== -1,
             isIOS = ["iPad", "iPod", "iPhone"].indexOf(window.navigator.platform) !== -1,
-            /**@type{?gui.IOSSafariSupport}*/
+            /**@type{?IOSSafariSupport}*/
             iOSSafariSupport;
 
         runtime.assert(window !== null,
@@ -173,7 +205,7 @@ gui.SessionControllerOptions = function () {
             var cursor = odtDocument.getCursor(inputMemberId),
                 imageElement;
 
-            if (cursor && cursor.getSelectionType() === ops.OdtCursor.RegionSelection) {
+            if (cursor && cursor.getSelectionType() === OdtCursor.RegionSelection) {
                 imageElement = odfUtils.getImageElements(cursor.getSelectedRange())[0];
                 if (imageElement) {
                     imageSelector.select(/**@type{!Element}*/(imageElement.parentNode));
@@ -290,7 +322,7 @@ gui.SessionControllerOptions = function () {
         }
 
         /**
-         * @param {!ops.Operation} op
+         * @param {!Operation} op
          * @return {undefined}
          */
         function updateUndoStack(op) {
@@ -304,7 +336,7 @@ gui.SessionControllerOptions = function () {
          * @return {undefined}
          */
         function forwardUndoStackChange(e) {
-            odtDocument.emit(ops.OdtDocument.signalUndoStackChanged, e);
+            odtDocument.emit(OdtDocument.signalUndoStackChanged, e);
         }
 
         /**
@@ -374,7 +406,7 @@ gui.SessionControllerOptions = function () {
                             newSelectionRange.setEnd(shadowCursorIterator.container(), shadowCursorIterator.unfilteredDomOffset());
                         }
                         shadowCursor.setSelectedRange(newSelectionRange, handleEnd === 'right');
-                        odtDocument.emit(ops.Document.signalCursorMoved, shadowCursor);
+                        odtDocument.emit(OpsDocument.signalCursorMoved, shadowCursor);
                     }
                 }
             }
@@ -400,7 +432,7 @@ gui.SessionControllerOptions = function () {
                         selectionController.expandToParagraphBoundaries(selectionRange.range);
                     }
                     shadowCursor.setSelectedRange(selectionRange.range, selectionRange.hasForwardSelection);
-                    odtDocument.emit(ops.Document.signalCursorMoved, shadowCursor);
+                    odtDocument.emit(OpsDocument.signalCursorMoved, shadowCursor);
                 }
             }
         }
@@ -409,7 +441,7 @@ gui.SessionControllerOptions = function () {
          * In order for drag operations to work, the browser needs to have it's current
          * selection set. This is called on mouse down to synchronize the user's last selection
          * to the browser selection
-         * @param {ops.OdtCursor} cursor
+         * @param {OdtCursor} cursor
          * @return {undefined}
          */
         function synchronizeWindowSelection(cursor) {
@@ -739,7 +771,7 @@ gui.SessionControllerOptions = function () {
 
             if (target.className === "annotationRemoveButton") {
                 runtime.assert(annotationsEnabled, "Remove buttons are displayed on annotations while annotation editing is disabled in the controller.");
-                annotationNode = /**@type{!Element}*/(target.parentNode).getElementsByTagNameNS(odf.Namespaces.officens, 'annotation').item(0);
+                annotationNode = /**@type{!Element}*/(target.parentNode).getElementsByTagNameNS(Namespaces.officens, 'annotation').item(0);
                 annotationController.removeAnnotation(/**@type{!Element}*/(annotationNode));
                 eventManager.focus();
             } else {
@@ -794,7 +826,7 @@ gui.SessionControllerOptions = function () {
              */
             function f(e) {
                 var selectionType = odtDocument.getCursor(inputMemberId).getSelectionType();
-                if (selectionType === ops.OdtCursor.RangeSelection) {
+                if (selectionType === OdtCursor.RangeSelection) {
                     return fn(e);
                 }
                 return true;
@@ -809,7 +841,7 @@ gui.SessionControllerOptions = function () {
         function insertLocalCursor() {
             runtime.assert(session.getOdtDocument().getCursor(inputMemberId) === undefined, "Inserting local cursor a second time.");
 
-            var op = new ops.OpAddCursor();
+            var op = new OpAddCursor();
             op.init({memberid: inputMemberId});
             session.enqueue([op]);
             // Immediately capture focus when the local cursor is inserted
@@ -825,7 +857,7 @@ gui.SessionControllerOptions = function () {
         function removeLocalCursor() {
             runtime.assert(session.getOdtDocument().getCursor(inputMemberId) !== undefined, "Removing local cursor without inserting before.");
 
-            var op = new ops.OpRemoveCursor();
+            var op = new OpRemoveCursor();
             op.init({memberid: inputMemberId});
             session.enqueue([op]);
         }
@@ -835,8 +867,8 @@ gui.SessionControllerOptions = function () {
          * @return {undefined}
          */
         this.startEditing = function () {
-            inputMethodEditor.subscribe(gui.InputMethodEditor.signalCompositionStart, textController.removeCurrentSelection);
-            inputMethodEditor.subscribe(gui.InputMethodEditor.signalCompositionEnd, insertNonEmptyData);
+            inputMethodEditor.subscribe(InputMethodEditor.signalCompositionStart, textController.removeCurrentSelection);
+            inputMethodEditor.subscribe(InputMethodEditor.signalCompositionEnd, insertNonEmptyData);
 
             eventManager.subscribe("beforecut", handleBeforeCut);
             eventManager.subscribe("cut", handleCut);
@@ -912,8 +944,8 @@ gui.SessionControllerOptions = function () {
          * @return {undefined}
          */
         this.endEditing = function () {
-            inputMethodEditor.unsubscribe(gui.InputMethodEditor.signalCompositionStart, textController.removeCurrentSelection);
-            inputMethodEditor.unsubscribe(gui.InputMethodEditor.signalCompositionEnd, insertNonEmptyData);
+            inputMethodEditor.unsubscribe(InputMethodEditor.signalCompositionStart, textController.removeCurrentSelection);
+            inputMethodEditor.unsubscribe(InputMethodEditor.signalCompositionEnd, insertNonEmptyData);
 
             eventManager.unsubscribe("cut", handleCut);
             eventManager.unsubscribe("beforecut", handleBeforeCut);
@@ -967,103 +999,103 @@ gui.SessionControllerOptions = function () {
         };
 
         /**
-         * @return {!ops.Session}
+         * @return {!Session}
          */
         this.getSession = function () {
             return session;
         };
 
         /**
-         * @return {!gui.SessionConstraints}
+         * @return {!SessionConstraints}
          */
         this.getSessionConstraints = function () {
             return sessionConstraints;
         };
 
         /**
-         * @param {?gui.UndoManager} manager
+         * @param {?UndoManager} manager
          * @return {undefined}
          */
         this.setUndoManager = function (manager) {
             if (undoManager) {
-                undoManager.unsubscribe(gui.UndoManager.signalUndoStackChanged, forwardUndoStackChange);
+                undoManager.unsubscribe(UndoManager.signalUndoStackChanged, forwardUndoStackChange);
             }
 
             undoManager = manager;
             if (undoManager) {
                 undoManager.setDocument(odtDocument);
-                // As per gui.UndoManager, this should NOT fire any signals or report
+                // As per UndoManager, this should NOT fire any signals or report
                 // events being executed back to the undo manager.
                 undoManager.setPlaybackFunction(session.enqueue);
-                undoManager.subscribe(gui.UndoManager.signalUndoStackChanged, forwardUndoStackChange);
+                undoManager.subscribe(UndoManager.signalUndoStackChanged, forwardUndoStackChange);
             }
         };
 
         /**
-         * @return {?gui.UndoManager}
+         * @return {?UndoManager}
          */
         this.getUndoManager = function () {
             return undoManager;
         };
 
         /**
-         * @return {!gui.MetadataController}
+         * @return {!MetadataController}
          */
         this.getMetadataController = function () {
             return metadataController;
         };
 
         /**
-         * @return {?gui.AnnotationController}
+         * @return {?AnnotationController}
          */
         this.getAnnotationController = function () {
             return annotationController;
         };
 
         /**
-         * @return {!gui.DirectFormattingController}
+         * @return {!DirectFormattingController}
          */
         this.getDirectFormattingController = function () {
             return directFormattingController;
         };
 
         /**
-         * @return {!gui.HyperlinkClickHandler}
+         * @return {!HyperlinkClickHandler}
          */
         this.getHyperlinkClickHandler = function () {
             return hyperlinkClickHandler;
         };
 
         /**
-         * @return {!gui.HyperlinkController}
+         * @return {!HyperlinkController}
          */
         this.getHyperlinkController = function () {
             return hyperlinkController;
         };
 
         /**
-         * @return {!gui.ImageController}
+         * @return {!ImageController}
          */
         this.getImageController = function () {
             return imageController;
         };
 
         /**
-         * @return {!gui.SelectionController}
+         * @return {!SelectionController}
          */
         this.getSelectionController = function () {
             return selectionController;
         };
 
         /**
-         * @return {!gui.TextController}
+         * @return {!TextController}
          */
         this.getTextController = function () {
             return textController;
         };
 
         /**
-         * @return {!gui.EventManager}
+         * @return {!EventManager}
          */
         this.getEventManager = function() {
             return eventManager;
@@ -1071,7 +1103,7 @@ gui.SessionControllerOptions = function () {
 
         /**
          * Return the keyboard event handlers
-         * @return {{keydown: gui.KeyboardHandler, keypress: gui.KeyboardHandler}}
+         * @return {{keydown: KeyboardHandler, keypress: KeyboardHandler}}
          */
         this.getKeyboardHandlers = function () {
             return {
@@ -1100,10 +1132,10 @@ gui.SessionControllerOptions = function () {
             eventManager.unsubscribe("drag", extendSelectionByDrag);
             eventManager.unsubscribe("dragstop", updateCursorSelection);
 
-            odtDocument.unsubscribe(ops.OdtDocument.signalOperationEnd, redrawRegionSelectionTask.trigger);
-            odtDocument.unsubscribe(ops.Document.signalCursorAdded, inputMethodEditor.registerCursor);
-            odtDocument.unsubscribe(ops.Document.signalCursorRemoved, inputMethodEditor.removeCursor);
-            odtDocument.unsubscribe(ops.OdtDocument.signalOperationEnd, updateUndoStack);
+            odtDocument.unsubscribe(OdtDocument.signalOperationEnd, redrawRegionSelectionTask.trigger);
+            odtDocument.unsubscribe(OpsDocument.signalCursorAdded, inputMethodEditor.registerCursor);
+            odtDocument.unsubscribe(OpsDocument.signalCursorRemoved, inputMethodEditor.removeCursor);
+            odtDocument.unsubscribe(OdtDocument.signalOperationEnd, updateUndoStack);
 
             callback();
         }
@@ -1132,12 +1164,12 @@ gui.SessionControllerOptions = function () {
             }
 
             runtime.clearTimeout(handleMouseClickTimeoutId);
-            core.Async.destroyAll(destroyCallbacks, callback);
+            async.destroyAll(destroyCallbacks, callback);
         };
 
         function init() {
-            drawShadowCursorTask = core.Task.createRedrawTask(updateShadowCursor);
-            redrawRegionSelectionTask = core.Task.createRedrawTask(redrawRegionSelection);
+            drawShadowCursorTask = task.createRedrawTask(updateShadowCursor);
+            redrawRegionSelectionTask = task.createRedrawTask(redrawRegionSelection);
 
             keyDownHandler.bind(keyCode.Left, modifier.None, rangeSelectionOnly(selectionController.moveCursorToLeft));
             keyDownHandler.bind(keyCode.Right, modifier.None, rangeSelectionOnly(selectionController.moveCursorToRight));
@@ -1183,7 +1215,7 @@ gui.SessionControllerOptions = function () {
             }
 
             if (isIOS) {
-                iOSSafariSupport = new gui.IOSSafariSupport(eventManager);
+                iOSSafariSupport = new IOSSafariSupport(eventManager);
             }
 
             eventManager.subscribe("keydown", keyDownHandler.handleEvent);
@@ -1201,13 +1233,13 @@ gui.SessionControllerOptions = function () {
             eventManager.subscribe("drag", extendSelectionByDrag);
             eventManager.subscribe("dragstop", updateCursorSelection);
 
-            odtDocument.subscribe(ops.OdtDocument.signalOperationEnd, redrawRegionSelectionTask.trigger);
-            odtDocument.subscribe(ops.Document.signalCursorAdded, inputMethodEditor.registerCursor);
-            odtDocument.subscribe(ops.Document.signalCursorRemoved, inputMethodEditor.removeCursor);
-            odtDocument.subscribe(ops.OdtDocument.signalOperationEnd, updateUndoStack);
+            odtDocument.subscribe(OdtDocument.signalOperationEnd, redrawRegionSelectionTask.trigger);
+            odtDocument.subscribe(OpsDocument.signalCursorAdded, inputMethodEditor.registerCursor);
+            odtDocument.subscribe(OpsDocument.signalCursorRemoved, inputMethodEditor.removeCursor);
+            odtDocument.subscribe(OdtDocument.signalOperationEnd, updateUndoStack);
         }
 
         init();
-    };
-}());
-// vim:expandtab
+    }
+/**@const*/
+exports.SessionController = SessionController;

@@ -22,23 +22,30 @@
  * @source: https://github.com/kogmbh/WebODF/
  */
 
-/*global odf, core, runtime*/
+"use strict";
+var cssUnits = require("../core/CSSUnits");
+var Namespaces = require("./Namespaces").Namespaces;
+var odfUtils = require("./OdfUtils");
+var StyleTreeNode = require("./StyleTree").StyleTreeNode;
+var runtime = require("../runtime").runtime;
 
-(function () {
-    "use strict";
+/**
+ * @typedef{!Object.<string,!Object.<string,!StyleTreeNode>>}
+ */
+var Tree;
 
     var /**@const
            @type{!string}*/
-        fons = odf.Namespaces.fons,
+        fons = Namespaces.fons,
         /**@const
            @type{!string}*/
-        stylens = odf.Namespaces.stylens,
+        stylens = Namespaces.stylens,
         /**@const
            @type{!string}*/
-        textns = odf.Namespaces.textns,
+        textns = Namespaces.textns,
         /**@const
            @type{!string}*/
-        xmlns = odf.Namespaces.xmlns,
+        xmlns = Namespaces.xmlns,
         /**@const
            @type{!string}*/
         helperns = "urn:webodf:names:helper",
@@ -345,10 +352,7 @@
     /**
      * @constructor
      */
-    odf.ListStyleToCss = function ListStyleToCss() {
-
-        var cssUnits = new core.CSSUnits(),
-            odfUtils = odf.OdfUtils;
+    function ListStyleToCss() {
 
         /**
          * Takes a value with a valid CSS unit and converts it to a CSS pixel value
@@ -659,7 +663,7 @@
          * the ODF list content if they affect the final style
          * @param {!CSSStyleSheet} styleSheet
          * @param {!Element} odfBody
-         * @param {!Object.<!string, !odf.StyleTreeNode>} listStyles
+         * @param {!Object.<!string, !StyleTreeNode>} listStyles
          * @return {undefined}
          */
         function applyContentBasedStyles(styleSheet, odfBody, listStyles) {
@@ -718,7 +722,7 @@
         /**
          * Creates CSS styles from the given ODF list styles and applies them to the stylesheet
          * @param {!CSSStyleSheet} styleSheet
-         * @param {!odf.StyleTree.Tree} styleTree
+         * @param {!Tree} styleTree
          * @param {!Element} odfBody
          * @return {undefined}
          */
@@ -732,13 +736,13 @@
             /*jslint sub:false*/
             if (styleFamilyTree) {
                 Object.keys(styleFamilyTree).forEach(function (styleName) {
-                    node = /**@type{!odf.StyleTreeNode}*/(styleFamilyTree[styleName]);
+                    node = /**@type{!StyleTreeNode}*/(styleFamilyTree[styleName]);
                     addRule(styleSheet, styleName, node.element);
                 });
             }
 
             applyContentBasedStyles(styleSheet, odfBody, styleFamilyTree);
         };
-    };
-}());
-
+    }
+/**@const*/
+exports.ListStyleToCss = ListStyleToCss;

@@ -22,19 +22,21 @@
  * @source: https://github.com/kogmbh/WebODF/
  */
 
-/*global ops */
+var op = require("./Operation");
+var OpsDocument = require("./Document").Document;
+var OdtDocument = require("./OdtDocument").OdtDocument;
 
 /**
  * @constructor
- * @implements ops.Operation
+ * @implements op.Operation
  */
-ops.OpSetBlob = function OpSetBlob() {
+function OpSetBlob() {
     "use strict";
 
     var memberid, timestamp, filename, mimetype, content;
 
     /**
-     * @param {!ops.OpSetBlob.InitSpec} data
+     * @param {!OpSetBlob.InitSpec} data
      */
     this.init = function (data) {
         memberid = data.memberid;
@@ -48,16 +50,16 @@ ops.OpSetBlob = function OpSetBlob() {
     this.group = undefined;
 
     /**
-     * @param {!ops.Document} document
+     * @param {!OpsDocument} document
      */
     this.execute = function (document) {
-        var odtDocument = /**@type{ops.OdtDocument}*/(document);
+        var odtDocument = /**@type{OdtDocument}*/(document);
         odtDocument.getOdfCanvas().odfContainer().setBlob(filename, mimetype, content);
         return true;
     };
 
     /**
-     * @return {!ops.OpSetBlob.Spec}
+     * @return {!OpSetBlob.Spec}
      */
     this.spec = function () {
         return {
@@ -69,21 +71,26 @@ ops.OpSetBlob = function OpSetBlob() {
             content: content
         };
     };
-};
-/**@typedef{{
-    optype:string,
-    memberid:string,
-    timestamp:number,
-    filename:string,
-    mimetype:string,
-    content:string
- }}*/
-ops.OpSetBlob.Spec;
-/**@typedef{{
-    memberid:string,
-    timestamp:(number|undefined),
-    filename:string,
-    mimetype:string,
-    content:string
- }}*/
-ops.OpSetBlob.InitSpec;
+}
+
+/**
+ * @record
+ * @extends {op.SpecBase}
+ */
+OpSetBlob.InitSpec = function() {}
+/**@type{!string}*/
+OpSetBlob.InitSpec.prototype.filename;
+/**@type{!string}*/
+OpSetBlob.InitSpec.prototype.mimetype;
+/**@type{!string}*/
+OpSetBlob.InitSpec.prototype.content;
+
+/**
+ * @record
+ * @extends {op.TypedOperationSpec}
+ * @extends {OpSetBlob.InitSpec}
+ */
+OpSetBlob.Spec = function() {}
+
+/**@const*/
+exports.OpSetBlob = OpSetBlob;

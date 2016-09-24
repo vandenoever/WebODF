@@ -22,22 +22,27 @@
  * @source: https://github.com/kogmbh/WebODF/
  */
 
-/*global Node, odf, runtime, core*/
+/*global Node*/
+var runtime = require("../runtime").runtime;
+var Namespaces = require("./Namespaces").Namespaces;
+var Formatting = require("./Formatting").Formatting;
+var domUtils = require("../core/DomUtils");
+var LoopWatchDog = require("../core/LoopWatchDog").LoopWatchDog;
+var ObjectNameGenerator = require("./ObjectNameGenerator").ObjectNameGenerator;
 
 /**
  * Class for applying a supplied text style to the given text nodes.
  * @constructor
- * @param {!odf.ObjectNameGenerator} objectNameGenerator Source for generating unique automatic style names
- * @param {!odf.Formatting} formatting Formatting retrieval and computation store
+ * @param {!ObjectNameGenerator} objectNameGenerator Source for generating unique automatic style names
+ * @param {!Formatting} formatting Formatting retrieval and computation store
  * @param {!Node} automaticStyles Root element for automatic styles
  */
-odf.TextStyleApplicator = function TextStyleApplicator(objectNameGenerator, formatting, automaticStyles) {
+function TextStyleApplicator(objectNameGenerator, formatting, automaticStyles) {
     "use strict";
-    var domUtils = core.DomUtils,
+    var /**@const*/
+        textns = Namespaces.textns,
         /**@const*/
-        textns = odf.Namespaces.textns,
-        /**@const*/
-        stylens = odf.Namespaces.stylens,
+        stylens = Namespaces.stylens,
         /**@const*/
         textProperties = "style:text-properties",
         /**@const*/
@@ -151,7 +156,7 @@ odf.TextStyleApplicator = function TextStyleApplicator(objectNameGenerator, form
             moveTrailing,
             node,
             nextNode,
-            loopGuard = new core.LoopWatchDog(10000),
+            loopGuard = new LoopWatchDog(10000),
             /**@type{!Array.<!Node>}*/
             styledNodes = [];
 
@@ -242,4 +247,6 @@ odf.TextStyleApplicator = function TextStyleApplicator(objectNameGenerator, form
         }
         textNodes.forEach(apply);
     };
-};
+}
+/**@const*/
+exports.TextStyleApplicator = TextStyleApplicator;

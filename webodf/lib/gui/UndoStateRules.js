@@ -22,7 +22,8 @@
  * @source: https://github.com/kogmbh/WebODF/
  */
 
-/*global gui, runtime*/
+var runtime = require("../runtime").runtime;
+var Operation = require("../ops/Operation").Operation;
 
 /**
  * This class attempts to implement undo/redo behaviour identical
@@ -36,7 +37,7 @@
  *      start with non-edit operations if it contains no further edit ops.
  * @constructor
  */
-gui.UndoStateRules = function UndoStateRules() {
+function UndoStateRules() {
     "use strict";
 
     /**
@@ -44,15 +45,15 @@ gui.UndoStateRules = function UndoStateRules() {
      * Each subsequent call to previous will return the next element from the end of the array
      * that matches the predicate.
      * @constructor
-     * @param {!Array.<!ops.Operation>} array
-     * @param {!function(!ops.Operation):!boolean} predicate
+     * @param {!Array.<!Operation>} array
+     * @param {!function(!Operation):!boolean} predicate
      */
     function ReverseIterator(array, predicate) {
         var index = array.length;
 
         /**
          * Return the previous element in the array that matches the predicate
-         * @return {?ops.Operation} Returns null when no more elements in the array match the predicate
+         * @return {?Operation} Returns null when no more elements in the array match the predicate
          */
         this.previous = function () {
             for (index = index - 1; index >= 0; index -= 1) {
@@ -65,7 +66,7 @@ gui.UndoStateRules = function UndoStateRules() {
     }
 
     /**
-     * @param {!ops.Operation} op
+     * @param {!Operation} op
      * @return {string}
      */
     function getOpType(op) {
@@ -73,7 +74,7 @@ gui.UndoStateRules = function UndoStateRules() {
     }
 
     /**
-     * @param {!ops.Operation} op
+     * @param {!Operation} op
      * @return {number|undefined}
      */
     function getOpPosition(op) {
@@ -89,7 +90,7 @@ gui.UndoStateRules = function UndoStateRules() {
     /**
      * Returns true if the supplied operation
      * is considered an editing operation.
-     * @param {!ops.Operation} op
+     * @param {!Operation} op
      * @return {!boolean} Returns true if the supplied op is an edit operation
      */
     function isEditOperation(op) {
@@ -100,7 +101,7 @@ gui.UndoStateRules = function UndoStateRules() {
     /**
      * Returns true if the supplied optype is allowed to
      * aggregate multiple operations in a single undo or redo state
-     * @param {!ops.Operation} op
+     * @param {!Operation} op
      * @return {!boolean}
      */
     function canAggregateOperation(op) {
@@ -116,9 +117,9 @@ gui.UndoStateRules = function UndoStateRules() {
     /**
      * Returns true if the newly supplied operation is continuing
      * in the same direction of travel as the recent edit operations
-     * @param {!ops.Operation} thisOp
-     * @param {!ops.Operation} lastEditOp
-     * @param {!ops.Operation} secondLastEditOp
+     * @param {!Operation} thisOp
+     * @param {!Operation} lastEditOp
+     * @param {!Operation} secondLastEditOp
      * @return {!boolean}
      */
     function isSameDirectionOfTravel(thisOp, lastEditOp, secondLastEditOp) {
@@ -144,8 +145,8 @@ gui.UndoStateRules = function UndoStateRules() {
 
     /**
      * Returns true if the two operations are considered adjacent.
-     * @param {!ops.Operation} thisOp
-     * @param {!ops.Operation} lastEditOp
+     * @param {!Operation} thisOp
+     * @param {!Operation} lastEditOp
      * @return {!boolean}
      */
     function isAdjacentOperation(thisOp, lastEditOp) {
@@ -161,9 +162,9 @@ gui.UndoStateRules = function UndoStateRules() {
 
     /**
      *
-     * @param {!ops.Operation} thisOp
-     * @param {!ops.Operation} lastEditOp
-     * @param {?ops.Operation} secondLastEditOp
+     * @param {!Operation} thisOp
+     * @param {!Operation} lastEditOp
+     * @param {?Operation} secondLastEditOp
      * @return {!boolean}
      */
     function continuesOperations(thisOp, lastEditOp, secondLastEditOp) {
@@ -183,8 +184,8 @@ gui.UndoStateRules = function UndoStateRules() {
      * - Be of the same type as the most recent edit operation
      * - Be considered adjacent (and in the same direction as) the most recent edit operation
      *
-     * @param {!ops.Operation} thisOp
-     * @param {!Array.<!ops.Operation>} recentOperations
+     * @param {!Operation} thisOp
+     * @param {!Array.<!Operation>} recentOperations
      * @return {!boolean}
      */
     function continuesMostRecentEditOperation(thisOp, recentOperations) {
@@ -193,9 +194,9 @@ gui.UndoStateRules = function UndoStateRules() {
             lastEditOp = editOpsFinder.previous();
 
         runtime.assert(Boolean(lastEditOp), "No edit operations found in state");
-        if (thisOpType === getOpType(/**@type{!ops.Operation}*/(lastEditOp))) {
+        if (thisOpType === getOpType(/**@type{!Operation}*/(lastEditOp))) {
             // Operation type is identical, so check if these operations are continuous
-            return continuesOperations(thisOp, /**@type{!ops.Operation}*/(lastEditOp), editOpsFinder.previous());
+            return continuesOperations(thisOp, /**@type{!Operation}*/(lastEditOp), editOpsFinder.previous());
         }
         return false;
     }
@@ -208,8 +209,8 @@ gui.UndoStateRules = function UndoStateRules() {
      * - Be continuous with the most recent edit operation of the same type in the most recent operations group
      *   (see isContinuousWithExistingOperation for the definition of "continuous")
      *
-     * @param {!ops.Operation} thisOp
-     * @param {!Array.<!ops.Operation>} recentOperations
+     * @param {!Operation} thisOp
+     * @param {!Array.<!Operation>} recentOperations
      * @return {!boolean}
      */
     function continuesMostRecentEditGroup(thisOp, recentOperations) {
@@ -256,7 +257,7 @@ gui.UndoStateRules = function UndoStateRules() {
                 }
                 candidateOp = editOpsFinder.previous();
             }
-            return continuesOperations(thisOp, /**@type{!ops.Operation}*/(lastEditOp), secondLastEditOp);
+            return continuesOperations(thisOp, /**@type{!Operation}*/(lastEditOp), secondLastEditOp);
         }
         return false;
     }
@@ -264,8 +265,8 @@ gui.UndoStateRules = function UndoStateRules() {
     /**
      * Returns true if the provided operation is part of the existing
      * set of operations according to the undo rules
-     * @param {!ops.Operation} operation
-     * @param {!Array.<!ops.Operation>} recentOperations
+     * @param {!Operation} operation
+     * @param {!Array.<!Operation>} recentOperations
      * @return {!boolean}
      */
     function isPartOfOperationSet(operation, recentOperations) {
@@ -301,4 +302,6 @@ gui.UndoStateRules = function UndoStateRules() {
         return false;
     }
     this.isPartOfOperationSet = isPartOfOperationSet;
-};
+}
+/**@const*/
+exports.UndoStateRules = UndoStateRules;

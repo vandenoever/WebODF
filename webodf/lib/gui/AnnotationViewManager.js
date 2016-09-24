@@ -22,8 +22,12 @@
  * @source: https://github.com/kogmbh/WebODF/
  */
 
-/*global runtime, gui, core, odf, Node*/
+/*global Node*/
 /*jslint sub: true*/
+var Namespaces = require("../odf/Namespaces").Namespaces;
+var AnnotationElement = require("../odf/OdfContainer").AnnotationElement;
+var odfUtils = require("../odf/OdfUtils");
+var runtime = require("../runtime").runtime;
 
 /**
  * TODO: There is currently brokenness in how annotations which overlap are handled.
@@ -36,33 +40,34 @@
  * @class
  * @interface
  */
-gui.AnnotatableCanvas = function AnnotatableCanvas() {"use strict"; };
-gui.AnnotatableCanvas.prototype.refreshSize = function () {"use strict"; };
+function AnnotatableCanvas() {"use strict"; }
+AnnotatableCanvas.prototype.refreshSize = function () {"use strict"; };
 /**
  * @return {!number}
  */
-gui.AnnotatableCanvas.prototype.getZoomLevel = function () {"use strict"; };
+AnnotatableCanvas.prototype.getZoomLevel = function () {"use strict"; };
 /**
  * @return {Element}
  */
-gui.AnnotatableCanvas.prototype.getSizer = function () {"use strict"; };
+AnnotatableCanvas.prototype.getSizer = function () {"use strict"; };
 /*jslint emptyblock:false*/
+/**@const*/
+exports.AnnotatableCanvas = AnnotatableCanvas;
 
 /**
  * A GUI class for wrapping Annotation nodes inside html wrappers, positioning
  * them on the sidebar, drawing connectors, and highlighting comments.
  * @constructor
- * @param {!gui.AnnotatableCanvas} canvas
+ * @param {!AnnotatableCanvas} canvas
  * @param {!Element} odfFragment
  * @param {!Element} annotationsPane
  * @param {!boolean} showAnnotationRemoveButton
  */
-gui.AnnotationViewManager = function AnnotationViewManager(canvas, odfFragment, annotationsPane, showAnnotationRemoveButton) {
+function AnnotationViewManager(canvas, odfFragment, annotationsPane, showAnnotationRemoveButton) {
     "use strict";
-    var /**@type{!Array.<!odf.AnnotationElement>}*/
+    var /**@type{!Array.<!AnnotationElement>}*/
         annotations = [],
         doc = odfFragment.ownerDocument,
-        odfUtils = odf.OdfUtils,
         /**@const*/
         CONNECTOR_MARGIN = 30,
         /**@const*/
@@ -74,7 +79,7 @@ gui.AnnotationViewManager = function AnnotationViewManager(canvas, odfFragment, 
                    "Expected to be run in an environment which has a global window, like a browser.");
     /**
      * Wraps an annotation with various HTML elements for styling, including connectors
-     * @param {!odf.AnnotationElement} annotation
+     * @param {!AnnotationElement} annotation
      * @return {undefined}
      */
     function wrapAnnotation(annotation) {
@@ -106,7 +111,7 @@ gui.AnnotationViewManager = function AnnotationViewManager(canvas, odfFragment, 
 
     /**
      * Unwraps an annotation
-     * @param {!odf.AnnotationElement} annotation
+     * @param {!AnnotationElement} annotation
      * @return {undefined}
      */
     function unwrapAnnotation(annotation) {
@@ -128,7 +133,7 @@ gui.AnnotationViewManager = function AnnotationViewManager(canvas, odfFragment, 
     function isNodeWithinAnnotationHighlight(node, annotationName) {
         var iteratingNode = node.parentNode;
 
-        while (!(iteratingNode.namespaceURI === odf.Namespaces.officens
+        while (!(iteratingNode.namespaceURI === Namespaces.officens
                 && iteratingNode.localName === "body")) {
             if (iteratingNode.namespaceURI === htmlns
                     && /**@type{!HTMLElement}*/(iteratingNode).className === "webodf-annotationHighlight"
@@ -143,13 +148,13 @@ gui.AnnotationViewManager = function AnnotationViewManager(canvas, odfFragment, 
     /**
      * Highlights the text between the annotation node and it's end
      * Only highlights text that has not already been highlighted
-     * @param {!odf.AnnotationElement} annotation
+     * @param {!AnnotationElement} annotation
      * @return {undefined}
      */
     function highlightAnnotation(annotation) {
         var annotationEnd = annotation.annotationEndElement,
             range = doc.createRange(),
-            annotationName = annotation.getAttributeNS(odf.Namespaces.officens, 'name'),
+            annotationName = annotation.getAttributeNS(Namespaces.officens, 'name'),
             textNodes;
 
         if (annotationEnd) {
@@ -175,11 +180,11 @@ gui.AnnotationViewManager = function AnnotationViewManager(canvas, odfFragment, 
 
     /**
      * Unhighlights the text between the annotation node and it's end
-     * @param {!odf.AnnotationElement} annotation
+     * @param {!AnnotationElement} annotation
      * @return {undefined}
      */
     function unhighlightAnnotation(annotation) {
-        var annotationName = annotation.getAttributeNS(odf.Namespaces.officens, 'name'),
+        var annotationName = annotation.getAttributeNS(Namespaces.officens, 'name'),
             highlightSpans = doc.querySelectorAll('span.webodf-annotationHighlight[annotation="' + annotationName + '"]'),
             i,
             container;
@@ -214,7 +219,7 @@ gui.AnnotationViewManager = function AnnotationViewManager(canvas, odfFragment, 
     /**
      * Recalculates the positions, widths, and rotation angles of things like the annotation note and it's
      * connectors. Can and should be called frequently to update the UI
-     * @param {!odf.AnnotationElement} annotation
+     * @param {!AnnotationElement} annotation
      * @return {undefined}
      */
     function renderAnnotation(annotation) {
@@ -344,7 +349,7 @@ gui.AnnotationViewManager = function AnnotationViewManager(canvas, odfFragment, 
 
     /**
      * Adds annotations to track, and wraps and highlights them
-     * @param {!Array.<!odf.AnnotationElement>} annotationElements
+     * @param {!Array.<!AnnotationElement>} annotationElements
      * @return {undefined}
      */
     function addAnnotations(annotationElements) {
@@ -373,7 +378,7 @@ gui.AnnotationViewManager = function AnnotationViewManager(canvas, odfFragment, 
 
     /**
      * Unhighlights, unwraps, and ejects an annotation from the tracking
-     * @param {!odf.AnnotationElement} annotation
+     * @param {!AnnotationElement} annotation
      * @return {undefined}
      */
     function forgetAnnotation(annotation) {
@@ -399,4 +404,6 @@ gui.AnnotationViewManager = function AnnotationViewManager(canvas, odfFragment, 
         }
     }
     this.forgetAnnotations = forgetAnnotations;
-};
+}
+/**@const*/
+exports.AnnotationViewManager = AnnotationViewManager;

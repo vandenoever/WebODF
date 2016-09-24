@@ -22,10 +22,13 @@
  * @source: https://github.com/kogmbh/WebODF/
  */
 
-/*global gui,ops,core,runtime*/
-
-(function() {
 "use strict";
+var UndoStateRules = require("./UndoStateRules").UndoStateRules;
+var UndoManager = require("./UndoManager").UndoManager;
+var EventNotifier = require("../core/EventNotifier").EventNotifier;
+var domUtils = require("../core/DomUtils");
+var Operation = require("../ops/Operation").Operation;
+var OpsDocument = require("../ops/Document").Document;
 
 var/**
     * Base for generating unique state ids
@@ -53,20 +56,20 @@ function StateId(mainId, subId) {
  * Possible TODO: create a context for sharing the undoRules,
  * instead of passing them to all StateTransition instances
  * @constructor
- * @param {gui.UndoStateRules=} undoRules
- * @param {!Array.<!ops.Operation>=} initialOps
+ * @param {UndoStateRules=} undoRules
+ * @param {!Array.<!Operation>=} initialOps
  * @param {!boolean=} editOpsPossible  Set to @true if the initialOps could contain edit ops.
  */
 function StateTransition(undoRules, initialOps, editOpsPossible) {
     var /**@type{!number}*/
         nextStateId,
-        /**@type{!Array.<!ops.Operation>}*/
+        /**@type{!Array.<!Operation>}*/
         operations,
         /**@type{!number}*/
         editOpsCount;
 
     /**
-     * @param {!ops.Operation} op
+     * @param {!Operation} op
      * @return {undefined}
      */
     this.addOperation = function (op) {
@@ -92,7 +95,7 @@ function StateTransition(undoRules, initialOps, editOpsPossible) {
     };
 
     /**
-     * @return {!Array.<!ops.Operation>}
+     * @return {!Array.<!Operation>}
      */
     this.getOperations = function () {
         return operations;
@@ -100,7 +103,7 @@ function StateTransition(undoRules, initialOps, editOpsPossible) {
 
     /**
      * @param {!number} count
-     * @param {!ops.Operation} op
+     * @param {!Operation} op
      * @return {!number}
      */
     function addEditOpsCount(count, op) {
@@ -119,20 +122,19 @@ function StateTransition(undoRules, initialOps, editOpsPossible) {
 }
 
 /**
- * @param {gui.UndoStateRules=} defaultRules
+ * @param {UndoStateRules=} defaultRules
  * @constructor
- * @implements gui.UndoManager
+ * @implements UndoManager
  */
-gui.TrivialUndoManager = function TrivialUndoManager(defaultRules) {
+function TrivialUndoManager(defaultRules) {
     var self = this,
         cursorns = 'urn:webodf:names:cursor',
-        domUtils = core.DomUtils,
         /**@type{?Element}*/
         initialDoc,
         /**@type{!StateTransition}*/
         initialStateTransition,
         playFunc,
-        /**@type{!ops.Document}*/
+        /**@type{!OpsDocument}*/
         document,
         /**@type {!StateId}*/
         unmodifiedStateId,
@@ -142,14 +144,14 @@ gui.TrivialUndoManager = function TrivialUndoManager(defaultRules) {
         undoStateTransitions = [],
         /**@type{!Array.<!StateTransition>}*/
         redoStateTransitions = [],
-        eventNotifier = new core.EventNotifier([
-            gui.UndoManager.signalUndoStackChanged,
-            gui.UndoManager.signalUndoStateCreated,
-            gui.UndoManager.signalUndoStateModified,
-            gui.UndoManager.signalDocumentModifiedChanged,
-            gui.TrivialUndoManager.signalDocumentRootReplaced
+        eventNotifier = new EventNotifier([
+            UndoManager.signalUndoStackChanged,
+            UndoManager.signalUndoStateCreated,
+            UndoManager.signalUndoStateModified,
+            UndoManager.signalDocumentModifiedChanged,
+            TrivialUndoManager.signalDocumentRootReplaced
         ]),
-        undoRules = defaultRules || new gui.UndoStateRules(),
+        undoRules = defaultRules || new UndoStateRules(),
         isExecutingOps = false;
 
     /**
@@ -175,7 +177,7 @@ gui.TrivialUndoManager = function TrivialUndoManager(defaultRules) {
     }
 
     function emitStackChange() {
-        eventNotifier.emit(gui.UndoManager.signalUndoStackChanged, {
+        eventNotifier.emit(UndoManager.signalUndoStackChanged, {
             undoAvailable: self.hasUndoStates(),
             redoAvailable: self.hasRedoStates()
         });
@@ -188,7 +190,7 @@ gui.TrivialUndoManager = function TrivialUndoManager(defaultRules) {
     function emitDocumentModifiedChange(oldModified) {
         var newModified = isModified();
         if (oldModified !== newModified) {
-            eventNotifier.emit(gui.UndoManager.signalDocumentModifiedChanged, newModified);
+            eventNotifier.emit(UndoManager.signalDocumentModifiedChanged, newModified);
         }
     }
 
@@ -261,7 +263,7 @@ gui.TrivialUndoManager = function TrivialUndoManager(defaultRules) {
         // Only need the *last* move or add operation for each visible cursor, as the length & position
         // are absolute
         /**
-         * @param {!ops.Operation} op
+         * @param {!Operation} op
          */
         function processOp(op) {
             var spec = op.spec();
@@ -335,7 +337,7 @@ gui.TrivialUndoManager = function TrivialUndoManager(defaultRules) {
             unmodifiedStateId = currentUndoStateTransition.getNextStateId();
         }
 
-        eventNotifier.emit(gui.UndoManager.signalDocumentModifiedChanged, modified);
+        eventNotifier.emit(UndoManager.signalDocumentModifiedChanged, modified);
     };
 
     /**
@@ -356,7 +358,7 @@ gui.TrivialUndoManager = function TrivialUndoManager(defaultRules) {
 
     /**
      * Set the OdtDocument to operate on
-     * @param {!ops.Document} newDocument
+     * @param {!OpsDocument} newDocument
      */
     this.setDocument = function (newDocument) {
         document = newDocument;
@@ -416,7 +418,7 @@ gui.TrivialUndoManager = function TrivialUndoManager(defaultRules) {
 
     /**
      * Sets the playback function to use to re-execute operations from the undo stack.
-     * @param {!function(!Array.<!ops.Operation>)} playback_func
+     * @param {!function(!Array.<!Operation>)} playback_func
      */
     this.setPlaybackFunction = function (playback_func) {
         playFunc = playback_func;
@@ -424,7 +426,7 @@ gui.TrivialUndoManager = function TrivialUndoManager(defaultRules) {
 
     /**
      * Track the execution of an operation, and add it to the available undo states
-     * @param {!ops.Operation} op
+     * @param {!Operation} op
      * @return {undefined}
      */
     this.onOperationExecuted = function (op) {
@@ -445,11 +447,11 @@ gui.TrivialUndoManager = function TrivialUndoManager(defaultRules) {
             currentUndoStateTransition = new StateTransition(undoRules, [op], true);
             // Every undo state *MUST* contain an edit for it to be valid for undo or redo
             undoStateTransitions.push(currentUndoStateTransition);
-            eventNotifier.emit(gui.UndoManager.signalUndoStateCreated, { operations: currentUndoStateTransition.getOperations() });
+            eventNotifier.emit(UndoManager.signalUndoStateCreated, { operations: currentUndoStateTransition.getOperations() });
             emitStackChange();
         } else {
             currentUndoStateTransition.addOperation(op);
-            eventNotifier.emit(gui.UndoManager.signalUndoStateModified, { operations: currentUndoStateTransition.getOperations() });
+            eventNotifier.emit(UndoManager.signalUndoStateModified, { operations: currentUndoStateTransition.getOperations() });
         }
 
         emitDocumentModifiedChange(oldModified);
@@ -510,7 +512,7 @@ gui.TrivialUndoManager = function TrivialUndoManager(defaultRules) {
             });
             // Only do actual work if moveBackward does something to the undo stacks
             document.setDocumentElement(/**@type{!Element}*/(initialDoc.cloneNode(true)));
-            eventNotifier.emit(gui.TrivialUndoManager.signalDocumentRootReplaced, { });
+            eventNotifier.emit(TrivialUndoManager.signalDocumentRootReplaced, { });
             executeOperations(initialStateTransition);
             undoStateTransitions.forEach(executeOperations);
 
@@ -532,8 +534,8 @@ gui.TrivialUndoManager = function TrivialUndoManager(defaultRules) {
     }
 
     init();
-};
+}
 
-/**@const*/ gui.TrivialUndoManager.signalDocumentRootReplaced = "documentRootReplaced";
-
-}());
+/**@const*/ TrivialUndoManager.signalDocumentRootReplaced = "documentRootReplaced";
+/**@const*/
+exports.TrivialUndoManager = TrivialUndoManager;

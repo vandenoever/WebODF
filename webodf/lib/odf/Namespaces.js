@@ -22,14 +22,12 @@
  * @source: https://github.com/kogmbh/WebODF/
  */
 
-/*global odf*/
-
 /**
  * Singleton object which provides namespace ids and
  * some utility methods related to prefixes and namespaces
  * @const
  */
-odf.Namespaces = {
+var Namespaces = {
     namespaceMap: {
         config: "urn:oasis:names:tc:opendocument:xmlns:config:1.0",
         db: "urn:oasis:names:tc:opendocument:xmlns:database:1.0",
@@ -103,9 +101,9 @@ odf.Namespaces = {
 (function () {
     "use strict";
     // map namespacemap to prefix map on startup
-    var map = odf.Namespaces.namespaceMap,
+    var map = Namespaces.namespaceMap,
         /**@type{!Object.<string,string>}*/
-        pmap = odf.Namespaces.prefixMap,
+        pmap = Namespaces.prefixMap,
         /**@type{string}*/
         prefix;
 
@@ -122,10 +120,10 @@ odf.Namespaces = {
  * @param {function(string,string):undefined} cb
  * @return {undefined}
  */
-odf.Namespaces.forEachPrefix = function forEachPrefix(cb) {
+Namespaces.forEachPrefix = function forEachPrefix(cb) {
     "use strict";
     var /**@type{!Object.<string,string>}*/
-        ns = odf.Namespaces.namespaceMap,
+        ns = Namespaces.namespaceMap,
         /**@type{string}*/
         prefix;
 
@@ -141,12 +139,12 @@ odf.Namespaces.forEachPrefix = function forEachPrefix(cb) {
  * @param {string} prefix
  * @return {?string}
  */
-odf.Namespaces.lookupNamespaceURI = function lookupNamespaceURI(prefix) {
+Namespaces.lookupNamespaceURI = function lookupNamespaceURI(prefix) {
     "use strict";
     var /**@type{?string}*/
         r = null;
-    if (odf.Namespaces.namespaceMap.hasOwnProperty(prefix)) {
-        r = /**@type{string}*/(odf.Namespaces.namespaceMap[prefix]);
+    if (Namespaces.namespaceMap.hasOwnProperty(prefix)) {
+        r = /**@type{string}*/(Namespaces.namespaceMap[prefix]);
     }
     return r;
 };
@@ -156,13 +154,14 @@ odf.Namespaces.lookupNamespaceURI = function lookupNamespaceURI(prefix) {
  * @param {string} namespaceURI
  * @return {?string}
  */
-odf.Namespaces.lookupPrefix = function lookupPrefix(namespaceURI) {
+Namespaces.lookupPrefix = function lookupPrefix(namespaceURI) {
     "use strict";
     var /**@type{!Object.<string,string>}*/
-        map = odf.Namespaces.prefixMap;
+        map = Namespaces.prefixMap;
     return map.hasOwnProperty(namespaceURI) ? map[namespaceURI] : null;
 };
 
 // TODO: document where and why this is needed
-odf.Namespaces.lookupNamespaceURI.lookupNamespaceURI = odf.Namespaces.lookupNamespaceURI;
-
+Namespaces.lookupNamespaceURI.lookupNamespaceURI = Namespaces.lookupNamespaceURI;
+/**@const*/
+exports.Namespaces = Namespaces;

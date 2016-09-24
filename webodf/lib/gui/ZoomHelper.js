@@ -22,10 +22,10 @@
  * @source: https://github.com/kogmbh/WebODF/
  */
 
-/*global runtime, core, gui*/
-
-(function () {
-    "use strict";
+"use strict";
+var EventNotifier = require("../core/EventNotifier").EventNotifier;
+var Destroyable = require("../core/Destroyable").Destroyable;
+var runtime = require("../runtime").runtime;
 
     /**
      * @constructor
@@ -68,9 +68,9 @@
      * on the sizer element. It also provides some methods to set, get, and
      * subscribe to the current zoom level.
      * @constructor
-     * @implements {core.Destroyable}
+     * @implements {Destroyable}
      */
-    gui.ZoomHelper = function () {
+    function ZoomHelper() {
         var /**@type{!HTMLElement}*/
             zoomableElement,
             /**@type{!Point}*/
@@ -88,7 +88,7 @@
             offsetParent,
             /**@type{!HTMLElement}*/
             parentElement,
-            events = new core.EventNotifier([gui.ZoomHelper.signalZoomChanged]),
+            events = new EventNotifier([ZoomHelper.signalZoomChanged]),
             /**@const*/
             gestures = {
                 NONE: 0,
@@ -410,7 +410,7 @@
                 // scroll area's dimensions will cause the view to end up
                 // in unexpected places. Scrolling later will ensure that
                 // the scrolled view is set by us and not the browser.
-                events.emit(gui.ZoomHelper.signalZoomChanged, zoom);
+                events.emit(ZoomHelper.signalZoomChanged, zoom);
                 restoreScroll();
                 applyDetailedTransform();
             }
@@ -450,7 +450,7 @@
             if (zoomableElement) {
                 zoom = zoomLevel;
                 applyDetailedTransform();
-                events.emit(gui.ZoomHelper.signalZoomChanged, zoom);
+                events.emit(ZoomHelper.signalZoomChanged, zoom);
             }
         };
 
@@ -518,8 +518,9 @@
             panPoint = new Point(0, 0);
         }
         init();
-    };
+    }
     /**@const
      * @type {!string} */
-    gui.ZoomHelper.signalZoomChanged = "zoomChanged";
-}());
+    ZoomHelper.signalZoomChanged = "zoomChanged";
+/**@const*/
+exports.ZoomHelper = ZoomHelper;

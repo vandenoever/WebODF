@@ -22,10 +22,11 @@
  * @source: https://github.com/kogmbh/WebODF/
  */
 
-/*global Node, core, ops, runtime, NodeFilter, Range*/
+/*global Node, NodeFilter, Range*/
 
-(function () {
-    "use strict";
+"use strict";
+var runtime = require("../runtime.js").runtime;
+
     var /**@type{!{rangeBCRIgnoresElementBCR: boolean, unscaledRangeClientRects: boolean, elementBCRIgnoresBodyScroll: !boolean}}*/
         browserQuirks;
 
@@ -150,9 +151,7 @@
 
     /**
      * A collection of Dom utilities
-     * @constructor
      */
-    core.DomUtilsImpl = function DomUtilsImpl() {
         var /**@type{?Range}*/
             sharedRange = null;
 
@@ -296,7 +295,6 @@
             }
             return modifiedNodes;
         }
-        this.splitBoundaries = splitBoundaries;
 
         /**
          * Returns true if the container range completely contains the insideRange.
@@ -309,7 +307,6 @@
             return container.compareBoundaryPoints(Range.START_TO_START, insideRange) <= 0
                 && container.compareBoundaryPoints(Range.END_TO_END, insideRange) >= 0;
         }
-        this.containsRange = containsRange;
 
         /**
          * Returns true if there is any intersection between range1 and range2
@@ -321,7 +318,6 @@
             return range1.compareBoundaryPoints(Range.END_TO_START, range2) <= 0
                 && range1.compareBoundaryPoints(Range.START_TO_END, range2) >= 0;
         }
-        this.rangesIntersect = rangesIntersect;
 
         /**
          * Returns the intersection of two ranges. If there is no intersection, this
@@ -348,7 +344,6 @@
             }
             return newRange;
         }
-        this.rangeIntersection = rangeIntersection;
 
         /**
          * Returns the maximum available offset for the node. If this is a text
@@ -485,7 +480,6 @@
             return elements;
         }
         /*jslint bitwise:false*/
-        this.getNodesInRange = getNodesInRange;
 
         /**
          * Merges the content of node with nextNode.
@@ -536,7 +530,6 @@
                 mergeTextNodes(node.previousSibling, node);
             }
         }
-        this.normalizeTextNodes = normalizeTextNodes;
 
         /**
          * Checks if the provided limits fully encompass the passed in node
@@ -560,7 +553,6 @@
             nodeRange.detach();
             return result;
         }
-        this.rangeContainsNode = rangeContainsNode;
 
         /**
          * Merge all child nodes into the targetNode's parent and remove the targetNode entirely
@@ -575,7 +567,6 @@
             parent.removeChild(targetNode);
             return parent;
         }
-        this.mergeIntoParent = mergeIntoParent;
 
         /**
          * Removes all unwanted nodes from targetNode includes itself.
@@ -606,7 +597,6 @@
             }
             return parent;
         }
-        this.removeUnwantedNodes = removeUnwantedNodes;
 
         /**
          * Removes all child nodes from the given node.
@@ -614,11 +604,11 @@
          * @param {!Node} node
          * @return {undefined}
          */
-        this.removeAllChildNodes = function (node) {
+        function removeAllChildNodes(node) {
             while (node.firstChild) {
                 node.removeChild(node.firstChild);
             }
-        };
+        }
 
         /**
          * Get an array of nodes below the specified node with the specific namespace and tag name.
@@ -641,7 +631,6 @@
             }
             return e;
         }
-        this.getElementsByTagNameNS = getElementsByTagNameNS;
 
         /**
          * Get an array of nodes below the specified node with the specific name tag name.
@@ -663,7 +652,6 @@
             }
             return e;
         }
-        this.getElementsByTagName = getElementsByTagName;
 
         /**
          * Whether a node contains another node
@@ -679,7 +667,6 @@
                 // contains() definition in the Closure Compiler externs file.
                 || /**@type{!Element}*/(parent).contains(/**@type{!Element}*/(descendant));
         }
-        this.containsNode = containsNode;
 
         /**
          * Whether a node contains another node
@@ -724,7 +711,6 @@
             }
             return comparison;
         }
-        this.comparePoints = comparePoints;
 
         /**
          * Scale the supplied number by the specified zoom transformation if the
@@ -749,7 +735,6 @@
             }
             return inputNumber / zoomLevel;
         }
-        this.adaptRangeDifferenceToZoomLevel = adaptRangeDifferenceToZoomLevel;
 
         /**
          * Translate a given child client rectangle to be relative to the parent's rectangle.
@@ -763,7 +748,7 @@
          * @param {!number} zoomLevel
          * @return {!ClientRect|{top: !number, left: !number,  bottom: !number, right: !number, width: !number, height: !number}}
          */
-        this.translateRect = function(child, parent, zoomLevel) {
+        function translateRect(child, parent, zoomLevel) {
             return {
                 top: adaptRangeDifferenceToZoomLevel(child.top - parent.top, zoomLevel),
                 left: adaptRangeDifferenceToZoomLevel(child.left - parent.left, zoomLevel),
@@ -772,7 +757,7 @@
                 width: adaptRangeDifferenceToZoomLevel(child.width, zoomLevel),
                 height: adaptRangeDifferenceToZoomLevel(child.height, zoomLevel)
             };
-        };
+        }
 
         /**
          * Get the bounding client rect for the specified node.
@@ -816,7 +801,6 @@
             range.selectNode(node);
             return range.getBoundingClientRect();
         }
-        this.getBoundingClientRect = getBoundingClientRect;
 
         /**
          * Takes a flat object which is a key-value
@@ -856,7 +840,6 @@
                 }
             });
         }
-        this.mapKeyValObjOntoNode = mapKeyValObjOntoNode;
 
         /**
          * Takes an array of strings, which is a listing of
@@ -894,7 +877,6 @@
                 }
             });
         }
-        this.removeKeyElementsFromNode = removeKeyElementsFromNode;
  
         /**
          * Looks at an element's direct children, and generates an object which is a
@@ -920,7 +902,6 @@
 
             return properties;
         }
-        this.getKeyValRepresentationOfNode = getKeyValRepresentationOfNode;
 
         /**
          * Maps attributes and elements in the properties object over top of the node.
@@ -966,7 +947,6 @@
                 }
             });
         }
-        this.mapObjOntoNode = mapObjOntoNode;
 
         /**
          * Clones an event object.
@@ -989,14 +969,8 @@
 
             return /**@type{!Event}*/(e);
         }
-        this.cloneEvent = cloneEvent;
 
-        this.getDirectChild = getDirectChild;
-
-        /**
-         * @param {!core.DomUtilsImpl} self
-         */
-        function init(self) {
+        function init() {
             var appVersion, webKitOrSafari, ie,
                 /**@type{?Window}*/
                 window = runtime.getWindow();
@@ -1014,14 +988,30 @@
             // http://msdn.microsoft.com/en-us/library/ie/bg182625%28v=vs.110%29.aspx
             ie = appVersion.indexOf('msie') !== -1 || appVersion.indexOf('trident') !== -1;
             if (webKitOrSafari || ie) {
-                self.containsNode = containsNodeForBrokenWebKit;
+                exports.containsNode = containsNodeForBrokenWebKit;
             }
         }
-        init(this);
-    };
-
-    /**
-     * @type {!core.DomUtilsImpl}
-     */
-    core.DomUtils = new core.DomUtilsImpl();
-}());
+        init();
+exports.splitBoundaries = splitBoundaries;
+exports.containsRange = containsRange;
+exports.rangesIntersect = rangesIntersect;
+exports.rangeIntersection = rangeIntersection;
+exports.getNodesInRange = getNodesInRange;
+exports.normalizeTextNodes = normalizeTextNodes;
+exports.rangeContainsNode = rangeContainsNode;
+exports.mergeIntoParent = mergeIntoParent;
+exports.removeUnwantedNodes = removeUnwantedNodes;
+exports.removeAllChildNodes = removeAllChildNodes;
+exports.getElementsByTagNameNS = getElementsByTagNameNS;
+exports.getElementsByTagName = getElementsByTagName;
+exports.containsNode = containsNode;
+exports.comparePoints = comparePoints;
+exports.adaptRangeDifferenceToZoomLevel = adaptRangeDifferenceToZoomLevel;
+exports.translateRect = translateRect;
+exports.getBoundingClientRect = getBoundingClientRect;
+exports.mapKeyValObjOntoNode = mapKeyValObjOntoNode;
+exports.removeKeyElementsFromNode = removeKeyElementsFromNode;
+exports.getKeyValRepresentationOfNode = getKeyValRepresentationOfNode;
+exports.mapObjOntoNode = mapObjOntoNode;
+exports.cloneEvent = cloneEvent;
+exports.getDirectChild = getDirectChild;

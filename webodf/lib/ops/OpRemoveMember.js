@@ -22,19 +22,21 @@
  * @source: https://github.com/kogmbh/WebODF/
  */
 
-/*global ops, runtime*/
+var op = require("./Operation");
+var OpsDocument = require("./Document").Document;
+var OdtDocument = require("./OdtDocument").OdtDocument;
 
 /**
  * @constructor
- * @implements ops.Operation
+ * @implements op.Operation
  */
-ops.OpRemoveMember = function OpRemoveMember() {
+function OpRemoveMember() {
     "use strict";
 
     var memberid, timestamp;
 
     /**
-     * @param {!ops.OpRemoveMember.InitSpec} data
+     * @param {!OpRemoveMember.InitSpec} data
      */
     this.init = function (data) {
         memberid = data.memberid;
@@ -45,22 +47,22 @@ ops.OpRemoveMember = function OpRemoveMember() {
     this.group = undefined;
 
     /**
-     * @param {!ops.Document} document
+     * @param {!OpsDocument} document
      */
     this.execute = function (document) {
-        var odtDocument = /**@type{ops.OdtDocument}*/(document);
+        var odtDocument = /**@type{OdtDocument}*/(document);
         if (!odtDocument.getMember(memberid)) {
             return false;
         }
 
         odtDocument.removeMember(memberid);
-        odtDocument.emit(ops.Document.signalMemberRemoved, memberid);
+        odtDocument.emit(OpsDocument.signalMemberRemoved, memberid);
 
         return true;
     };
 
     /**
-     * @return {!ops.OpRemoveMember.Spec}
+     * @return {!OpRemoveMember.Spec}
      */
     this.spec = function () {
         return {
@@ -69,15 +71,20 @@ ops.OpRemoveMember = function OpRemoveMember() {
             timestamp: timestamp
         };
     };
-};
-/**@typedef{{
-    optype:string,
-    memberid:string,
-    timestamp:number
-}}*/
-ops.OpRemoveMember.Spec;
-/**@typedef{{
-    memberid:string,
-    timestamp:(number|undefined)
-}}*/
-ops.OpRemoveMember.InitSpec;
+}
+
+/**
+ * @record
+ * @extends {op.SpecBase}
+ */
+OpRemoveMember.InitSpec = function() {}
+
+/**
+ * @record
+ * @extends {op.TypedOperationSpec}
+ * @extends {OpRemoveMember.InitSpec}
+ */
+OpRemoveMember.Spec = function() {}
+
+/**@const*/
+exports.OpRemoveMember = OpRemoveMember;

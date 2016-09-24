@@ -22,16 +22,18 @@
  * @source: https://github.com/kogmbh/WebODF/
  */
 
-/*global runtime, gui, core*/
+var runtime = require("../runtime").runtime;
+var Destroyable = require("../core/Destroyable").Destroyable;
+var EventManager = require("./EventManager").EventManager;
 
 /**
  * Drop-in workaround for several bugs/quirks
  * found in iOS Safari.
  * @constructor
- * @implements {core.Destroyable}
- * @param {!gui.EventManager} eventManager
+ * @implements {Destroyable}
+ * @param {!EventManager} eventManager
  */
-gui.IOSSafariSupport = function (eventManager) {
+function IOSSafariSupport(eventManager) {
     "use strict";
     var window = runtime.getWindow(),
         eventTrap = eventManager.getEventTrap();
@@ -79,4 +81,6 @@ gui.IOSSafariSupport = function (eventManager) {
         eventTrap.style.WebkitTransform = "translateX(-10000px)";
     }
     init();
-};
+}
+/**@const*/
+exports.IOSSafariSupport = IOSSafariSupport;

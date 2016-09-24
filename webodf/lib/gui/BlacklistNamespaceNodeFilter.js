@@ -22,14 +22,14 @@
  * @source: https://github.com/kogmbh/WebODF/
  */
 
-/*global gui, NodeFilter*/
+/*global NodeFilter*/
 
 /**
  * @constructor
  * @implements NodeFilter
  * @param {!Array.<!string>} excludedNamespaces
  */
-gui.BlacklistNamespaceNodeFilter = function (excludedNamespaces) {
+function BlacklistNamespaceNodeFilter(excludedNamespaces) {
     "use strict";
     var /**@type{!Object.<!string, !boolean>}*/
         excludedNamespacesObj = {},
@@ -53,4 +53,6 @@ gui.BlacklistNamespaceNodeFilter = function (excludedNamespaces) {
         });
     }
     init();
-};
+}
+/**@const*/
+exports.BlacklistNamespaceNodeFilter = BlacklistNamespaceNodeFilter;

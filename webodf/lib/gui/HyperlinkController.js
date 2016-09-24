@@ -22,29 +22,38 @@
  * @source: https://github.com/kogmbh/WebODF/
  */
 
-/*global runtime, core, gui, Node, ops, odf */
+/*global Node*/
+
+var Destroyable = require("../core/Destroyable").Destroyable;
+var Session = require("../ops/Session").Session;
+var SessionConstraints = require("./SessionConstraints").SessionConstraints;
+var SessionContext = require("./SessionContext").SessionContext;
+var EventSource = require("../core/EventSource").EventSource;
+var OpApplyHyperlink = require("../ops/OpApplyHyperlink").OpApplyHyperlink;
+var OpRemoveHyperlink = require("../ops/OpRemoveHyperlink").OpRemoveHyperlink;
+var OpInsertText = require("../ops/OpInsertText").OpInsertText;
+var EventNotifier = require("../core/EventNotifier").EventNotifier;
+var OpsDocument = require("../ops/Document").Document;
+var odfUtils = require("../odf/OdfUtils");
+var CommonConstraints = require("./CommonConstraints").CommonConstraints;
+var OdtCursor = require("../ops/OdtCursor").OdtCursor;
 
 /**
  * @constructor
- * @implements {core.Destroyable}
- * @implements {core.EventSource}
- * @param {!ops.Session} session
- * @param {!gui.SessionConstraints} sessionConstraints
- * @param {!gui.SessionContext} sessionContext
+ * @implements {Destroyable}
+ * @implements {EventSource}
+ * @param {!Session} session
+ * @param {!SessionConstraints} sessionConstraints
+ * @param {!SessionContext} sessionContext
  * @param {!string} inputMemberId
  */
-gui.HyperlinkController = function HyperlinkController(
-    session,
-    sessionConstraints,
-    sessionContext,
-    inputMemberId
-    ) {
+function HyperlinkController(session, sessionConstraints, sessionContext,
+        inputMemberId) {
     "use strict";
 
-    var odfUtils = odf.OdfUtils,
-        odtDocument = session.getOdtDocument(),
-        eventNotifier = new core.EventNotifier([
-            gui.HyperlinkController.enabledChanged
+    var odtDocument = session.getOdtDocument(),
+        eventNotifier = new EventNotifier([
+            HyperlinkController.enabledChanged
         ]),
         isEnabled = false;
 
@@ -54,18 +63,18 @@ gui.HyperlinkController = function HyperlinkController(
     function updateEnabledState() {
         var /**@type{!boolean}*/newIsEnabled = true;
 
-        if (sessionConstraints.getState(gui.CommonConstraints.EDIT.REVIEW_MODE) === true) {
+        if (sessionConstraints.getState(CommonConstraints.EDIT.REVIEW_MODE) === true) {
             newIsEnabled = /**@type{!boolean}*/(sessionContext.isLocalCursorWithinOwnAnnotation());
         }
 
         if (newIsEnabled !== isEnabled) {
             isEnabled = newIsEnabled;
-            eventNotifier.emit(gui.HyperlinkController.enabledChanged, isEnabled);
+            eventNotifier.emit(HyperlinkController.enabledChanged, isEnabled);
         }
     }
 
     /**
-     * @param {!ops.OdtCursor} cursor
+     * @param {!OdtCursor} cursor
      * @return {undefined}
      */
     function onCursorEvent(cursor) {
@@ -110,12 +119,12 @@ gui.HyperlinkController = function HyperlinkController(
             return;
         }
         var selection = odtDocument.getCursorSelection(inputMemberId),
-            op = new ops.OpApplyHyperlink(),
+            op = new OpApplyHyperlink(),
             operations = [];
 
         if (selection.length === 0 || insertionText) {
             insertionText = insertionText || hyperlink;
-            op = new ops.OpInsertText();
+            op = new OpInsertText();
             op.init({
                 memberid: inputMemberId,
                 position: selection.position,
@@ -125,7 +134,7 @@ gui.HyperlinkController = function HyperlinkController(
             operations.push(op);
         }
 
-        op = new ops.OpApplyHyperlink();
+        op = new OpApplyHyperlink();
         op.init({
             memberid: inputMemberId,
             position: selection.position,
@@ -170,7 +179,7 @@ gui.HyperlinkController = function HyperlinkController(
                 focusNode: /**@type{!Node}*/(domRange.endContainer),
                 focusOffset: domRange.endOffset
             });
-            op = new ops.OpRemoveHyperlink();
+            op = new OpRemoveHyperlink();
             op.init({
                 memberid: inputMemberId,
                 position: cursorRange.position,
@@ -192,8 +201,8 @@ gui.HyperlinkController = function HyperlinkController(
                     focusOffset: domRange.endOffset
                 });
                 if (cursorRange.length > 0) {
-                    op = new ops.OpApplyHyperlink();
-                    /**@type{!ops.OpApplyHyperlink}*/(op).init({
+                    op = new OpApplyHyperlink();
+                    /**@type{!OpApplyHyperlink}*/(op).init({
                         memberid: inputMemberId,
                         position: cursorRange.position,
                         length: cursorRange.length,
@@ -215,8 +224,8 @@ gui.HyperlinkController = function HyperlinkController(
                     focusOffset: domRange.endOffset
                 });
                 if (cursorRange.length > 0) {
-                    op = new ops.OpApplyHyperlink();
-                    /**@type{!ops.OpApplyHyperlink}*/(op).init({
+                    op = new OpApplyHyperlink();
+                    /**@type{!OpApplyHyperlink}*/(op).init({
                         memberid: inputMemberId,
                         position: cursorRange.position,
                         length: cursorRange.length,
@@ -237,17 +246,19 @@ gui.HyperlinkController = function HyperlinkController(
      * @return {undefined}
      */
     this.destroy = function (callback) {
-        odtDocument.unsubscribe(ops.Document.signalCursorMoved, onCursorEvent);
-        sessionConstraints.unsubscribe(gui.CommonConstraints.EDIT.REVIEW_MODE, updateEnabledState);
+        odtDocument.unsubscribe(OpsDocument.signalCursorMoved, onCursorEvent);
+        sessionConstraints.unsubscribe(CommonConstraints.EDIT.REVIEW_MODE, updateEnabledState);
         callback();
     };
 
     function init() {
-        odtDocument.subscribe(ops.Document.signalCursorMoved, onCursorEvent);
-        sessionConstraints.subscribe(gui.CommonConstraints.EDIT.REVIEW_MODE, updateEnabledState);
+        odtDocument.subscribe(OpsDocument.signalCursorMoved, onCursorEvent);
+        sessionConstraints.subscribe(CommonConstraints.EDIT.REVIEW_MODE, updateEnabledState);
         updateEnabledState();
     }
     init();
-};
+}
 
-/**@const*/gui.HyperlinkController.enabledChanged = "enabled/changed";
+/**@const*/HyperlinkController.enabledChanged = "enabled/changed";
+/**@const*/
+exports.HyperlinkController = HyperlinkController;

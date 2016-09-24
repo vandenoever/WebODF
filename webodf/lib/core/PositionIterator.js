@@ -22,7 +22,8 @@
  * @source: https://github.com/kogmbh/WebODF/
  */
 
-/*global Node, NodeFilter, runtime, core*/
+/*global Node, NodeFilter*/
+var runtime = require("../runtime").runtime;
 
 /**
  * An iterator that iterators through positions in a DOM tree.
@@ -54,8 +55,7 @@
  * @param {!NodeFilter=} filter
  * @param {!boolean=} expandEntityReferences
  */
-core.PositionIterator = function PositionIterator(root, whatToShow, filter,
-        expandEntityReferences) {
+function PositionIterator(root, whatToShow, filter, expandEntityReferences) {
     "use strict";
     /*
      * Implementation notes.
@@ -515,4 +515,6 @@ core.PositionIterator = function PositionIterator(root, whatToShow, filter,
         }
     }
     init();
-};
+}
+/**@const*/
+exports.PositionIterator = PositionIterator;

@@ -22,8 +22,12 @@
  * @source: https://github.com/kogmbh/WebODF/
  */
 
-/*global ops, odf*/
 /*jslint nomen: true, evil: true, bitwise: true */
+var op = require("./Operation");
+var OpsDocument = require("./Document").Document;
+var OdtDocument = require("./OdtDocument").OdtDocument;
+var odfUtils = require("../odf/OdfUtils");
+var Namespaces = require("../odf/Namespaces").Namespaces;
 
 /**
  * This operation splits the paragraph at the given
@@ -36,9 +40,9 @@
  * have no specified style.
  *
  * @constructor
- * @implements ops.Operation
+ * @implements op.Operation
  */
-ops.OpSplitParagraph = function OpSplitParagraph() {
+function OpSplitParagraph() {
     "use strict";
 
     var memberid, timestamp,
@@ -50,12 +54,11 @@ ops.OpSplitParagraph = function OpSplitParagraph() {
         moveCursor,
         /**@type{!string}*/
         paragraphStyleName,
-        odfUtils = odf.OdfUtils,
         /**@const*/
-        textns = odf.Namespaces.textns;
+        textns = Namespaces.textns;
 
     /**
-     * @param {!ops.OpSplitParagraph.InitSpec} data
+     * @param {!OpSplitParagraph.InitSpec} data
      */
     this.init = function (data) {
         memberid = data.memberid;
@@ -70,10 +73,10 @@ ops.OpSplitParagraph = function OpSplitParagraph() {
     this.group = undefined;
 
     /**
-     * @param {!ops.Document} document
+     * @param {!OpsDocument} document
      */
     this.execute = function (document) {
-        var odtDocument = /**@type{!ops.OdtDocument}*/(document),
+        var odtDocument = /**@type{!OdtDocument}*/(document),
             domPosition, paragraphNode, targetNode,
             node, splitNode, splitChildNode, keptChildNode,
             cursor = odtDocument.getCursor(memberid);
@@ -168,22 +171,22 @@ ops.OpSplitParagraph = function OpSplitParagraph() {
         if (domPosition.textNode.length === 0) {
             domPosition.textNode.parentNode.removeChild(domPosition.textNode);
         }
-        odtDocument.emit(ops.OdtDocument.signalStepsInserted, {position: position});
+        odtDocument.emit(OdtDocument.signalStepsInserted, {position: position});
 
         if (cursor && moveCursor) {
             odtDocument.moveCursor(memberid, position + 1, 0);
-            odtDocument.emit(ops.Document.signalCursorMoved, cursor);
+            odtDocument.emit(OpsDocument.signalCursorMoved, cursor);
         }
 
         odtDocument.fixCursorPositions();
         odtDocument.getOdfCanvas().refreshSize();
         // mark both paragraphs as edited
-        odtDocument.emit(ops.OdtDocument.signalParagraphChanged, {
+        odtDocument.emit(OdtDocument.signalParagraphChanged, {
             paragraphElement: paragraphNode,
             memberId: memberid,
             timeStamp: timestamp
         });
-        odtDocument.emit(ops.OdtDocument.signalParagraphChanged, {
+        odtDocument.emit(OdtDocument.signalParagraphChanged, {
             paragraphElement: splitChildNode,
             memberId: memberid,
             timeStamp: timestamp
@@ -194,7 +197,7 @@ ops.OpSplitParagraph = function OpSplitParagraph() {
     };
 
     /**
-     * @return {!ops.OpSplitParagraph.Spec}
+     * @return {!OpSplitParagraph.Spec}
      */
     this.spec = function () {
         return {
@@ -207,23 +210,28 @@ ops.OpSplitParagraph = function OpSplitParagraph() {
             moveCursor: moveCursor
         };
     };
-};
-/**@typedef{{
-    optype:string,
-    memberid:string,
-    timestamp:number,
-    position:number,
-    sourceParagraphPosition:number,
-    paragraphStyleName:string,
-    moveCursor:boolean
-}}*/
-ops.OpSplitParagraph.Spec;
-/**@typedef{{
-    memberid:string,
-    timestamp:(number|undefined),
-    position:number,
-    sourceParagraphPosition:number,
-    paragraphStyleName:string,
-    moveCursor:(string|boolean|undefined)
-}}*/
-ops.OpSplitParagraph.InitSpec;
+}
+
+/**
+ * @record
+ * @extends {op.SpecBase}
+ */
+OpSplitParagraph.InitSpec = function() {}
+/**@type{!number}*/
+OpSplitParagraph.InitSpec.prototype.position;
+/**@type{!number}*/
+OpSplitParagraph.InitSpec.prototype.sourceParagraphPosition;
+/**@type{!string}*/
+OpSplitParagraph.InitSpec.prototype.paragraphStyleName;
+/**@type{(!string|!boolean|undefined)}*/
+OpSplitParagraph.InitSpec.prototype.moveCursor;
+
+/**
+ * @record
+ * @extends {op.TypedOperationSpec}
+ * @extends {OpSplitParagraph.InitSpec}
+ */
+OpSplitParagraph.Spec = function() {}
+
+/**@const*/
+exports.OpSplitParagraph = OpSplitParagraph;

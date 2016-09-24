@@ -22,7 +22,9 @@
  * @source: https://github.com/kogmbh/WebODF/
  */
 
-/*global gui, NodeFilter, odf, Node*/
+/*global NodeFilter, Node*/
+var odfUtils = require("../odf/OdfUtils");
+var Namespaces = require("../odf/Namespaces").Namespaces;
 
 /**
  * Exclude nodes that do not make up part of the ODF's text body. This includes:
@@ -32,13 +34,12 @@
  * @constructor
  * @implements NodeFilter
  */
-gui.OdfTextBodyNodeFilter = function () {
+function OdfTextBodyNodeFilter() {
     "use strict";
-    var odfUtils = odf.OdfUtils,
-        TEXT_NODE = Node.TEXT_NODE,
+    var TEXT_NODE = Node.TEXT_NODE,
         FILTER_REJECT = NodeFilter.FILTER_REJECT,
         FILTER_ACCEPT = NodeFilter.FILTER_ACCEPT,
-        textns = odf.Namespaces.textns;
+        textns = Namespaces.textns;
 
     /**
      * @param {!Node} node
@@ -54,4 +55,6 @@ gui.OdfTextBodyNodeFilter = function () {
         }
         return FILTER_ACCEPT;
     };
-};
+}
+/**@const*/
+exports.OdfTextBodyNodeFilter = OdfTextBodyNodeFilter;

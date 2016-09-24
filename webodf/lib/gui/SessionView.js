@@ -22,15 +22,35 @@
  * @source: https://github.com/kogmbh/WebODF/
  */
 
-/*global Node, document, runtime, gui, ops, core */
+/*global Node*/
+"use strict";
+
+var runtime = require("../runtime").runtime;
+var CaretManager = require("./CaretManager").CaretManager;
+var SessionConstraints = require("./SessionConstraints").SessionConstraints;
+var SelectionViewManager = require("./SelectionViewManager").SelectionViewManager;
+var Destroyable = require("../core/Destroyable").Destroyable;
+var EditInfo = require("../ops/EditInfo").EditInfo;
+var EditInfoMarker = require("./EditInfoMarker").EditInfoMarker;
+var task = require("../core/Task");
+var async = require("../core/Async");
+var OdtDocument = require("../ops/OdtDocument").OdtDocument;
+var OdtCursor = require("../ops/OdtCursor").OdtCursor;
+var Member = require("../ops/Member").Member;
+var Caret = require("./Caret").Caret;
+var Session = require("../ops/Session").Session;
+var ScheduledTask = require("../core/ScheduledTask").ScheduledTask;
+var OdfCanvas = require("../odf/OdfCanvas").OdfCanvas;
+var OpsDocument = require("../ops/Document").Document;
+var CommonConstraints = require("./CommonConstraints").CommonConstraints;
+var ShadowCursor = require("./ShadowCursor").ShadowCursor;
+var domUtils = require("../core/DomUtils");
 
 /**
  * @constructor
  * @struct
  */
-gui.SessionViewOptions = function () {
-    "use strict";
-
+function SessionViewOptions() {
     /**
      * Set the initial edit information marker visibility
      * @type {boolean}
@@ -48,10 +68,8 @@ gui.SessionViewOptions = function () {
      * @type {boolean}
      */
     this.caretBlinksOnRangeSelect = true;
-};
+}
 
-(function () {
-    "use strict";
 
     /**
      * Return a user-specified option, or the default value if no user option
@@ -70,27 +88,27 @@ gui.SessionViewOptions = function () {
      * be matched with the memberids for which CSS is generated, to generate the same CSS
      * for shadow cursors.
      * @constructor
-     * @implements {core.Destroyable}
-     * @param {!gui.SessionViewOptions} viewOptions
+     * @implements {Destroyable}
+     * @param {!SessionViewOptions} viewOptions
      * @param {string} localMemberId
-     * @param {!ops.Session} session
-     * @param {!gui.SessionConstraints} sessionConstraints
-     * @param {!gui.CaretManager} caretManager
-     * @param {!gui.SelectionViewManager} selectionViewManager
+     * @param {!Session} session
+     * @param {!SessionConstraints} sessionConstraints
+     * @param {!CaretManager} caretManager
+     * @param {!SelectionViewManager} selectionViewManager
      */
-    gui.SessionView = function SessionView(viewOptions, localMemberId, session, sessionConstraints, caretManager, selectionViewManager) {
+    function SessionView(viewOptions, localMemberId, session, sessionConstraints, caretManager, selectionViewManager) {
         var /**@type{!HTMLStyleElement}*/
             avatarInfoStyles,
             /**@type{!HTMLStyleElement}*/
             annotationConstraintStyles,
             editInfons = 'urn:webodf:names:editinfo',
-            /**@type{!Object.<string,!gui.EditInfoMarker>}*/
+            /**@type{!Object.<string,!EditInfoMarker>}*/
             editInfoMap = {},
-            /**@type{!ops.OdtDocument}*/
+            /**@type{!OdtDocument}*/
             odtDocument,
-            /**@type{!odf.OdfCanvas}*/
+            /**@type{!OdfCanvas}*/
             odfCanvas,
-            /**@type{!core.ScheduledTask}*/
+            /**@type{!ScheduledTask}*/
             highlightRefreshTask,
             showEditInfoMarkers = configOption(viewOptions.editInfoMarkersInitiallyVisible, true),
             showCaretAvatars = configOption(viewOptions.caretAvatarsInitiallyVisible, true),
@@ -187,7 +205,7 @@ gui.SessionViewOptions = function () {
                 setStyle('.webodf-touchEnabled .webodf-selectionOverlay', '{ display: block; }', ' > .webodf-draggable');
 
                 // Also set shadow cursor rules for local user
-                memberId = gui.ShadowCursor.ShadowCursorMemberId;
+                memberId = ShadowCursor.ShadowCursorMemberId;
                 setStyle('.webodf-selectionOverlay', '{ fill: ' + color + '; stroke: ' + color + ';}', '');
                 setStyle('.webodf-touchEnabled .webodf-selectionOverlay', '{ display: block; }', ' > .webodf-draggable');
             }
@@ -210,8 +228,8 @@ gui.SessionViewOptions = function () {
                 editInfoMarker = editInfoMap[id];
             } else {
                 id = Math.random().toString();
-                editInfo = new ops.EditInfo(element, session.getOdtDocument());
-                editInfoMarker = new gui.EditInfoMarker(editInfo, showEditInfoMarkers);
+                editInfo = new EditInfo(element, session.getOdtDocument());
+                editInfoMarker = new EditInfoMarker(editInfo, showEditInfoMarkers);
 
                 editInfoNode = /**@type{!Element}*/(element.getElementsByTagNameNS(editInfons, 'editinfo').item(0));
                 editInfoNode.setAttributeNS(editInfons, 'id', id);
@@ -311,21 +329,21 @@ gui.SessionViewOptions = function () {
         };
 
         /**
-         * @return {!ops.Session}
+         * @return {!Session}
          */
         this.getSession = function () {
             return session;
         };
         /**
          * @param {!string} memberid
-         * @return {?gui.Caret}
+         * @return {?Caret}
          */
         this.getCaret = function (memberid) {
             return caretManager.getCaret(memberid);
         };
 
         /**
-         * @param {!ops.Member} member
+         * @param {!Member} member
          * @return {undefined}
          */
         function renderMemberData(member) {
@@ -336,7 +354,7 @@ gui.SessionViewOptions = function () {
         }
 
         /**
-         * @param {!ops.OdtCursor} cursor
+         * @param {!OdtCursor} cursor
          * @return {undefined}
          */
         function onCursorAdded(cursor) {
@@ -356,13 +374,13 @@ gui.SessionViewOptions = function () {
         }
 
         /**
-         * @param {!ops.OdtCursor} cursor
+         * @param {!OdtCursor} cursor
          * @return {undefined}
          */
         function onCursorMoved(cursor) {
             var memberId = cursor.getMemberId(),
                 localSelectionView = selectionViewManager.getSelectionView(localMemberId),
-                shadowSelectionView = selectionViewManager.getSelectionView(gui.ShadowCursor.ShadowCursorMemberId),
+                shadowSelectionView = selectionViewManager.getSelectionView(ShadowCursor.ShadowCursorMemberId),
                 localCaret = caretManager.getCaret(localMemberId);
 
             if (memberId === localMemberId) {
@@ -374,7 +392,7 @@ gui.SessionViewOptions = function () {
                 if (localCaret) {
                     localCaret.show();
                 }
-            } else if (memberId === gui.ShadowCursor.ShadowCursorMemberId) {
+            } else if (memberId === ShadowCursor.ShadowCursorMemberId) {
                 // If the shadow cursor moved, then hide the current cursor's selection
                 shadowSelectionView.show();
                 if (localSelectionView) {
@@ -421,10 +439,10 @@ gui.SessionViewOptions = function () {
 
             // TODO: Move such handling into AnnotationViewManager
             if (annotationConstraintStyles.hasChildNodes()) {
-                core.DomUtils.removeAllChildNodes(annotationConstraintStyles);
+                domUtils.removeAllChildNodes(annotationConstraintStyles);
             }
 
-            if (sessionConstraints.getState(gui.CommonConstraints.EDIT.ANNOTATIONS.ONLY_DELETE_OWN) === true) {
+            if (sessionConstraints.getState(CommonConstraints.EDIT.ANNOTATIONS.ONLY_DELETE_OWN) === true) {
                 localMember = session.getOdtDocument().getMember(localMemberId);
                 if (localMember) {
                     localMemberName = localMember.getProperties().fullName;
@@ -439,25 +457,25 @@ gui.SessionViewOptions = function () {
          * @return {undefined}
          */
         function destroy(callback) {
-            var /**@type{!Array.<!gui.EditInfoMarker>}*/
+            var /**@type{!Array.<!EditInfoMarker>}*/
                 editInfoArray = Object.keys(editInfoMap).map(function (keyname) {
                     return editInfoMap[keyname];
                 });
 
-            odtDocument.unsubscribe(ops.Document.signalMemberAdded, renderMemberData);
-            odtDocument.unsubscribe(ops.Document.signalMemberUpdated, renderMemberData);
-            odtDocument.unsubscribe(ops.Document.signalCursorAdded, onCursorAdded);
-            odtDocument.unsubscribe(ops.Document.signalCursorRemoved, onCursorRemoved);
-            odtDocument.unsubscribe(ops.OdtDocument.signalParagraphChanged, onParagraphChanged);
-            odtDocument.unsubscribe(ops.Document.signalCursorMoved, onCursorMoved);
+            odtDocument.unsubscribe(OpsDocument.signalMemberAdded, renderMemberData);
+            odtDocument.unsubscribe(OpsDocument.signalMemberUpdated, renderMemberData);
+            odtDocument.unsubscribe(OpsDocument.signalCursorAdded, onCursorAdded);
+            odtDocument.unsubscribe(OpsDocument.signalCursorRemoved, onCursorRemoved);
+            odtDocument.unsubscribe(OdtDocument.signalParagraphChanged, onParagraphChanged);
+            odtDocument.unsubscribe(OpsDocument.signalCursorMoved, onCursorMoved);
 
-            odtDocument.unsubscribe(ops.OdtDocument.signalParagraphChanged, selectionViewManager.rerenderSelectionViews);
-            odtDocument.unsubscribe(ops.OdtDocument.signalTableAdded, selectionViewManager.rerenderSelectionViews);
-            odtDocument.unsubscribe(ops.OdtDocument.signalParagraphStyleModified, selectionViewManager.rerenderSelectionViews);
+            odtDocument.unsubscribe(OdtDocument.signalParagraphChanged, selectionViewManager.rerenderSelectionViews);
+            odtDocument.unsubscribe(OdtDocument.signalTableAdded, selectionViewManager.rerenderSelectionViews);
+            odtDocument.unsubscribe(OdtDocument.signalParagraphStyleModified, selectionViewManager.rerenderSelectionViews);
 
-            sessionConstraints.unsubscribe(gui.CommonConstraints.EDIT.ANNOTATIONS.ONLY_DELETE_OWN, processConstraints);
-            odtDocument.unsubscribe(ops.Document.signalMemberAdded, processConstraints);
-            odtDocument.unsubscribe(ops.Document.signalMemberUpdated, processConstraints);
+            sessionConstraints.unsubscribe(CommonConstraints.EDIT.ANNOTATIONS.ONLY_DELETE_OWN, processConstraints);
+            odtDocument.unsubscribe(OpsDocument.signalMemberAdded, processConstraints);
+            odtDocument.unsubscribe(OpsDocument.signalMemberUpdated, processConstraints);
 
             avatarInfoStyles.parentNode.removeChild(avatarInfoStyles);
             annotationConstraintStyles.parentNode.removeChild(annotationConstraintStyles);
@@ -483,29 +501,29 @@ gui.SessionViewOptions = function () {
          */
         this.destroy = function (callback) {
             var cleanup = [highlightRefreshTask.destroy, destroy];
-            odtDocument.unsubscribe(ops.OdtDocument.signalAnnotationAdded, onAnnotationAdded);
-            core.Async.destroyAll(cleanup, callback);
+            odtDocument.unsubscribe(OdtDocument.signalAnnotationAdded, onAnnotationAdded);
+            async.destroyAll(cleanup, callback);
         };
 
         function init() {
             odtDocument = session.getOdtDocument();
             odfCanvas = odtDocument.getOdfCanvas();
 
-            odtDocument.subscribe(ops.OdtDocument.signalAnnotationAdded, onAnnotationAdded);
-            odtDocument.subscribe(ops.Document.signalMemberAdded, renderMemberData);
-            odtDocument.subscribe(ops.Document.signalMemberUpdated, renderMemberData);
-            odtDocument.subscribe(ops.Document.signalCursorAdded, onCursorAdded);
-            odtDocument.subscribe(ops.Document.signalCursorRemoved, onCursorRemoved);
-            odtDocument.subscribe(ops.OdtDocument.signalParagraphChanged, onParagraphChanged);
-            odtDocument.subscribe(ops.Document.signalCursorMoved, onCursorMoved);
+            odtDocument.subscribe(OdtDocument.signalAnnotationAdded, onAnnotationAdded);
+            odtDocument.subscribe(OpsDocument.signalMemberAdded, renderMemberData);
+            odtDocument.subscribe(OpsDocument.signalMemberUpdated, renderMemberData);
+            odtDocument.subscribe(OpsDocument.signalCursorAdded, onCursorAdded);
+            odtDocument.subscribe(OpsDocument.signalCursorRemoved, onCursorRemoved);
+            odtDocument.subscribe(OdtDocument.signalParagraphChanged, onParagraphChanged);
+            odtDocument.subscribe(OpsDocument.signalCursorMoved, onCursorMoved);
 
-            odtDocument.subscribe(ops.OdtDocument.signalParagraphChanged, selectionViewManager.rerenderSelectionViews);
-            odtDocument.subscribe(ops.OdtDocument.signalTableAdded, selectionViewManager.rerenderSelectionViews);
-            odtDocument.subscribe(ops.OdtDocument.signalParagraphStyleModified, selectionViewManager.rerenderSelectionViews);
+            odtDocument.subscribe(OdtDocument.signalParagraphChanged, selectionViewManager.rerenderSelectionViews);
+            odtDocument.subscribe(OdtDocument.signalTableAdded, selectionViewManager.rerenderSelectionViews);
+            odtDocument.subscribe(OdtDocument.signalParagraphStyleModified, selectionViewManager.rerenderSelectionViews);
 
-            sessionConstraints.subscribe(gui.CommonConstraints.EDIT.ANNOTATIONS.ONLY_DELETE_OWN, processConstraints);
-            odtDocument.subscribe(ops.Document.signalMemberAdded, processConstraints);
-            odtDocument.subscribe(ops.Document.signalMemberUpdated, processConstraints);
+            sessionConstraints.subscribe(CommonConstraints.EDIT.ANNOTATIONS.ONLY_DELETE_OWN, processConstraints);
+            odtDocument.subscribe(OpsDocument.signalMemberAdded, processConstraints);
+            odtDocument.subscribe(OpsDocument.signalMemberUpdated, processConstraints);
 
             // Add a css sheet for user info-edited styling
             avatarInfoStyles = newStyleSheet();
@@ -515,8 +533,9 @@ gui.SessionViewOptions = function () {
             annotationConstraintStyles = newStyleSheet();
             processConstraints();
 
-            highlightRefreshTask = core.Task.createRedrawTask(refreshHighlights);
+            highlightRefreshTask = task.createRedrawTask(refreshHighlights);
         }
         init();
-    };
-}());
+    }
+/**@const*/
+exports.SessionView = SessionView;

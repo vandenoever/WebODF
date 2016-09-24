@@ -22,70 +22,72 @@
  * @source: https://github.com/kogmbh/WebODF/
  */
 
-/*global ops, gui*/
+var Operation = require("../ops/Operation").Operation;
+var OpsDocument = require("../ops/Document").Document;
+
 /*jslint emptyblock: true, unparam: true*/
 
 /**
  * @interface
  */
-gui.UndoManager = function UndoManager() {"use strict"; };
+function UndoManager() {"use strict"; }
 
 /**
  * Subscribe to events related to the undo manager
  * @param {!string} signal
  * @param {!Function} callback
  */
-gui.UndoManager.prototype.subscribe = function(signal, callback) {"use strict"; };
+UndoManager.prototype.subscribe = function(signal, callback) {"use strict"; };
 
 /**
  * Unsubscribe to events related to the undo manager
  * @param {!string} signal
  * @param {!Function} callback
  */
-gui.UndoManager.prototype.unsubscribe = function(signal, callback) {"use strict"; };
+UndoManager.prototype.unsubscribe = function(signal, callback) {"use strict"; };
 
 /**
  * Set the Document to operate on
- * @param {!ops.Document} newDocument
+ * @param {!OpsDocument} newDocument
  */
-gui.UndoManager.prototype.setDocument = function (newDocument) {"use strict"; };
+UndoManager.prototype.setDocument = function (newDocument) {"use strict"; };
 
 /**
  * Sets the initial document state and operation state. This is the earliest point
  * the document can be undone to.
  */
-gui.UndoManager.prototype.setInitialState = function () {"use strict"; };
+UndoManager.prototype.setInitialState = function () {"use strict"; };
 
 /**
  * Initializes the undo manager and creates the initial document
  * snapshot. If the undo manager has already been previously initialized,
  * this call will do nothing.
  */
-gui.UndoManager.prototype.initialize = function () {"use strict"; };
+UndoManager.prototype.initialize = function () {"use strict"; };
 
 /**
  * Purges entire undo stack including the initial state. This is primarily intended
  * to free up memory and resources when the undo state is no longer required.
  */
-gui.UndoManager.prototype.purgeInitialState = function () {"use strict"; };
+UndoManager.prototype.purgeInitialState = function () {"use strict"; };
 
 /**
  * Sets the playback function to use to re-execute operations from the undo stack.
- * @param {!function(!Array.<!ops.Operation>)} playback_func
+ * @param {!function(!Array.<!Operation>)} playback_func
  */
-gui.UndoManager.prototype.setPlaybackFunction = function (playback_func) {"use strict"; };
+UndoManager.prototype.setPlaybackFunction = function (playback_func) {"use strict"; };
 
 /**
  * Returns true if there are one or more undo states available
  * @return {boolean}
  */
-gui.UndoManager.prototype.hasUndoStates = function () {"use strict"; };
+UndoManager.prototype.hasUndoStates = function () {"use strict"; };
 
 /**
  * Returns true if there are one or more redo states available
  * @return {boolean}
  */
-gui.UndoManager.prototype.hasRedoStates = function () {"use strict"; };
+UndoManager.prototype.hasRedoStates = function () {"use strict"; };
 
 /**
  * Move forward the desired number of states. Will stop when the number of
@@ -93,7 +95,7 @@ gui.UndoManager.prototype.hasRedoStates = function () {"use strict"; };
  * @param {!number} states
  * @return {!number} Returns the number of states actually moved
  */
-gui.UndoManager.prototype.moveForward = function (states) {"use strict"; };
+UndoManager.prototype.moveForward = function (states) {"use strict"; };
 
 /**
  * Move backward the desired number of states. Will stop when the number of
@@ -101,20 +103,20 @@ gui.UndoManager.prototype.moveForward = function (states) {"use strict"; };
  * @param {!number} states
  * @return {!number} Returns the number of states actually moved
  */
-gui.UndoManager.prototype.moveBackward = function (states) {"use strict"; };
+UndoManager.prototype.moveBackward = function (states) {"use strict"; };
 
 /**
  * Track the execution of an operation, and add it to the available undo states
- * @param {!ops.Operation} op
+ * @param {!Operation} op
  * @return {undefined}
  */
-gui.UndoManager.prototype.onOperationExecuted = function (op) {"use strict"; };
+UndoManager.prototype.onOperationExecuted = function (op) {"use strict"; };
 
 /**
  * Returns if the current state matches the unmodified state.
  * @return {!boolean}
  */
-gui.UndoManager.prototype.isDocumentModified = function () {"use strict"; };
+UndoManager.prototype.isDocumentModified = function () {"use strict"; };
 
 /**
  * Sets the current state of the document to be either the unmodified state
@@ -122,9 +124,11 @@ gui.UndoManager.prototype.isDocumentModified = function () {"use strict"; };
  * @param {!boolean} modified
  * @return {undefined}
  */
-gui.UndoManager.prototype.setDocumentModified = function(modified) {"use strict"; };
+UndoManager.prototype.setDocumentModified = function(modified) {"use strict"; };
 
-/**@const*/gui.UndoManager.signalUndoStackChanged = "undoStackChanged";
-/**@const*/gui.UndoManager.signalUndoStateCreated = "undoStateCreated";
-/**@const*/gui.UndoManager.signalUndoStateModified = "undoStateModified";
-/**@const*/gui.UndoManager.signalDocumentModifiedChanged = "documentModifiedChanged";
+/**@const*/UndoManager.signalUndoStackChanged = "undoStackChanged";
+/**@const*/UndoManager.signalUndoStateCreated = "undoStateCreated";
+/**@const*/UndoManager.signalUndoStateModified = "undoStateModified";
+/**@const*/UndoManager.signalDocumentModifiedChanged = "documentModifiedChanged";
+/**@const*/
+exports.UndoManager = UndoManager;

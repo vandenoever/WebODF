@@ -22,7 +22,10 @@
  * @source: https://github.com/kogmbh/WebODF/
  */
 
-/*global odf, core, Node, NodeFilter*/
+/*global Node, NodeFilter*/
+
+var odfUtils = require("./OdfUtils");
+var domUtils = require("../core/DomUtils");
 
 /**
  * Defines a set of rules for how elements can be collapsed based on whether they contain ODT content (e.g.,
@@ -30,11 +33,8 @@
  * @constructor
  * @param {!Node} rootNode Root text element of the odtDocument
  */
-odf.CollapsingRules = function CollapsingRules(rootNode) {
+function CollapsingRules(rootNode) {
     "use strict";
-    var odfUtils = odf.OdfUtils,
-        domUtils = core.DomUtils;
-
     /**
      * Returns NodeFilter value if a given node is odf node or a text node that has a odf parent.
      * @param {!Node} node
@@ -78,4 +78,6 @@ odf.CollapsingRules = function CollapsingRules(rootNode) {
         return parent;
     }
     this.mergeChildrenIntoParent = mergeChildrenIntoParent;
-};
+}
+/**@const*/
+exports.CollapsingRules = CollapsingRules;

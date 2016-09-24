@@ -22,7 +22,9 @@
  * @source: https://github.com/kogmbh/WebODF/
  */
 
-/*global Node, core, ops, runtime*/
+/*global Node*/
+var runtime = require("../runtime.js").runtime;
+var domUtils = require("./DomUtils");
 
 /**
  * @class
@@ -49,7 +51,7 @@
  * @param {!Document} document  The DOM document in which the cursor is placed
  * @param {!string} memberId The memberid this cursor is assigned to
  */
-core.Cursor = function Cursor(document, memberId) {
+function Cursor(document, memberId) {
     "use strict";
     var cursorns = 'urn:webodf:names:cursor',
         /**@type{!Element}*/
@@ -60,8 +62,7 @@ core.Cursor = function Cursor(document, memberId) {
         recentlyModifiedNodes = [],
         /**@type{!Range}*/
         selectedRange = /**@type{!Range}*/(document.createRange()),
-        isCollapsed,
-        domUtils = core.DomUtils;
+        isCollapsed;
 
     /**
      * Split a text node and put the cursor into it.
@@ -219,4 +220,6 @@ core.Cursor = function Cursor(document, memberId) {
     }
 
     init();
-};
+}
+/**@const*/
+exports.Cursor = Cursor;

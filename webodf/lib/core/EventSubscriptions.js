@@ -22,29 +22,34 @@
  * @source: https://github.com/kogmbh/WebODF/
  */
 
-/*global gui, core*/
+var Async = require("./Async");
+var Destroyable = require("./Destroyable").Destroyable;
+var EventNotifier = require("./EventNotifier").EventNotifier;
+var EventSource = require("./EventSource").EventSource;
+var ScheduledTask = require("./ScheduledTask").ScheduledTask;
+var Task = require("./Task");
 
 /**
  * A helper object used to subscribe to events on multiple event sources. Tracking this makes it easier to unsubscribe
  * to all events upon destruction.
  * 
  * @constructor
- * @implements {core.Destroyable}
+ * @implements {Destroyable}
  */
-core.EventSubscriptions = function () {
+function EventSubscriptions() {
     "use strict";
-     var /**@type{!Array.<!{eventSource: !core.EventSource, eventid: !string, callback: !Function}>}*/
+     var /**@type{!Array.<!{eventSource: !EventSource, eventid: !string, callback: !Function}>}*/
          subscriptions = [],
-         /**@type {!core.EventNotifier}*/
-         frameEventNotifier = new core.EventNotifier(),
-         /**@type{!Object.<!string,!Array.<!{frameEventId: !string, eventSource: !Object, task: !core.ScheduledTask}>>}*/
+         /**@type {!EventNotifier}*/
+         frameEventNotifier = new EventNotifier(),
+         /**@type{!Object.<!string,!Array.<!{frameEventId: !string, eventSource: !Object, task: !ScheduledTask}>>}*/
          frameSubscriptions = {},
          /**@type{!number}*/
          nextFrameEventId = 0;
 
     /**
      * Subscribe to the specified event on the supplied eventSource
-     * @param {!core.EventSource} eventSource
+     * @param {!EventSource} eventSource
      * @param {!string} eventid
      * @param {!Function} callback
      */
@@ -63,7 +68,7 @@ core.EventSubscriptions = function () {
      * frame. The callback will only be triggered once per event id when the browser redraws the content.
      * The callback takes no arguments.
      *
-     * @param {!core.EventSource} eventSource
+     * @param {!EventSource} eventSource
      * @param {!string} eventid
      * @param {!function():undefined} callback Event callback. This callback takes NO arguments
      * @return {undefined}
@@ -94,7 +99,7 @@ core.EventSubscriptions = function () {
                 // A unique frame event id is necessary in case multiple eventSources identical external event ids
                 frameEventId: frameEventId,
                 eventSource: eventSource,
-                task: core.Task.createRedrawTask(function() {
+                task: Task.createRedrawTask(function() {
                     frameEventNotifier.emit(frameEventId, undefined);
                 })
             };
@@ -124,9 +129,9 @@ core.EventSubscriptions = function () {
             delete frameSubscriptions[eventId];
         });
         /*jslint emptyblock:true*/
-        core.Async.destroyAll(cleanup, function() { });
+        Async.destroyAll(cleanup, function() { });
         /*jslint emptyblock:false*/
-        frameEventNotifier = new core.EventNotifier();
+        frameEventNotifier = new EventNotifier();
     }
     this.unsubscribeAll = unsubscribeAll;
 
@@ -140,4 +145,6 @@ core.EventSubscriptions = function () {
         unsubscribeAll();
         callback();
     };
-};
+}
+/**@const*/
+exports = EventSubscriptions;

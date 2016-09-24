@@ -22,20 +22,20 @@
  * @source: https://github.com/kogmbh/WebODF/
  */
 
-/*global runtime, odf*/
+var Namespaces = require("./Namespaces").Namespaces;
+var styleParseUtils = require("./StyleParseUtils");
 
 /**
  * Convenient access to style attributes for graphic-properties.
  * @constructor
  * @param {!Element} element <style:graphic-properties/> element
- * @param {!odf.StyleParseUtils} styleParseUtils
- * @param {!odf.GraphicProperties|undefined} parent
+ * @param {!GraphicProperties|undefined} parent
  */
-odf.GraphicProperties = function (element, styleParseUtils, parent) {
+function GraphicProperties(element, parent) {
     "use strict";
     var self = this,
-        stylens = odf.Namespaces.stylens,
-        svgns = odf.Namespaces.svgns,
+        stylens = Namespaces.stylens,
+        svgns = Namespaces.svgns,
         getter;
     getter = {
         verticalPos: function () {
@@ -90,24 +90,26 @@ odf.GraphicProperties = function (element, styleParseUtils, parent) {
         return /**@type{!number|undefined}*/(self.data.value("strokeWidth"));
     };
     /**
-     * @type {!odf.LazyStyleProperties}
+     * @type {!styleParseUtils.LazyStyleProperties}
      */
     this.data;
     function init() {
         var p = parent === undefined ? undefined : parent.data;
-        self.data = new odf.LazyStyleProperties(p, getter);
+        self.data = new styleParseUtils.LazyStyleProperties(p, getter);
     }
     init();
-};
+}
+/**@const*/
+exports.GraphicProperties = GraphicProperties;
 /**
  * @constructor
  */
-odf.ComputedGraphicProperties = function () {
+function ComputedGraphicProperties() {
     "use strict";
-    var /**@type{!odf.GraphicProperties|undefined}*/
+    var /**@type{!GraphicProperties|undefined}*/
         g;
     /**
-     * @param {!odf.GraphicProperties|undefined} graphicProperties
+     * @param {!GraphicProperties|undefined} graphicProperties
      * @return {undefined}
      */
     this.setGraphicProperties = function (graphicProperties) {
@@ -137,4 +139,6 @@ odf.ComputedGraphicProperties = function () {
     this.horizontalRel = function () {
         return (g && g.horizontalRel()) || "page";
     };
-};
+}
+/**@const*/
+exports.ComputedGraphicProperties = ComputedGraphicProperties;

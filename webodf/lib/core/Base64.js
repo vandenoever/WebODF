@@ -21,18 +21,14 @@
  * @source: http://www.webodf.org/
  * @source: https://github.com/kogmbh/WebODF/
  */
-
-/*global core, runtime, ArrayBuffer, Uint8Array*/
+"use strict";
+/*global ArrayBuffer, Uint8Array*/
 /*jslint bitwise: true, regexp: true, plusplus: true*/
+var runtime = require("../runtime").runtime;
 
 /*
  * $Id: base64.js,v 0.9 2009/03/01 20:51:18 dankogai Exp dankogai $
  */
-/**
- * @return {function(new:core.Base64):?}
- */
-function makeBase64() {
-    "use strict";
     /**
      * @param {!string} bin
      * @return {!Object.<!string,!number>}
@@ -374,7 +370,7 @@ function makeBase64() {
      * @constructor
      * @struct
      */
-    core.Base64 = function Base64() {
+    function Base64() {
         this.convertUTF8ArrayToBase64 = convertUTF8ArrayToBase64;
         this.convertByteArrayToBase64 = convertUTF8ArrayToBase64;
         this.convertBase64ToUTF8Array = convertBase64ToUTF8Array;
@@ -432,9 +428,5 @@ function makeBase64() {
         };
         return this;
     };
-    return core.Base64;
-}
-/**
- * @constructor
- */
-core.Base64 = makeBase64();
+/**@const*/
+exports.Base64 = Base64;

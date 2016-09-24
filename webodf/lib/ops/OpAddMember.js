@@ -22,7 +22,11 @@
  * @source: https://github.com/kogmbh/WebODF/
  */
 
-/*global ops, runtime*/
+var op = require("./Operation");
+var OdtCursor = require("./OdtCursor").OdtCursor;
+var OpsDocument = require("./Document").Document;
+var OdtDocument = require("./OdtDocument").OdtDocument;
+var m = require("./Member");
 
 /**
  * OpAddMember has 3 required properties:
@@ -32,14 +36,14 @@
  * runtime.tr("Unknown Author"), 'black', and "avatar-joe.png"
  * respectively, if unspecified.
  * @constructor
- * @implements ops.Operation
+ * @implements op.Operation
  */
-ops.OpAddMember = function OpAddMember() {
+function OpAddMember() {
     "use strict";
 
     var memberid, timestamp, setProperties;
     /**
-     * @param {!ops.OpAddMember.InitSpec} data
+     * @param {!OpAddMember.InitSpec} data
      */
     this.init = function (data) {
         memberid = data.memberid;
@@ -51,24 +55,24 @@ ops.OpAddMember = function OpAddMember() {
     this.group = undefined;
 
     /**
-     * @param {!ops.Document} document
+     * @param {!OpsDocument} document
      */
     this.execute = function (document) {
-        var odtDocument = /**@type{ops.OdtDocument}*/(document),
+        var odtDocument = /**@type{OdtDocument}*/(document),
             member;
         if (odtDocument.getMember(memberid)) {
             return false;
         }
 
-        member = new ops.Member(memberid, setProperties);
+        member = new m.Member(memberid, setProperties);
         odtDocument.addMember(member);
-        odtDocument.emit(ops.Document.signalMemberAdded, member);
+        odtDocument.emit(OpsDocument.signalMemberAdded, member);
 
         return true;
     };
 
     /**
-     * @return {!ops.OpAddMember.Spec}
+     * @return {!OpAddMember.Spec}
      */
     this.spec = function () {
         return {
@@ -78,17 +82,22 @@ ops.OpAddMember = function OpAddMember() {
             setProperties: setProperties
         };
     };
-};
-/**@typedef{{
-    optype:string,
-    memberid:string,
-    timestamp:number,
-    setProperties:!ops.MemberProperties
-}}*/
-ops.OpAddMember.Spec;
-/**@typedef{{
-    memberid:string,
-    timestamp:(number|undefined),
-    setProperties:!ops.MemberProperties
-}}*/
-ops.OpAddMember.InitSpec;
+}
+
+/**
+ * @record
+ * @extends {op.SpecBase}
+ */
+OpAddMember.InitSpec = function() {}
+/**@type{!m.MemberProperties}*/
+OpAddMember.InitSpec.prototype.setProperties;
+
+/**
+ * @record
+ * @extends {op.TypedOperationSpec}
+ * @extends {OpAddMember.InitSpec}
+ */
+OpAddMember.Spec = function() {}
+
+/**@const*/
+exports.OpAddMember = OpAddMember;

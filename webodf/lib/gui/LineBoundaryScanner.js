@@ -22,15 +22,20 @@
  * @source: https://github.com/kogmbh/WebODF/
  */
 
-/*global gui*/
+var v = require("./VisualStepScanner");
+
+/**
+ * @typedef {(ClientRect|{left: !number, right: !number, top: !number, bottom: !number})}
+ */
+var SimpleClientRect;
 
 /**
  * Finds line-wrap points by comparing the visual overlap between visible rectangles.
  *
  * @constructor
- * @implements {gui.VisualStepScanner}
+ * @implements {v.VisualStepScanner}
  */
-gui.LineBoundaryScanner = function () {
+function LineBoundaryScanner() {
     "use strict";
     var self = this,
         lineRect = null,
@@ -42,8 +47,8 @@ gui.LineBoundaryScanner = function () {
      * no overlap, or either of the rectangles is 0 height, this will
      * return 0.
      *
-     * @param {!core.SimpleClientRect} rect1
-     * @param {!core.SimpleClientRect} rect2
+     * @param {!SimpleClientRect} rect1
+     * @param {!SimpleClientRect} rect2
      * @return {!number}
      */
     function verticalOverlapPercent(rect1, rect2) {
@@ -61,21 +66,21 @@ gui.LineBoundaryScanner = function () {
      * Returns true if the amount of overlap between the known line rectangle and the visible next rectangle
      * is below the specified MIN_OVERLAP_THRESHOLD. If there is no known line rectangle, this will return false.
      *
-     * @param {!core.SimpleClientRect} nextRect Client rect of next step (by direction)
+     * @param {!SimpleClientRect} nextRect Client rect of next step (by direction)
      * @return {!boolean}
      */
     function isLineBoundary(nextRect) {
         if (lineRect) {
             // TODO this logic will fail if the caret is between a subscript & superscript char as the overlap will be 0
-            return verticalOverlapPercent(/**@type{!core.SimpleClientRect}*/(lineRect), nextRect) <= MIN_OVERLAP_THRESHOLD;
+            return verticalOverlapPercent(/**@type{!SimpleClientRect}*/(lineRect), nextRect) <= MIN_OVERLAP_THRESHOLD;
         }
         return false;
     }
 
     /**
-     * @param {!core.SimpleClientRect} rect1
-     * @param {!core.SimpleClientRect} rect2
-     * @return {!core.SimpleClientRect}
+     * @param {!SimpleClientRect} rect1
+     * @param {!SimpleClientRect} rect2
+     * @return {!SimpleClientRect}
      */
     function combineRects(rect1, rect2) {
         return {
@@ -87,14 +92,14 @@ gui.LineBoundaryScanner = function () {
     }
 
     /**
-     * @param {?core.SimpleClientRect} originalRect
-     * @param {?core.SimpleClientRect} newRect
-     * @return {?core.SimpleClientRect}
+     * @param {?SimpleClientRect} originalRect
+     * @param {?SimpleClientRect} newRect
+     * @return {?SimpleClientRect}
      */
     function growRect(originalRect, newRect) {
         if (originalRect && newRect) {
-            return combineRects(/**@type{!core.SimpleClientRect}*/(originalRect),
-                                /**@type{!core.SimpleClientRect}*/(newRect));
+            return combineRects(/**@type{!SimpleClientRect}*/(originalRect),
+                                /**@type{!SimpleClientRect}*/(newRect));
         }
         return originalRect || newRect;
     }
@@ -102,7 +107,7 @@ gui.LineBoundaryScanner = function () {
     this.token = undefined;
 
     /**
-     * @param {!gui.StepInfo} stepInfo
+     * @param {!v.StepInfo} stepInfo
      * @param {?ClientRect} previousRect
      * @param {?ClientRect} nextRect
      * @return {!boolean}
@@ -111,7 +116,7 @@ gui.LineBoundaryScanner = function () {
         // Can only detect line boundaries when the next rectangle is visible. An invisible next-rect
         // indicates the next step does not have any visible content attached, so it's location on screen
         // is impossible to determine accurately.
-        var isOverLineBoundary = nextRect && isLineBoundary(/**@type{!core.SimpleClientRect}*/(nextRect));
+        var isOverLineBoundary = nextRect && isLineBoundary(/**@type{!SimpleClientRect}*/(nextRect));
 
         if (previousRect && (!nextRect || isOverLineBoundary)) {
             // Detect a possible line wrap point in one of two ways:
@@ -130,4 +135,6 @@ gui.LineBoundaryScanner = function () {
         lineRect = growRect(lineRect, previousRect);
         return false;
     };
-};
+}
+/**@const*/
+exports.LineBoundaryScanner = LineBoundaryScanner;

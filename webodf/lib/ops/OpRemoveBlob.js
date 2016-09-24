@@ -22,19 +22,21 @@
  * @source: https://github.com/kogmbh/WebODF/
  */
 
-/*global ops */
+var op = require("./Operation");
+var OpsDocument = require("./Document").Document;
+var OdtDocument = require("./OdtDocument").OdtDocument;
 
 /**
  * @constructor
- * @implements ops.Operation
+ * @implements op.Operation
  */
-ops.OpRemoveBlob = function OpRemoveBlob() {
+function OpRemoveBlob() {
     "use strict";
 
     var memberid, timestamp, filename;
 
     /**
-     * @param {!ops.OpRemoveBlob.InitSpec} data
+     * @param {!OpRemoveBlob.InitSpec} data
      */
     this.init = function (data) {
         memberid = data.memberid;
@@ -46,16 +48,16 @@ ops.OpRemoveBlob = function OpRemoveBlob() {
     this.group = undefined;
 
     /**
-     * @param {!ops.Document} document
+     * @param {!OpsDocument} document
      */
     this.execute = function (document) {
-        var odtDocument = /**@type{ops.OdtDocument}*/(document);
+        var odtDocument = /**@type{OdtDocument}*/(document);
         odtDocument.getOdfCanvas().odfContainer().removeBlob(filename);
         return true;
     };
 
     /**
-     * @return {!ops.OpRemoveBlob.Spec}
+     * @return {!OpRemoveBlob.Spec}
      */
     this.spec = function () {
         return {
@@ -65,17 +67,22 @@ ops.OpRemoveBlob = function OpRemoveBlob() {
             filename: filename
         };
     };
-};
-/**@typedef{{
-    optype:string,
-    memberid:string,
-    timestamp:number,
-    filename:string
-}}*/
-ops.OpRemoveBlob.Spec;
-/**@typedef{{
-    memberid:string,
-    timestamp:(number|undefined),
-    filename:string
-}}*/
-ops.OpRemoveBlob.InitSpec;
+}
+
+/**
+ * @record
+ * @extends {op.SpecBase}
+ */
+OpRemoveBlob.InitSpec = function() {}
+/**@type{!string}*/
+OpRemoveBlob.InitSpec.prototype.filename;
+
+/**
+ * @record
+ * @extends {op.TypedOperationSpec}
+ * @extends {OpRemoveBlob.InitSpec}
+ */
+OpRemoveBlob.Spec = function() {}
+
+/**@const*/
+exports.OpRemoveBlob = OpRemoveBlob;

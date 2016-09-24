@@ -22,23 +22,27 @@
  * @source: https://github.com/kogmbh/WebODF/
  */
 
-/*global runtime, core, gui, ops*/
+var OdtCursor = require("../ops/OdtCursor").OdtCursor;
+var SelectionView = require("./SelectionView").SelectionView;
+var ShadowCursor = require("./ShadowCursor").ShadowCursor;
+var Destroyable = require("../core/Destroyable").Destroyable;
+var EventNotifier = require("../core/EventNotifier").EventNotifier;
 
 /**
  * The Selection View Manager is responsible for managing SelectionView objects
  * and attaching/detaching them to cursors.
  * @constructor
- * @implements {core.Destroyable}
- * @param {!function(new:gui.SelectionView, !(ops.OdtCursor|gui.ShadowCursor))} SelectionView
+ * @implements {Destroyable}
+ * @param {!function(new:SelectionView, !(OdtCursor|ShadowCursor))} SelectionView
  */
-gui.SelectionViewManager = function SelectionViewManager(SelectionView) {
+function SelectionViewManager(SelectionViewConstructor) {
     "use strict";
-    var /**@type{!Object.<string,gui.SelectionView>}*/
+    var /**@type{!Object.<string,SelectionView>}*/
         selectionViews = {};
 
     /**
      * @param {!string} memberId
-     * @return {?gui.SelectionView}
+     * @return {?SelectionView}
      */
     function getSelectionView(memberId) {
         return selectionViews.hasOwnProperty(memberId) ? selectionViews[memberId] : null;
@@ -46,7 +50,7 @@ gui.SelectionViewManager = function SelectionViewManager(SelectionView) {
     this.getSelectionView = getSelectionView;
 
     /**
-     * @return {!Array.<!gui.SelectionView>}
+     * @return {!Array.<!SelectionView>}
      */
     function getSelectionViews() {
         return Object.keys(selectionViews).map(function (memberid) { return selectionViews[memberid]; });
@@ -100,13 +104,13 @@ gui.SelectionViewManager = function SelectionViewManager(SelectionView) {
     };
 
     /**
-     * @param {!(ops.OdtCursor|gui.ShadowCursor)} cursor
+     * @param {!(OdtCursor|ShadowCursor)} cursor
      * @param {!boolean} virtualSelectionsInitiallyVisible
-     * @return {!gui.SelectionView}
+     * @return {!SelectionView}
      */
     this.registerCursor = function (cursor, virtualSelectionsInitiallyVisible) {
         var memberId = cursor.getMemberId(),
-            selectionView = new SelectionView(cursor);
+            selectionView = new SelectionViewConstructor(cursor);
 
         if (virtualSelectionsInitiallyVisible) {
             selectionView.show();
@@ -144,4 +148,6 @@ gui.SelectionViewManager = function SelectionViewManager(SelectionView) {
         }
         destroySelectionView(0, undefined);
     };
-};
+}
+/**@const*/
+exports.SelectionViewManager = SelectionViewManager;

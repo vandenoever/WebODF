@@ -22,13 +22,13 @@
  * @source: https://github.com/kogmbh/WebODF/
  */
 
-/*global core*/
-
 /**
  * Step or iteration direction values
  * @enum {!number}
  */
-core.StepDirection = {
+var StepDirection = {
     PREVIOUS: 1,
     NEXT: 2
 };
+/**@const*/
+exports.StepDirection = StepDirection;

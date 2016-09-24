@@ -22,7 +22,12 @@
  * @source: https://github.com/kogmbh/WebODF/
  */
 
-/*global ops, xmldom, odf, runtime*/
+var op = require("./Operation");
+var OpsDocument = require("./Document").Document;
+var OdtDocument = require("./OdtDocument").OdtDocument;
+var Namespaces = require("../odf/Namespaces").Namespaces;
+var xpath = require("../xmldom/XPath");
+var MemberProperties = require("./Member").MemberProperties;
 
 /**
  * OpUpdateMember allows you to set and remove
@@ -31,20 +36,20 @@
  * removable, they will be filtered out of 
  * removedProperties if found.
  * @constructor
- * @implements ops.Operation
+ * @implements op.Operation
  */
-ops.OpUpdateMember = function OpUpdateMember() {
+function OpUpdateMember() {
     "use strict";
 
     var /**@type{string}*/
         memberid,
         timestamp,
-        /**@type{ops.MemberProperties}*/
+        /**@type{MemberProperties}*/
         setProperties,
         removedProperties;
 
     /**
-     * @param {!ops.OpUpdateMember.InitSpec} data
+     * @param {!OpUpdateMember.InitSpec} data
      */
     this.init = function (data) {
         memberid = data.memberid;
@@ -57,16 +62,15 @@ ops.OpUpdateMember = function OpUpdateMember() {
     this.group = undefined;
 
     /**
-     * @param {!ops.OdtDocument} doc
+     * @param {!OdtDocument} doc
      */
     function updateCreators(doc) {
-        var xpath = xmldom.XPath,
-            xp = "//dc:creator[@editinfo:memberid='" + memberid + "']",
+        var xp = "//dc:creator[@editinfo:memberid='" + memberid + "']",
             creators = xpath.getODFElementsWithXPath(doc.getRootNode(), xp, function (prefix) {
                 if (prefix === "editinfo") {
                     return "urn:webodf:names:editinfo";
                 }
-                return odf.Namespaces.lookupNamespaceURI(prefix);
+                return Namespaces.lookupNamespaceURI(prefix);
             }),
             i;
 
@@ -76,10 +80,10 @@ ops.OpUpdateMember = function OpUpdateMember() {
     }
 
     /**
-     * @param {!ops.Document} document
+     * @param {!OpsDocument} document
      */
     this.execute = function (document) {
-        var odtDocument = /**@type{ops.OdtDocument}*/(document),
+        var odtDocument = /**@type{OdtDocument}*/(document),
             member = odtDocument.getMember(memberid);
         if (!member) {
             return false;
@@ -95,12 +99,12 @@ ops.OpUpdateMember = function OpUpdateMember() {
             }
         }
 
-        odtDocument.emit(ops.Document.signalMemberUpdated, member);
+        odtDocument.emit(OpsDocument.signalMemberUpdated, member);
         return true;
     };
 
     /**
-     * @return {!ops.OpUpdateMember.Spec}
+     * @return {!OpUpdateMember.Spec}
      */
     this.spec = function () {
         return {
@@ -111,19 +115,24 @@ ops.OpUpdateMember = function OpUpdateMember() {
             removedProperties: removedProperties
         };
     };
-};
-/**@typedef{{
-    optype:string,
-    memberid:string,
-    timestamp:number,
-    setProperties:?ops.MemberProperties,
-    removedProperties:Object
- }}*/
-ops.OpUpdateMember.Spec;
-/**@typedef{{
-    memberid:string,
-    timestamp:(number|undefined),
-    setProperties:?ops.MemberProperties,
-    removedProperties:Object
- }}*/
-ops.OpUpdateMember.InitSpec;
+}
+
+/**
+ * @record
+ * @extends {op.SpecBase}
+ */
+OpUpdateMember.InitSpec = function() {}
+/**@type{?MemberProperties}*/
+OpUpdateMember.InitSpec.prototype.setProperties;
+/**@type{!Object}*/
+OpUpdateMember.InitSpec.prototype.removedProperties;
+
+/**
+ * @record
+ * @extends {op.TypedOperationSpec}
+ * @extends {OpUpdateMember.InitSpec}
+ */
+OpUpdateMember.Spec = function() {}
+
+/**@const*/
+exports.OpUpdateMember = OpUpdateMember;

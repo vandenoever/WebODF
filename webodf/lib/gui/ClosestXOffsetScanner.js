@@ -22,7 +22,7 @@
  * @source: https://github.com/kogmbh/WebODF/
  */
 
-/*global core, gui*/
+var v = require("./VisualStepScanner");
 
 /**
  * Finds the closest step to the specified offset, but comparing the left and right edges of the
@@ -30,14 +30,14 @@
  * start getting further away from the current closest step.
  *
  * @constructor
- * @implements {gui.VisualStepScanner}
+ * @implements {v.VisualStepScanner}
  * @param {!number} offset Target horizontal offset
  */
-gui.ClosestXOffsetScanner = function (offset) {
+function ClosestXOffsetScanner(offset) {
     "use strict";
     var self = this,
         closestDiff,
-        LEFT_TO_RIGHT = gui.StepInfo.VisualDirection.LEFT_TO_RIGHT;
+        LEFT_TO_RIGHT = v.StepInfo.VisualDirection.LEFT_TO_RIGHT;
 
     this.token = undefined;
 
@@ -67,7 +67,7 @@ gui.ClosestXOffsetScanner = function (offset) {
     }
 
     /**
-     * @param {!gui.StepInfo} stepInfo
+     * @param {!v.StepInfo} stepInfo
      * @param {?ClientRect} previousRect
      * @param {?ClientRect} nextRect
      * @return {!boolean}
@@ -101,4 +101,6 @@ gui.ClosestXOffsetScanner = function (offset) {
         }
         return false;
     };
-};
+}
+/**@const*/
+exports.ClosestXOffsetScanner = ClosestXOffsetScanner;

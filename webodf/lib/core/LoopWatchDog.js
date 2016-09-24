@@ -22,7 +22,7 @@
  * @source: https://github.com/kogmbh/WebODF/
  */
 
-/*global core,runtime */
+var runtime = require("../runtime").runtime;
 
 /**
  * An iterator that iterators through positions in a DOM tree.
@@ -30,7 +30,7 @@
  * @param {!number} timeout
  * @param {!number=} maxChecks
  */
-core.LoopWatchDog = function LoopWatchDog(timeout, maxChecks) {
+function LoopWatchDog(timeout, maxChecks) {
     "use strict";
     var startTime = Date.now(),
         /**@type{!number}*/
@@ -53,4 +53,6 @@ core.LoopWatchDog = function LoopWatchDog(timeout, maxChecks) {
         }
     }
     this.check = check;
-};
+}
+/**@const*/
+exports.LoopWatchDog = LoopWatchDog;

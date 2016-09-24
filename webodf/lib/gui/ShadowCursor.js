@@ -22,7 +22,8 @@
  * @source: https://github.com/kogmbh/WebODF/
  */
 
-/*global core, gui, ops, runtime*/
+var OpsDocument = require("../ops/Document").Document;
+var OdtCursor = require("../ops/OdtCursor").OdtCursor;
 
 /**
  * @class
@@ -31,9 +32,9 @@
  * simulating a Cursor when you cannot/should not use a real cursor.
  * 
  * @constructor
- * @param {!ops.Document} document
+ * @param {!OpsDocument} document
  */
-gui.ShadowCursor = function ShadowCursor(document) {
+function ShadowCursor(document) {
     "use strict";
     var /**@type{!Range}*/
         selectedRange = /**@type{!Range}*/(document.getDOMDocument().createRange()),
@@ -45,11 +46,11 @@ gui.ShadowCursor = function ShadowCursor(document) {
 
     /**
      * Obtain the memberid the cursor is assigned to. For a shadow cursor,
-     * this value is always gui.ShadowCursor.ShadowCursorMemberId
+     * this value is always ShadowCursor.ShadowCursorMemberId
      * @return {string}
      */
     this.getMemberId = function () {
-        return gui.ShadowCursor.ShadowCursorMemberId;
+        return ShadowCursor.ShadowCursorMemberId;
     };
 
     /**
@@ -82,7 +83,7 @@ gui.ShadowCursor = function ShadowCursor(document) {
 
     /**
      * Obtain the document to which the cursor corresponds.
-     * @return {!ops.Document}
+     * @return {!OpsDocument}
      */
     this.getDocument = function () {
         return document;
@@ -90,17 +91,19 @@ gui.ShadowCursor = function ShadowCursor(document) {
 
     /**
      * Gets the current selection type. For a shadow cursor, this value is always
-     * ops.OdtCursor.RangeSelection
+     * OdtCursor.RangeSelection
      * @return {!string}
      */
     this.getSelectionType = function () {
-        return ops.OdtCursor.RangeSelection;
+        return OdtCursor.RangeSelection;
     };
 
     function init() {
         selectedRange.setStart(document.getRootNode(), 0);
     }
     init();
-};
+}
 
-/** @const @type {!string} */gui.ShadowCursor.ShadowCursorMemberId = "";
+/** @const @type {!string} */ShadowCursor.ShadowCursorMemberId = "";
+/**@const*/
+exports.ShadowCursor = ShadowCursor;

@@ -22,18 +22,18 @@
  * @source: https://github.com/kogmbh/WebODF/
  */
 
-/*global runtime, odf*/
+var styleParseUtils = require("./StyleParseUtils");
+var Namespaces = require("./Namespaces").Namespaces;
 
 /**
  * @constructor
  * @param {?Element} element
- * @param {!odf.StyleParseUtils} styleParseUtils
- * @param {!odf.PageLayoutProperties|undefined} parent
+ * @param {!PageLayoutProperties|undefined} parent
  */
-odf.PageLayoutProperties = function (element, styleParseUtils, parent) {
+function PageLayoutProperties(element, parent) {
     "use strict";
     var self = this,
-        fons = odf.Namespaces.fons,
+        fons = Namespaces.fons,
         getter;
     getter = {
         pageHeight: function () {
@@ -68,26 +68,25 @@ odf.PageLayoutProperties = function (element, styleParseUtils, parent) {
                 || 794; // A4 width
     };
     /**
-     * @type {!odf.LazyStyleProperties|undefined}
+     * @type {!styleParseUtils.LazyStyleProperties|undefined}
      */
     this.data;
     function init() {
         var p = parent === undefined ? undefined : parent.data;
-        self.data = new odf.LazyStyleProperties(p, getter);
+        self.data = new styleParseUtils.LazyStyleProperties(p, getter);
     }
     init();
-};
+}
 /**
  * @constructor
  * @param {?Element} element
- * @param {!odf.StyleParseUtils} styleParseUtils
- * @param {!odf.PageLayout=} parent
+ * @param {!PageLayout=} parent
  */
-odf.PageLayout = function (element, styleParseUtils, parent) {
+function PageLayout(element, parent) {
     "use strict";
     var self = this;
     /**
-     * @type {!odf.PageLayoutProperties}
+     * @type {!PageLayoutProperties}
      */
     this.pageLayout;
     function init() {
@@ -96,23 +95,27 @@ odf.PageLayout = function (element, styleParseUtils, parent) {
             e = styleParseUtils.getPropertiesElement("page-layout-properties",
                  element);
         }
-        self.pageLayout = new odf.PageLayoutProperties(e, styleParseUtils,
+        self.pageLayout = new PageLayoutProperties(e,
                 (parent && parent.pageLayout));
     }
     init();
-};
+}
+/**@const*/
+exports.PageLayout = PageLayout;
 /*jslint emptyblock: true, unparam: true*/
 /**
  * @interface
  */
-odf.PageLayoutCache = function () {"use strict"; };
+function PageLayoutCache() {"use strict"; }
 /**
  * @param {!string} name
- * @return {!odf.PageLayout}
+ * @return {!PageLayout}
  */
-odf.PageLayoutCache.prototype.getPageLayout = function (name) {"use strict"; };
+PageLayoutCache.prototype.getPageLayout = function (name) {"use strict"; };
 /**
- * @return {!odf.PageLayout}
+ * @return {!PageLayout}
  */
-odf.PageLayoutCache.prototype.getDefaultPageLayout = function () {"use strict"; };
+PageLayoutCache.prototype.getDefaultPageLayout = function () {"use strict"; };
 /*jslint emptyblock: false, unparam: false*/
+/**@const*/
+exports.PageLayoutCache = PageLayoutCache;

@@ -22,19 +22,22 @@
  * @source: https://github.com/kogmbh/WebODF/
  */
 
-/*global runtime, gui, odf, core */
+var runtime = require("../runtime").runtime;
+var Destroyable = require("../core/Destroyable").Destroyable;
+var domUtils = require("../core/DomUtils");
+var KeyboardHandler = require("./KeyboardHandler").KeyboardHandler;
+var odfUtils = require("../odf/OdfUtils");
+var OdfCanvas = require("../odf/OdfCanvas").OdfCanvas;
 
 /**
  * @constructor
- * @implements {core.Destroyable}
- * @param {!odf.OdfCanvas} odfCanvas
+ * @implements {Destroyable}
+ * @param {!OdfCanvas} odfCanvas
  * @param {!function():!number} getActiveModifier Get the currently active hyperlink click handler modifier
  */
-gui.HyperlinkTooltipView = function HyperlinkTooltipView(odfCanvas, getActiveModifier) {
+function HyperlinkTooltipView(odfCanvas, getActiveModifier) {
     "use strict";
-    var domUtils = core.DomUtils,
-        odfUtils = odf.OdfUtils,
-        /**@type{!Window}*/
+    var /**@type{!Window}*/
         window = /**@type{!Window}*/(runtime.getWindow()),
         /**@type{!Element}*/
         linkSpan,
@@ -79,10 +82,10 @@ gui.HyperlinkTooltipView = function HyperlinkTooltipView(odfCanvas, getActiveMod
         var modifierKey = getActiveModifier(),
             hint;
         switch (modifierKey) {
-            case gui.KeyboardHandler.Modifier.Ctrl:
+            case KeyboardHandler.Modifier.Ctrl:
                 hint = runtime.tr("Ctrl-click to follow link");
                 break;
-            case gui.KeyboardHandler.Modifier.Meta:
+            case KeyboardHandler.Modifier.Meta:
                 hint = runtime.tr("⌘-click to follow link");
                 break;
             default:
@@ -177,4 +180,6 @@ gui.HyperlinkTooltipView = function HyperlinkTooltipView(odfCanvas, getActiveMod
     }
 
     init();
-};
+}
+/**@const*/
+exports.HyperlinkTooltipView = HyperlinkTooltipView;

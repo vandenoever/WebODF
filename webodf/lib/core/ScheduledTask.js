@@ -22,7 +22,10 @@
  * @source: https://github.com/kogmbh/WebODF/
  */
 
-/*global Node, core, runtime*/
+/*global Node*/
+
+var runtime = require("../runtime").runtime;
+var Destroyable = require("./Destroyable").Destroyable;
 
 /**
  * @class
@@ -31,12 +34,12 @@
  * batching up draw requests or other lower-priority or high-volume calls
  *
  * @constructor
- * @implements {core.Destroyable}
+ * @implements {Destroyable}
  * @param {!Function} fn The function to execute for this task
  * @param {!function(!function():undefined):!number} scheduleTask Schedule the task to execute
  * @param {!function(!number):undefined} cancelTask Cancel a scheduled task
  */
-core.ScheduledTask = function ScheduledTask(fn, scheduleTask, cancelTask) {
+function ScheduledTask(fn, scheduleTask, cancelTask) {
     "use strict";
     var timeoutId,
         scheduled = false,
@@ -115,5 +118,6 @@ core.ScheduledTask = function ScheduledTask(fn, scheduleTask, cancelTask) {
         destroyed = true;
         callback();
     };
-
-};
+}
+/**@const*/
+exports.ScheduledTask = ScheduledTask;

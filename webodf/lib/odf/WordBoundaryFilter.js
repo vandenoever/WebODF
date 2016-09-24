@@ -22,7 +22,13 @@
  * @source: https://github.com/kogmbh/WebODF/
  */
 
-/*global Node, NodeFilter, core, runtime, odf*/
+/*global Node, NodeFilter*/
+"use strict";
+var domUtils = require("../core/DomUtils");
+var PositionFilter = require("../core/PositionFilter").PositionFilter;
+var OdtDocument = require("../ops/OdtDocument").OdtDocument;
+var odfUtils = require("./OdfUtils");
+var PositionIterator = require("../core/PositionIterator").PositionIterator;
 
 /**
  * A filter that allows a position if it is in front of a word, picture etc.
@@ -50,28 +56,27 @@
  *
  *
  * @constructor
- * @implements {core.PositionFilter}
- * @param {!ops.OdtDocument} odtDocument
- * @param {!odf.WordBoundaryFilter.IncludeWhitespace} includeWhitespace Specify the type of whitespace to include within
+ * @implements {PositionFilter}
+ * @param {!OdtDocument} odtDocument
+ * @param {!WordBoundaryFilter.IncludeWhitespace} includeWhitespace Specify the type of whitespace to include within
  *  the word boundary. TRAILING causes the accepted position to be after the whitespace trailing a word, while LEADING
  *  causes the accepted position to be just after the word boundary (but before the trailing whitespace).
  */
-odf.WordBoundaryFilter = function WordBoundaryFilter(odtDocument, includeWhitespace) {
+function WordBoundaryFilter(odtDocument, includeWhitespace) {
     "use strict";
     var TEXT_NODE = Node.TEXT_NODE,
         ELEMENT_NODE = Node.ELEMENT_NODE,
-        odfUtils = odf.OdfUtils,
         // Sourced from http://apps.timwhitlock.info/js/regex, including all punctuation components
         punctuation = /[!-#%-*,-\/:-;?-@\[-\]_{}¡«·»¿;·՚-՟։-֊־׀׃׆׳-״؉-؊،-؍؛؞-؟٪-٭۔܀-܍߷-߹।-॥॰෴๏๚-๛༄-༒༺-༽྅࿐-࿔၊-၏჻፡-፨᙭-᙮᚛-᚜᛫-᛭᜵-᜶។-៖៘-៚᠀-᠊᥄-᥅᧞-᧟᨞-᨟᭚-᭠᰻-᰿᱾-᱿\u2000-\u206e⁽-⁾₍-₎〈-〉❨-❵⟅-⟆⟦-⟯⦃-⦘⧘-⧛⧼-⧽⳹-⳼⳾-⳿⸀-\u2e7e\u3000-\u303f゠・꘍-꘏꙳꙾꡴-꡷꣎-꣏꤮-꤯꥟꩜-꩟﴾-﴿︐-︙︰-﹒﹔-﹡﹣﹨﹪-﹫！-＃％-＊，-／：-；？-＠［-］＿｛｝｟-･]|\ud800[\udd00-\udd01\udf9f\udfd0]|\ud802[\udd1f\udd3f\ude50-\ude58]|\ud809[\udc00-\udc7e]/,
         spacing = /\s/,
         /**@const*/
-        FILTER_ACCEPT = core.PositionFilter.FilterResult.FILTER_ACCEPT,
+        FILTER_ACCEPT = PositionFilter.FilterResult.FILTER_ACCEPT,
         /**@const*/
-        FILTER_REJECT = core.PositionFilter.FilterResult.FILTER_REJECT,
+        FILTER_REJECT = PositionFilter.FilterResult.FILTER_REJECT,
         /**@const*/
-        TRAILING = odf.WordBoundaryFilter.IncludeWhitespace.TRAILING,
+        TRAILING = WordBoundaryFilter.IncludeWhitespace.TRAILING,
         /**@const*/
-        LEADING = odf.WordBoundaryFilter.IncludeWhitespace.LEADING,
+        LEADING = WordBoundaryFilter.IncludeWhitespace.LEADING,
         /**
          * @enum {number}
          */
@@ -136,8 +141,8 @@ odf.WordBoundaryFilter = function WordBoundaryFilter(odtDocument, includeWhitesp
     }
 
     /**
-     * @param {!core.PositionIterator} iterator
-     * @return {!core.PositionFilter.FilterResult}
+     * @param {!PositionIterator} iterator
+     * @return {!PositionFilter.FilterResult}
      */
     this.acceptPosition = function (iterator) {
         var container = iterator.container(),
@@ -186,14 +191,16 @@ odf.WordBoundaryFilter = function WordBoundaryFilter(odtDocument, includeWhitesp
         }
         return FILTER_ACCEPT;
     };
-};
+}
 
 /**
  * Type of whitespace to include within the word boundary
  * @enum {!number}
  */
-odf.WordBoundaryFilter.IncludeWhitespace = {
+WordBoundaryFilter.IncludeWhitespace = {
     /**@const*/None: 0,
     /**@const*/TRAILING: 1,
     /**@const*/LEADING: 2
 };
+/**@const*/
+exports.WordBoundaryFilter = WordBoundaryFilter;

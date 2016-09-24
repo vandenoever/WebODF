@@ -22,7 +22,9 @@
  * @source: https://github.com/kogmbh/WebODF/
  */
 
-/*global Node, NodeFilter, xmldom, runtime*/
+/*global Node, NodeFilter*/
+
+var LSSerializerFilter = require("./LSSerializerFilter").LSSerializerFilter;
 
 /*jslint sub: true, emptyblock: true*/
 if (typeof Object.create !== 'function') {
@@ -46,7 +48,7 @@ if (typeof Object.create !== 'function') {
  * Partial implementation of LSSerializer
  * @constructor
  */
-xmldom.LSSerializer = function LSSerializer() {
+function LSSerializer() {
     "use strict";
     var self = this;
 
@@ -251,7 +253,7 @@ xmldom.LSSerializer = function LSSerializer() {
         return s;
     }
     /**
-     * @type {xmldom.LSSerializerFilter}
+     * @type {LSSerializerFilter}
      */
     this.filter = null;
     /**
@@ -266,4 +268,6 @@ xmldom.LSSerializer = function LSSerializer() {
         var ns = new Namespaces(nsmap);
         return serializeNode(ns, node);
     };
-};
+}
+/**@const*/
+exports.LSSerializer = LSSerializer;

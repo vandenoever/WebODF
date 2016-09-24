@@ -22,43 +22,49 @@
  * @source: https://github.com/kogmbh/WebODF/
  */
 
-/*global odf, runtime, xmldom, core, document*/
+/*global document*/
+"use strict";
+var cssUnits = require("../core/CSSUnits");
+var domUtils = require("../core/DomUtils");
+var Namespaces = require("./Namespaces").Namespaces;
+var utils = require("./OdfUtils");
+var styleParseUtils = require("./StyleParseUtils");
+var StyleTreeNode = require("./StyleTree").StyleTreeNode;
+var runtime = require("../runtime").runtime;
+var xpath = require("../xmldom/XPath");
 
 /**
  * @constructor
  */
-odf.Style2CSS = function Style2CSS() {
-    "use strict";
+function Style2CSS() {
     var // helper constants
         /**@const
            @type{!string}*/
-        drawns = odf.Namespaces.drawns,
+        drawns = Namespaces.drawns,
         /**@const
            @type{!string}*/
-        fons = odf.Namespaces.fons,
+        fons = Namespaces.fons,
         /**@const
            @type{!string}*/
-        officens = odf.Namespaces.officens,
+        officens = Namespaces.officens,
         /**@const
            @type{!string}*/
-        stylens = odf.Namespaces.stylens,
+        stylens = Namespaces.stylens,
         /**@const
            @type{!string}*/
-        svgns = odf.Namespaces.svgns,
+        svgns = Namespaces.svgns,
         /**@const
            @type{!string}*/
-        tablens = odf.Namespaces.tablens,
+        tablens = Namespaces.tablens,
         /**@const
            @type{!string}*/
-        xlinkns = odf.Namespaces.xlinkns,
+        xlinkns = Namespaces.xlinkns,
         /**@const
            @type{!string}*/
-        presentationns = odf.Namespaces.presentationns,
+        presentationns = Namespaces.presentationns,
         /**@const
          * @type {!string}*/
         webodfhelperns = "urn:webodf:names:helper",
-        domUtils = core.DomUtils,
-        styleParseUtils = new odf.StyleParseUtils(),
 
         /**@const
            @type{!Object.<string,string>}*/
@@ -261,12 +267,9 @@ odf.Style2CSS = function Style2CSS() {
         // A font-face declaration map, to be populated once style2css is called.
         /**@type{!Object.<string,string>}*/
         fontFaceDeclsMap = {},
-        utils = odf.OdfUtils,
         documentType,
         odfRoot,
-        defaultFontSize,
-        xpath = xmldom.XPath,
-        cssUnits = new core.CSSUnits();
+        defaultFontSize;
 
     /**
      * @param {!string} family
@@ -303,7 +306,7 @@ odf.Style2CSS = function Style2CSS() {
     /**
      * @param {!string} family
      * @param {!string} name
-     * @param {!odf.StyleTreeNode} node
+     * @param {!StyleTreeNode} node
      * @return {!Array.<string>}
      */
     function getSelectors(family, name, node) {
@@ -372,7 +375,7 @@ odf.Style2CSS = function Style2CSS() {
         } else {
             xp = "//style:default-style[@style:family='" + parentStyleFamily + "']";
         }
-        parentStyleNode = xpath.getODFElementsWithXPath(/**@type{!Element}*/(odfRoot), xp, odf.Namespaces.lookupNamespaceURI)[0];
+        parentStyleNode = xpath.getODFElementsWithXPath(/**@type{!Element}*/(odfRoot), xp, Namespaces.lookupNamespaceURI)[0];
         return parentStyleNode;
     }
 
@@ -743,7 +746,7 @@ odf.Style2CSS = function Style2CSS() {
      * Gets a list with the names of all styles derived from the given style,
      * including the name of the style itself.
      * @param {!string} styleName
-     * @param {!odf.StyleTreeNode} node
+     * @param {!StyleTreeNode} node
      * @return {!Array.<!string>}
      */
     function getDerivedStyleNames(styleName, node) {
@@ -765,7 +768,7 @@ odf.Style2CSS = function Style2CSS() {
      * @param {!CSSStyleSheet} sheet
      * @param {!string} styleName
      * @param {!Element} properties
-     * @param {!odf.StyleTreeNode} node
+     * @param {!StyleTreeNode} node
      * @return {undefined}
      */
     function addDrawPageFrameDisplayRules(sheet, styleName, properties, node) {
@@ -817,7 +820,7 @@ odf.Style2CSS = function Style2CSS() {
      * @param {!CSSStyleSheet} sheet
      * @param {string} family
      * @param {string} name
-     * @param {!odf.StyleTreeNode} node
+     * @param {!StyleTreeNode} node
      * @return {undefined}
      */
     function addStyleRule(sheet, family, name, node) {
@@ -945,7 +948,7 @@ odf.Style2CSS = function Style2CSS() {
      * @param {!CSSStyleSheet} sheet
      * @param {string} family
      * @param {string} name
-     * @param {!odf.StyleTreeNode} node
+     * @param {!StyleTreeNode} node
      * @return {undefined}
      */
     function addRule(sheet, family, name, node) {
@@ -959,7 +962,7 @@ odf.Style2CSS = function Style2CSS() {
      * @param {!CSSStyleSheet} sheet
      * @param {string} family
      * @param {string} name
-     * @param {!odf.StyleTreeNode} node
+     * @param {!StyleTreeNode} node
      * @return {undefined}
      */
     function addRules(sheet, family, name, node) {
@@ -983,7 +986,7 @@ odf.Style2CSS = function Style2CSS() {
      * @param {!Element} rootNode
      * @param {!CSSStyleSheet} stylesheet
      * @param {!Object.<string,string>} fontFaceMap
-     * @param {!Object.<string,!Object.<string,!odf.StyleTreeNode>>} styleTree
+     * @param {!Object.<string,!Object.<string,!StyleTreeNode>>} styleTree
      * @return {undefined}
      */
     this.style2css = function (doctype, rootNode, stylesheet, fontFaceMap, styleTree) {
@@ -1016,7 +1019,7 @@ odf.Style2CSS = function Style2CSS() {
         }
 
         // add @odfRoot namespace rules
-        odf.Namespaces.forEachPrefix(insertCSSNamespace);
+        Namespaces.forEachPrefix(insertCSSNamespace);
         insertCSSNamespace("webodfhelper", webodfhelperns);
 
         fontFaceDeclsMap = fontFaceMap;
@@ -1035,4 +1038,5 @@ odf.Style2CSS = function Style2CSS() {
             }
         }
     };
-};
+}
+exports.Style2CSS = Style2CSS;

@@ -22,18 +22,18 @@
  * @source: https://github.com/kogmbh/WebODF/
  */
 
-/*global runtime, odf*/
+var styleParseUtils = require("./StyleParseUtils");
+var Namespaces = require("./Namespaces").Namespaces;
 
 /**
  * @constructor
  * @param {!Element} element
- * @param {!odf.StyleParseUtils} styleParseUtils
- * @param {!odf.ParagraphProperties|undefined} parent
+ * @param {!ParagraphProperties|undefined} parent
  */
-odf.ParagraphProperties = function (element, styleParseUtils, parent) {
+function ParagraphProperties(element, parent) {
     "use strict";
     var self = this,
-        fons = odf.Namespaces.fons,
+        fons = Namespaces.fons,
         getter;
     getter = {
         marginTop: function () {
@@ -50,23 +50,25 @@ odf.ParagraphProperties = function (element, styleParseUtils, parent) {
         return /**@type{!number|undefined}*/(self.data.value("marginTop"));
     };
     /**
-     * @type {!odf.LazyStyleProperties}
+     * @type {!styleParseUtils.LazyStyleProperties}
      */
     this.data;
     function init() {
         var p = parent === undefined ? undefined : parent.data;
-        self.data = new odf.LazyStyleProperties(p, getter);
+        self.data = new styleParseUtils.LazyStyleProperties(p, getter);
     }
     init();
-};
+}
+/**@const*/
+exports.ParagraphProperties = ParagraphProperties;
 /**
  * @constructor
  */
-odf.ComputedParagraphProperties = function () {
+function ComputedParagraphProperties() {
     "use strict";
     var /**@type{!Object.<!string,*>}*/
         data = {},
-        /**@type{!Array.<!odf.ParagraphProperties>}*/
+        /**@type{!Array.<!ParagraphProperties>}*/
         styleChain = [];
     /**
      * @param {!string} name
@@ -85,7 +87,7 @@ odf.ComputedParagraphProperties = function () {
         return v;
     }
     /**
-     * @param {!Array.<!odf.ParagraphProperties>} newStyleChain
+     * @param {!Array.<!ParagraphProperties>} newStyleChain
      * @return {undefined}
      */
     this.setStyleChain = function setStyleChain(newStyleChain) {
@@ -98,4 +100,6 @@ odf.ComputedParagraphProperties = function () {
     this.marginTop = function () {
         return /**@type{!number}*/(value("marginTop")) || 0;
     };
-};
+}
+/**@const*/
+exports.ComputedParagraphProperties = ComputedParagraphProperties;

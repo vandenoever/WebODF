@@ -22,24 +22,36 @@
  * @source: https://github.com/kogmbh/WebODF/
  */
 
-/*global runtime, core, gui, odf, ops, Node*/
+/*global Node*/
+
+var Destroyable = require("../core/Destroyable").Destroyable;
+var EventNotifier = require("../core/EventNotifier").EventNotifier;
+var OpAddAnnotation = require("../ops/OpAddAnnotation").OpAddAnnotation;
+var OpRemoveAnnotation = require("../ops/OpRemoveAnnotation").OpRemoveAnnotation;
+var OpMoveCursor = require("../ops/OpMoveCursor").OpMoveCursor;
+var OpsDocument = require("../ops/Document").Document;
+var Session = require("../ops/Session").Session;
+var OdtCursor = require("../ops/OdtCursor").OdtCursor;
+var StepDirection = require("../core/enums").StepDirection;
+var odfUtils = require("../odf/OdfUtils");
+var CommonConstraints = require("./CommonConstraints").CommonConstraints;
+var SessionConstraints = require("./SessionConstraints").SessionConstraints;
 
 /**
  * @constructor
- * @implements {core.Destroyable}
- * @param {!ops.Session} session
- * @param {!gui.SessionConstraints} sessionConstraints
+ * @implements {Destroyable}
+ * @param {!Session} session
+ * @param {!SessionConstraints} sessionConstraints
  * @param {!string} inputMemberId
  */
-gui.AnnotationController = function AnnotationController(session, sessionConstraints, inputMemberId) {
+function AnnotationController(session, sessionConstraints, inputMemberId) {
     "use strict";
 
     var odtDocument = session.getOdtDocument(),
         isAnnotatable = false,
-        eventNotifier = new core.EventNotifier([gui.AnnotationController.annotatableChanged]),
-        odfUtils = odf.OdfUtils,
+        eventNotifier = new EventNotifier([AnnotationController.annotatableChanged]),
         /**@const*/
-        NEXT = core.StepDirection.NEXT;
+        NEXT = StepDirection.NEXT;
 
     /**
      * @return {undefined}
@@ -54,12 +66,12 @@ gui.AnnotationController = function AnnotationController(session, sessionConstra
 
         if (newIsAnnotatable !== isAnnotatable) {
             isAnnotatable = newIsAnnotatable;
-            eventNotifier.emit(gui.AnnotationController.annotatableChanged, isAnnotatable);
+            eventNotifier.emit(AnnotationController.annotatableChanged, isAnnotatable);
         }
     }
 
     /**
-     * @param {!ops.OdtCursor} cursor
+     * @param {!OdtCursor} cursor
      * @return {undefined}
      */
     function onCursorAdded(cursor) {
@@ -79,7 +91,7 @@ gui.AnnotationController = function AnnotationController(session, sessionConstra
     }
 
     /**
-     * @param {!ops.OdtCursor} cursor
+     * @param {!OdtCursor} cursor
      * @return {undefined}
      */
     function onCursorMoved(cursor) {
@@ -100,7 +112,7 @@ gui.AnnotationController = function AnnotationController(session, sessionConstra
      * @return {undefined}
      */
     this.addAnnotation = function () {
-        var op = new ops.OpAddAnnotation(),
+        var op = new OpAddAnnotation(),
             selection = odtDocument.getCursorSelection(inputMemberId),
             length = selection.length,
             position = selection.position;
@@ -134,7 +146,7 @@ gui.AnnotationController = function AnnotationController(session, sessionConstra
         var startStep, endStep, op, moveCursor,
             currentUserName = odtDocument.getMember(inputMemberId).getProperties().fullName;
 
-        if (sessionConstraints.getState(gui.CommonConstraints.EDIT.ANNOTATIONS.ONLY_DELETE_OWN) === true) {
+        if (sessionConstraints.getState(CommonConstraints.EDIT.ANNOTATIONS.ONLY_DELETE_OWN) === true) {
             if (currentUserName !== odfUtils.getAnnotationCreator(annotationNode)) {
                 return;
             }
@@ -145,13 +157,13 @@ gui.AnnotationController = function AnnotationController(session, sessionConstra
         // Will report the last walkable step within the annotation
         endStep = odtDocument.convertDomPointToCursorStep(annotationNode, annotationNode.childNodes.length);
 
-        op = new ops.OpRemoveAnnotation();
+        op = new OpRemoveAnnotation();
         op.init({
             memberid: inputMemberId,
             position: startStep,
             length: endStep - startStep
         });
-        moveCursor = new ops.OpMoveCursor();
+        moveCursor = new OpMoveCursor();
         moveCursor.init({
             memberid: inputMemberId,
             position: startStep > 0 ? startStep - 1 : startStep, // Last position just before the annotation starts
@@ -183,22 +195,24 @@ gui.AnnotationController = function AnnotationController(session, sessionConstra
      * @return {undefined}
      */
     this.destroy = function(callback) {
-        odtDocument.unsubscribe(ops.Document.signalCursorAdded, onCursorAdded);
-        odtDocument.unsubscribe(ops.Document.signalCursorRemoved, onCursorRemoved);
-        odtDocument.unsubscribe(ops.Document.signalCursorMoved, onCursorMoved);
+        odtDocument.unsubscribe(OpsDocument.signalCursorAdded, onCursorAdded);
+        odtDocument.unsubscribe(OpsDocument.signalCursorRemoved, onCursorRemoved);
+        odtDocument.unsubscribe(OpsDocument.signalCursorMoved, onCursorMoved);
         callback();
     };
 
     function init() {
-        sessionConstraints.registerConstraint(gui.CommonConstraints.EDIT.ANNOTATIONS.ONLY_DELETE_OWN);
+        sessionConstraints.registerConstraint(CommonConstraints.EDIT.ANNOTATIONS.ONLY_DELETE_OWN);
 
-        odtDocument.subscribe(ops.Document.signalCursorAdded, onCursorAdded);
-        odtDocument.subscribe(ops.Document.signalCursorRemoved, onCursorRemoved);
-        odtDocument.subscribe(ops.Document.signalCursorMoved, onCursorMoved);
+        odtDocument.subscribe(OpsDocument.signalCursorAdded, onCursorAdded);
+        odtDocument.subscribe(OpsDocument.signalCursorRemoved, onCursorRemoved);
+        odtDocument.subscribe(OpsDocument.signalCursorMoved, onCursorMoved);
         updatedCachedValues();
     }
 
     init();
-};
+}
 
-/**@const*/gui.AnnotationController.annotatableChanged = "annotatable/changed";
+/**@const*/AnnotationController.annotatableChanged = "annotatable/changed";
+/**@const*/
+exports.AnnotationController = AnnotationController;

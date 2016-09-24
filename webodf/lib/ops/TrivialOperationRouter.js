@@ -22,7 +22,10 @@
  * @source: https://github.com/kogmbh/WebODF/
  */
 
-/*global ops, runtime, core*/
+var OperationRouter = require("./OperationRouter").OperationRouter;
+var Operation = require("./Operation").Operation;
+var OperationFactory = require("./OperationFactory").OperationFactory;
+var EventNotifier = require("../core/EventNotifier").EventNotifier;
 
 /*
  * route the operations.
@@ -34,16 +37,16 @@
 
 /**
  * @constructor
- * @implements ops.OperationRouter
+ * @implements OperationRouter
  */
-ops.TrivialOperationRouter = function TrivialOperationRouter() {
+function TrivialOperationRouter() {
     "use strict";
 
-    var events = new core.EventNotifier([
-            ops.OperationRouter.signalProcessingBatchStart,
-            ops.OperationRouter.signalProcessingBatchEnd
+    var events = new EventNotifier([
+            OperationRouter.signalProcessingBatchStart,
+            OperationRouter.signalProcessingBatchEnd
         ]),
-        /**@type{!ops.OperationFactory}*/
+        /**@type{!OperationFactory}*/
         operationFactory,
         playbackFunction,
         /**@type{number}*/
@@ -52,7 +55,7 @@ ops.TrivialOperationRouter = function TrivialOperationRouter() {
     /**
      * Sets the factory to use to create operation instances from operation specs.
      *
-     * @param {!ops.OperationFactory} f
+     * @param {!OperationFactory} f
      * @return {undefined}
      */
     this.setOperationFactory = function (f) {
@@ -62,7 +65,7 @@ ops.TrivialOperationRouter = function TrivialOperationRouter() {
     /**
      * Sets the method which should be called to apply operations.
      *
-     * @param {!function(!ops.Operation):boolean} playback_func
+     * @param {!function(!Operation):boolean} playback_func
      * @return {undefined}
      */
     this.setPlaybackFunction = function (playback_func) {
@@ -72,7 +75,7 @@ ops.TrivialOperationRouter = function TrivialOperationRouter() {
     /**
      * Brings the locally created operations into the game.
      *
-     * @param {!Array.<!ops.Operation>} operations
+     * @param {!Array.<!Operation>} operations
      * @return {undefined}
      */
     this.push = function (operations) {
@@ -82,9 +85,9 @@ ops.TrivialOperationRouter = function TrivialOperationRouter() {
         // The current implementation is only designed for a localeditor instance & the TrivialUndoManager.
         // TODO redesign this concept to work with collaborative editing
         groupIdentifier += 1;
-        events.emit(ops.OperationRouter.signalProcessingBatchStart, {});
+        events.emit(OperationRouter.signalProcessingBatchStart, {});
         operations.forEach(function (op) {
-            var /**@type{?ops.Operation}*/
+            var /**@type{?Operation}*/
                 timedOp,
                 opspec = op.spec();
 
@@ -95,7 +98,7 @@ ops.TrivialOperationRouter = function TrivialOperationRouter() {
             // TODO: handle return flag in error case
             playbackFunction(timedOp);
         });
-        events.emit(ops.OperationRouter.signalProcessingBatchEnd, {});
+        events.emit(OperationRouter.signalProcessingBatchEnd, {});
     };
 
     /**
@@ -136,4 +139,6 @@ ops.TrivialOperationRouter = function TrivialOperationRouter() {
     this.hasSessionHostConnection = function () {
         return true;
     };
-};
+}
+/**@const*/
+exports.TrivialOperationRouter = TrivialOperationRouter;

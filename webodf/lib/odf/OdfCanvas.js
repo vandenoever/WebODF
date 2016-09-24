@@ -22,11 +22,29 @@
  * @source: https://github.com/kogmbh/WebODF/
  */
 
-/*global runtime, odf, xmldom, webodf_css, core, gui */
 /*jslint sub: true*/
 
-(function () {
-    "use strict";
+"use strict";
+var Async = require("../core/Async");
+var Task = require("../core/Task");
+var xpath = require("../xmldom/XPath");
+var Style2CSS = require("./Style2CSS").Style2CSS;
+var ListStyleToCss = require("./ListStylesToCss").ListStyleToCss;
+var FontLoader = require("./FontLoader").FontLoader;
+var Formatting = require("./Formatting").Formatting;
+var oc = require("./OdfContainer");
+var StyleTree = require("./StyleTree").StyleTree;
+var avm = require("../gui/AnnotationViewManager");
+var Viewport = require("../gui/Viewport").Viewport;
+var SingleScrollViewport = require("../gui/SingleScrollViewport").SingleScrollViewport;
+var Destroyable = require("../core/Destroyable").Destroyable;
+var Canvas = require("../ops/Canvas").Canvas;
+var ZoomHelper = require("../gui/ZoomHelper").ZoomHelper;
+var Namespaces = require("./Namespaces").Namespaces;
+var domUtils = require("../core/DomUtils");
+var runtime = require("../runtime").runtime;
+var ScheduledTask = require("../core/ScheduledTask").ScheduledTask;
+
     /**
      * A loading queue where various tasks related to loading can be placed
      * and will be run with 10 ms between them. This gives the ui a change to
@@ -74,7 +92,7 @@
     }
     /**
      * @constructor
-     * @implements {core.Destroyable}
+     * @implements {Destroyable}
      * @param {!HTMLStyleElement} css
      */
     function PageSwitcher(css) {
@@ -163,18 +181,16 @@
     }
 
     // variables per class (so not per instance!)
-    var /**@const@type {!string}*/drawns  = odf.Namespaces.drawns,
-        /**@const@type {!string}*/fons    = odf.Namespaces.fons,
-        /**@const@type {!string}*/officens = odf.Namespaces.officens,
-        /**@const@type {!string}*/stylens = odf.Namespaces.stylens,
-        /**@const@type {!string}*/svgns   = odf.Namespaces.svgns,
-        /**@const@type {!string}*/tablens = odf.Namespaces.tablens,
-        /**@const@type {!string}*/textns  = odf.Namespaces.textns,
-        /**@const@type {!string}*/xlinkns = odf.Namespaces.xlinkns,
-        /**@const@type {!string}*/presentationns = odf.Namespaces.presentationns,
-        /**@const@type {!string}*/webodfhelperns = "urn:webodf:names:helper",
-        xpath = xmldom.XPath,
-        domUtils = core.DomUtils;
+    var /**@const@type {!string}*/drawns  = Namespaces.drawns,
+        /**@const@type {!string}*/fons    = Namespaces.fons,
+        /**@const@type {!string}*/officens = Namespaces.officens,
+        /**@const@type {!string}*/stylens = Namespaces.stylens,
+        /**@const@type {!string}*/svgns   = Namespaces.svgns,
+        /**@const@type {!string}*/tablens = Namespaces.tablens,
+        /**@const@type {!string}*/textns  = Namespaces.textns,
+        /**@const@type {!string}*/xlinkns = Namespaces.xlinkns,
+        /**@const@type {!string}*/presentationns = Namespaces.presentationns,
+        /**@const@type {!string}*/webodfhelperns = "urn:webodf:names:helper";
 
     /**
      * @param {!HTMLStyleElement} style
@@ -191,17 +207,17 @@
 
     /**
      * A new styles.xml has been loaded. Update the live document with it.
-     * @param {!odf.OdfContainer} odfcontainer
-     * @param {!odf.Formatting} formatting
+     * @param {!oc.OdfContainer} odfcontainer
+     * @param {!Formatting} formatting
      * @param {!HTMLStyleElement} stylesxmlcss
      * @return {undefined}
      **/
     function handleStyles(odfcontainer, formatting, stylesxmlcss) {
         // update the css translation of the styles
-        var style2css = new odf.Style2CSS(),
-            list2css = new odf.ListStyleToCss(),
+        var style2css = new Style2CSS(),
+            list2css = new ListStyleToCss(),
             styleSheet = /**@type{!CSSStyleSheet}*/(stylesxmlcss.sheet),
-            styleTree = new odf.StyleTree(
+            styleTree = new StyleTree(
                 odfcontainer.rootElement.styles,
                 odfcontainer.rootElement.automaticStyles).getStyleTree();
 
@@ -221,13 +237,13 @@
     }
 
     /**
-     * @param {!odf.OdfContainer} odfContainer
+     * @param {!oc.OdfContainer} odfContainer
      * @param {!HTMLStyleElement} fontcss
      * @return {undefined}
      **/
     function handleFonts(odfContainer, fontcss) {
         // update the css references to the fonts
-        var fontLoader = new odf.FontLoader();
+        var fontLoader = new FontLoader();
         fontLoader.loadFonts(odfContainer,
             /**@type{!CSSStyleSheet}*/(fontcss.sheet));
     }
@@ -250,7 +266,7 @@
     }
 
     /**
-     * @param {!odf.OdfContainer} odfContainer
+     * @param {!oc.OdfContainer} odfContainer
      * @param {!Element} frame
      * @param {!string} headerFooterId
      * @return {?string}
@@ -363,7 +379,7 @@
     }
     /**
      * @param {string} id
-     * @param {!odf.OdfContainer} container
+     * @param {!oc.OdfContainer} container
      * @param {!Element} image
      * @param {!CSSStyleSheet} stylesheet
      * @return {undefined}
@@ -371,7 +387,7 @@
     function setImage(id, container, image, stylesheet) {
         image.setAttributeNS(webodfhelperns, 'styleid', id);
         var url = image.getAttributeNS(xlinkns, 'href'),
-            /**@type{!odf.OdfPart}*/
+            /**@type{!oc.OdfPart}*/
             part;
         /**
          * @param {?string} url
@@ -385,7 +401,7 @@
             }
         }
         /**
-         * @param {!odf.OdfPart} p
+         * @param {!oc.OdfPart} p
          */
         function onchange(p) {
             callback(p.url);
@@ -413,7 +429,7 @@
             i,
             nodes = xpath.getODFElementsWithXPath(odfbody,
                 ".//*[*[@text:anchor-type='paragraph']]",
-                odf.Namespaces.lookupNamespaceURI);
+                Namespaces.lookupNamespaceURI);
         for (i = 0; i < nodes.length; i += 1) {
             n = nodes[i];
             if (n.setAttributeNS) {
@@ -557,8 +573,8 @@
     }
 
     /**
-     * @param {!odf.Formatting} formatting
-     * @param {!odf.OdfContainer} odfContainer
+     * @param {!Formatting} formatting
+     * @param {!oc.OdfContainer} odfContainer
      * @param {!Element} shadowContent
      * @param {!Element} odfbody
      * @param {!CSSStyleSheet} stylesheet
@@ -646,13 +662,13 @@
     }
 
     /**
-     * @param {!odf.OdfContainer} container
+     * @param {!oc.OdfContainer} container
      * @param {!Element} plugin
      * @return {undefined}
      **/
     function setVideo(container, plugin) {
         var video, source, url, doc = plugin.ownerDocument,
-            /**@type{!odf.OdfPart}*/
+            /**@type{!oc.OdfPart}*/
             part;
 
         url = plugin.getAttributeNS(xlinkns, 'href');
@@ -682,7 +698,7 @@
             }
         }
         /**
-         * @param {!odf.OdfPart} p
+         * @param {!oc.OdfPart} p
          */
         function onchange(p) {
             callback(p.url, p.mimetype);
@@ -736,19 +752,15 @@
             style.setAttribute("webodfcss", count + 1);
             return style;
         }
-        if (String(typeof webodf_css) === "string") {
-            css = /**@type{!string}*/(webodf_css);
-        } else {
-            href = "webodf.css";
-            if (runtime.currentDirectory) {
-                href = runtime.currentDirectory();
-                if (href.length > 0 && href.substr(-1) !== "/") {
-                    href += "/";
-                }
-                href += "../webodf.css";
+        href = "webodf.css";
+        if (runtime.currentDirectory) {
+            href = runtime.currentDirectory();
+            if (href.length > 0 && href.substr(-1) !== "/") {
+                href += "/";
             }
-            css = /**@type{!string}*/(runtime.readFileSync(href, "utf-8"));
+            href += "../webodf.css";
         }
+        css = /**@type{!string}*/(runtime.readFileSync(href, "utf-8"));
         style = /**@type{!HTMLStyleElement}*/(document.createElementNS(head.namespaceURI, 'style'));
         style.setAttribute('media', 'screen, print, handheld, projection');
         style.setAttribute('type', 'text/css');
@@ -782,7 +794,7 @@
             text = '';
         style.setAttribute('type', 'text/css');
         style.setAttribute('media', 'screen, print, handheld, projection');
-        odf.Namespaces.forEachPrefix(function(prefix, ns) {
+        Namespaces.forEachPrefix(function(prefix, ns) {
             text += "@namespace " + prefix + " url(" + ns + ");\n";
         });
         text += "@namespace webodfhelper url(" + webodfhelperns + ");\n";
@@ -795,23 +807,23 @@
      * It takes care of giving visual feedback on loading, ensures that the
      * stylesheets are loaded.
      * @constructor
-     * @implements {gui.AnnotatableCanvas}
-     * @implements {ops.Canvas}
-     * @implements {core.Destroyable}
+     * @implements {avm.AnnotatableCanvas}
+     * @implements {Canvas}
+     * @implements {Destroyable}
      * @param {!HTMLElement} element Put and ODF Canvas inside this element.
-     * @param {!gui.Viewport=} viewport Viewport used for scrolling elements and ranges into view
+     * @param {!Viewport=} viewport Viewport used for scrolling elements and ranges into view
      */
-    odf.OdfCanvas = function OdfCanvas(element, viewport) {
+    function OdfCanvas(element, viewport) {
         runtime.assert((element !== null) && (element !== undefined),
-            "odf.OdfCanvas constructor needs DOM element");
+            "OdfCanvas constructor needs DOM element");
         runtime.assert((element.ownerDocument !== null) && (element.ownerDocument !== undefined),
-            "odf.OdfCanvas constructor needs DOM");
+            "OdfCanvas constructor needs DOM");
         var self = this,
             doc = /**@type{!Document}*/(element.ownerDocument),
-            /**@type{!odf.OdfContainer}*/
+            /**@type{!oc.OdfContainer}*/
             odfcontainer,
-            /**@type{!odf.Formatting}*/
-            formatting = new odf.Formatting(),
+            /**@type{!Formatting}*/
+            formatting = new Formatting(),
             /**@type{!PageSwitcher}*/
             pageSwitcher,
             /**@type{HTMLDivElement}*/
@@ -820,7 +832,7 @@
             annotationsPane = null,
             allowAnnotations = false,
             showAnnotationRemoveButton = false,
-            /**@type{gui.AnnotationViewManager}*/
+            /**@type{avm.AnnotationViewManager}*/
             annotationViewManager = null,
             /**@type{!HTMLStyleElement}*/
             webodfcss,
@@ -834,18 +846,18 @@
             /**@type{!Object.<string,!Array.<!Function>>}*/
             eventHandlers = {},
             waitingForDoneTimeoutId,
-            /**@type{!core.ScheduledTask}*/redrawContainerTask,
+            /**@type{!ScheduledTask}*/redrawContainerTask,
             shouldRefreshCss = false,
             shouldRerenderAnnotations = false,
             loadingQueue = new LoadingQueue(),
-            /**@type{!gui.ZoomHelper}*/
-            zoomHelper = new gui.ZoomHelper(),
-            /**@type{!gui.Viewport}*/
-            canvasViewport = viewport || new gui.SingleScrollViewport(/**@type{!HTMLElement}*/(element.parentNode));
+            /**@type{!ZoomHelper}*/
+            zoomHelper = new ZoomHelper(),
+            /**@type{!Viewport}*/
+            canvasViewport = viewport || new SingleScrollViewport(/**@type{!HTMLElement}*/(element.parentNode));
 
         /**
          * Load all the images that are inside an odf element.
-         * @param {!odf.OdfContainer} container
+         * @param {!oc.OdfContainer} container
          * @param {!Element} odffragment
          * @param {!CSSStyleSheet} stylesheet
          * @return {undefined}
@@ -857,7 +869,7 @@
             /**
              * Do delayed loading for all the images
              * @param {string} name
-             * @param {!odf.OdfContainer} container
+             * @param {!oc.OdfContainer} container
              * @param {!Element} node
              * @param {!CSSStyleSheet} stylesheet
              * @return {undefined}
@@ -877,7 +889,7 @@
         }
         /**
          * Load all the video that are inside an odf element.
-         * @param {!odf.OdfContainer} container
+         * @param {!oc.OdfContainer} container
          * @param {!Element} odffragment
          * @return {undefined}
          */
@@ -887,7 +899,7 @@
                 node;
             /**
              * Do delayed loading for all the videos
-             * @param {!odf.OdfContainer} container
+             * @param {!oc.OdfContainer} container
              * @param {!Element} node
              * @return {undefined}
              */
@@ -995,8 +1007,8 @@
 
         /**
          * A new content.xml has been loaded. Update the live document with it.
-         * @param {!odf.OdfContainer} container
-         * @param {!odf.ODFDocumentElement} odfnode
+         * @param {!oc.OdfContainer} container
+         * @param {!oc.ODFDocumentElement} odfnode
          * @return {undefined}
          **/
         function handleContent(container, odfnode) {
@@ -1049,7 +1061,7 @@
         /**
          * This should create an annotations pane if non existent, and then populate it with annotations
          * If annotations are disallowed, it should remove the pane and all annotations
-         * @param {!odf.ODFDocumentElement} odfnode
+         * @param {!oc.ODFDocumentElement} odfnode
          */
         function handleAnnotations(odfnode) {
             var annotationNodes;
@@ -1061,8 +1073,8 @@
                 if (annotationViewManager) {
                     annotationViewManager.forgetAnnotations();
                 }
-                annotationViewManager = new gui.AnnotationViewManager(self, odfnode.body, annotationsPane, showAnnotationRemoveButton);
-                annotationNodes = /**@type{!Array.<!odf.AnnotationElement>}*/(domUtils.getElementsByTagNameNS(odfnode.body, officens, 'annotation'));
+                annotationViewManager = new avm.AnnotationViewManager(self, odfnode.body, annotationsPane, showAnnotationRemoveButton);
+                annotationNodes = /**@type{!Array.<!oc.AnnotationElement>}*/(domUtils.getElementsByTagNameNS(odfnode.body, officens, 'annotation'));
                 annotationViewManager.addAnnotations(annotationNodes);
 
                 fixContainerSize();
@@ -1110,7 +1122,7 @@
                 }
             }
 
-            if (odfcontainer.state === odf.OdfContainer.DONE) {
+            if (odfcontainer.state === oc.OdfContainer.DONE) {
                 callback();
             } else {
                 // so the ODF is not done yet. take care that we'll
@@ -1120,7 +1132,7 @@
                 runtime.log("WARNING: refreshOdf called but ODF was not DONE.");
 
                 waitingForDoneTimeoutId = runtime.setTimeout(function later_cb() {
-                    if (odfcontainer.state === odf.OdfContainer.DONE) {
+                    if (odfcontainer.state === oc.OdfContainer.DONE) {
                         callback();
                     } else {
                         runtime.log("will be back later...");
@@ -1150,14 +1162,14 @@
             redrawContainerTask.trigger();
         };
         /**
-         * @return {!odf.OdfContainer}
+         * @return {!oc.OdfContainer}
          */
         this.odfContainer = function () {
             return odfcontainer;
         };
         /**
          * Set a odfcontainer manually.
-         * @param {!odf.OdfContainer} container
+         * @param {!oc.OdfContainer} container
          * @param {boolean=} suppressEvent Default value is false
          * @return {undefined}
          */
@@ -1180,7 +1192,7 @@
             element.appendChild(element.ownerDocument.createTextNode(runtime.tr('Loading') + url + '...'));
             element.removeAttribute('style');
             // open the odf container
-            odfcontainer = new odf.OdfContainer(url, function (container) {
+            odfcontainer = new oc.OdfContainer(url, function (container) {
                 // assignment might be necessary if the callback
                 // fires before the assignment above happens.
                 odfcontainer = container;
@@ -1213,14 +1225,14 @@
         };
 
         /**
-         * @return {!odf.Formatting}
+         * @return {!Formatting}
          */
         this.getFormatting = function () {
             return formatting;
         };
 
         /**
-         * @return {gui.AnnotationViewManager}
+         * @return {avm.AnnotationViewManager}
          */
         this.getAnnotationViewManager = function () {
             return annotationViewManager;
@@ -1273,7 +1285,7 @@
         /**
          * Adds an annotation for the annotaiton manager to track
          * and wraps and highlights it
-         * @param {!odf.AnnotationElement} annotation
+         * @param {!oc.AnnotationElement} annotation
          * @return {undefined}
          */
         this.addAnnotation = function (annotation) {
@@ -1285,7 +1297,7 @@
 
         /**
          * Stops an annotation and unwraps it
-         * @param {!odf.AnnotationElement} annotation
+         * @param {!oc.AnnotationElement} annotation
          * @return {undefined}
          */
         this.forgetAnnotation = function (annotation) {
@@ -1296,7 +1308,7 @@
         };
 
         /**
-         * @return {!gui.ZoomHelper}
+         * @return {!ZoomHelper}
          */
         this.getZoomHelper = function () {
             return zoomHelper;
@@ -1404,7 +1416,7 @@
         };
 
         /**
-         * @return {!gui.Viewport}
+         * @return {!Viewport}
          */
         this.getViewport = function () {
             return canvasViewport;
@@ -1453,7 +1465,7 @@
             head.removeChild(positioncss);
 
             // TODO: loadingQueue, make sure it is empty
-            core.Async.destroyAll(cleanup, callback);
+            Async.destroyAll(cleanup, callback);
         };
 
         function init() {
@@ -1462,10 +1474,11 @@
             fontcss = addStyleSheet(doc);
             stylesxmlcss = addStyleSheet(doc);
             positioncss = addStyleSheet(doc);
-            redrawContainerTask = core.Task.createRedrawTask(redrawContainer);
-            zoomHelper.subscribe(gui.ZoomHelper.signalZoomChanged, fixContainerSize);
+            redrawContainerTask = Task.createRedrawTask(redrawContainer);
+            zoomHelper.subscribe(ZoomHelper.signalZoomChanged, fixContainerSize);
         }
 
         init();
-    };
-}());
+    }
+/**@const*/
+exports.OdfCanvas = OdfCanvas;

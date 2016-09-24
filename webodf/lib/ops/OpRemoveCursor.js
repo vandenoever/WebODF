@@ -22,19 +22,21 @@
  * @source: https://github.com/kogmbh/WebODF/
  */
 
-/*global ops*/
+var op = require("./Operation");
+var OpsDocument = require("./Document").Document;
+var OdtDocument = require("./OdtDocument").OdtDocument;
 
 /**
  * @constructor
- * @implements ops.Operation
+ * @implements op.Operation
  */
-ops.OpRemoveCursor = function OpRemoveCursor() {
+function OpRemoveCursor() {
     "use strict";
 
     var memberid, timestamp;
 
     /**
-     * @param {!ops.OpRemoveCursor.InitSpec} data
+     * @param {!OpRemoveCursor.InitSpec} data
      */
     this.init = function (data) {
         memberid = data.memberid;
@@ -45,10 +47,10 @@ ops.OpRemoveCursor = function OpRemoveCursor() {
     this.group = undefined;
 
     /**
-     * @param {!ops.Document} document
+     * @param {!OpsDocument} document
      */
     this.execute = function (document) {
-        var odtDocument = /**@type{ops.OdtDocument}*/(document);
+        var odtDocument = /**@type{OdtDocument}*/(document);
         if (!odtDocument.removeCursor(memberid)) {
             return false;
         }
@@ -57,7 +59,7 @@ ops.OpRemoveCursor = function OpRemoveCursor() {
     };
 
     /**
-     * @return {!ops.OpRemoveCursor.Spec}
+     * @return {!OpRemoveCursor.Spec}
      */
     this.spec = function () {
         return {
@@ -66,15 +68,20 @@ ops.OpRemoveCursor = function OpRemoveCursor() {
             timestamp: timestamp
         };
     };
-};
-/**@typedef{{
-    optype:string,
-    memberid:string,
-    timestamp:number
-}}*/
-ops.OpRemoveCursor.Spec;
-/**@typedef{{
-    memberid:string,
-    timestamp:(number|undefined)
-}}*/
-ops.OpRemoveCursor.InitSpec;
+}
+
+/**
+ * @record
+ * @extends {op.SpecBase}
+ */
+OpRemoveCursor.InitSpec = function() {}
+
+/**
+ * @record
+ * @extends {op.TypedOperationSpec}
+ * @extends {OpRemoveCursor.InitSpec}
+ */
+OpRemoveCursor.Spec = function() {}
+
+/**@const*/
+exports.OpRemoveCursor = OpRemoveCursor;

@@ -22,13 +22,16 @@
  * @source: https://github.com/kogmbh/WebODF/
  */
 
-/*global runtime, gui*/
+var Formatting = require("../odf/Formatting").Formatting;
+
+/**@typedef{!Object.<!string,(!string|!Object.<!string,!string>)>}*/
+Formatting.StyleData;
 
 /**
  * @constructor
- * @param {!Array.<!odf.Formatting.AppliedStyle>} styles
+ * @param {!Array.<!Formatting.AppliedStyle>} styles
  */
-gui.StyleSummary = function StyleSummary(styles) {
+function StyleSummary(styles) {
     "use strict";
     var propertyValues = {};
 
@@ -180,4 +183,6 @@ gui.StyleSummary = function StyleSummary(styles) {
         isAlignedRight: this.isAlignedRight,
         isAlignedJustified: this.isAlignedJustified
     };
-};
+}
+/**@const*/
+exports.StyleSummary = StyleSummary;

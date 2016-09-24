@@ -22,15 +22,16 @@
  * @source: https://github.com/kogmbh/WebODF/
  */
 
-/*global core, ops, runtime*/
+var Destroyable = require("../core/Destroyable").Destroyable;
+var OdtDocument = require("./OdtDocument").OdtDocument;
 
 /**
  * @constructor
- * @implements {core.Destroyable}
+ * @implements {Destroyable}
  * @param {!Element} container
- * @param {!ops.OdtDocument} odtDocument
+ * @param {!OdtDocument} odtDocument
  */
-ops.EditInfo = function EditInfo(container, odtDocument) {
+function EditInfo(container, odtDocument) {
     "use strict";
     var /**@type {!Element}*/
         editInfoNode,
@@ -69,7 +70,7 @@ ops.EditInfo = function EditInfo(container, odtDocument) {
     };
 
     /**
-     * @return {!ops.OdtDocument}
+     * @return {!OdtDocument}
      */
     this.getOdtDocument = function () {
         return odtDocument;
@@ -131,4 +132,6 @@ ops.EditInfo = function EditInfo(container, odtDocument) {
     }
 
     init();
-};
+}
+/**@const*/
+exports.EditInfo = EditInfo;

@@ -22,25 +22,26 @@
  * @source: https://github.com/kogmbh/WebODF/
  */
 
-/*global core*/
 /*jslint emptyblock: true, unparam: true*/
 
 /**
  * An object that allows subscription to events
  * @interface
  */
-core.EventSource = function() { "use strict"; };
+function EventSource() { "use strict"; };
 
 /**
  * @param {!string} eventId
  * @param {!Function} cb
  * @return {undefined}
  */
-core.EventSource.prototype.subscribe = function (eventId, cb) { "use strict"; };
+EventSource.prototype.subscribe = function (eventId, cb) { "use strict"; };
 
 /**
  * @param {!string} eventId
  * @param {!Function} cb
  * @return {undefined}
  */
-core.EventSource.prototype.unsubscribe = function (eventId, cb) { "use strict"; };
+EventSource.prototype.unsubscribe = function (eventId, cb) { "use strict"; };
+/**@const*/
+exports.EventSource = EventSource;

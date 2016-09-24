@@ -1,6 +1,6 @@
 
 FILE( GLOB_RECURSE TESTS_TESTFILES RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}
-	${CMAKE_CURRENT_SOURCE_DIR}/manifest.json
+    #	${CMAKE_CURRENT_SOURCE_DIR}/manifest.json
 	${CMAKE_CURRENT_SOURCE_DIR}/tests.js
 	${CMAKE_CURRENT_SOURCE_DIR}/tests.html
 	${CMAKE_CURRENT_SOURCE_DIR}/utf8.txt
@@ -28,7 +28,7 @@ add_custom_command(
     COMMAND ${NODE} ${RUNTIMEJS} tests.js
     COMMAND ${TOUCHFILE} nodetest.timestamp
     WORKING_DIRECTORY _nodetest
-    DEPENDS ${NODE} manifest.json-target ${TESTS_LIBJSFILES} ${tests_nodetests}
+    DEPENDS ${NODE} ${TESTS_LIBJSFILES} ${tests_nodetests}
 )
 add_custom_target(nodetest ALL DEPENDS _nodetest/nodetest.timestamp)
 add_dependencies(webodf.js-tests nodetest)
@@ -46,7 +46,7 @@ if (BUILD_QTJSRUNTIME)
         WORKING_DIRECTORY _qtjsruntimetest
         DEPENDS
             qtjsruntime
-            manifest.json-target
+            #            manifest.json-target
             ${TESTS_LIBJSFILES}
             ${tests_qtjsruntimetest}
             ${tests_qtjsruntimetest2}

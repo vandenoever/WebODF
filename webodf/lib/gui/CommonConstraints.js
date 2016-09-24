@@ -22,14 +22,12 @@
  * @source: https://github.com/kogmbh/WebODF/
  */
 
-/*global gui*/
-
 /**
  * Singleton object which provides some common constraint
  * names that ship with and are respected by WebODF.
  * @const
  */
-gui.CommonConstraints = {
+var CommonConstraints = {
     EDIT: {
         ANNOTATIONS: {
             // Only allow deleting self-created annotations
@@ -41,3 +39,5 @@ gui.CommonConstraints = {
         REVIEW_MODE: "reviewMode"
     }
 };
+/**@const*/
+exports.CommonConstraints = CommonConstraints;

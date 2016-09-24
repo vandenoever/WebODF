@@ -22,7 +22,9 @@
  * @source: https://github.com/kogmbh/WebODF/
  */
 
-/*global odf, runtime, ops*/
+var op = require("./Operation");
+var OpsDocument = require("./Document").Document;
+var OdtDocument = require("./OdtDocument").OdtDocument;
 
 /**
  * This allows you to update metadata.
@@ -32,9 +34,9 @@
  * removedProperties is a comma-separated (no spaces)
  * string of such field names to be removed.
  * @constructor
- * @implements ops.Operation
+ * @implements op.Operation
  */
-ops.OpUpdateMetadata = function OpUpdateMetadata() {
+function OpUpdateMetadata() {
     "use strict";
 
     var memberid, timestamp,
@@ -42,7 +44,7 @@ ops.OpUpdateMetadata = function OpUpdateMetadata() {
         removedProperties;
 
     /**
-     * @param {!ops.OpUpdateMetadata.InitSpec} data
+     * @param {!OpUpdateMetadata.InitSpec} data
      */
     this.init = function (data) {
         memberid = data.memberid;
@@ -55,10 +57,10 @@ ops.OpUpdateMetadata = function OpUpdateMetadata() {
     this.group = undefined;
 
     /**
-     * @param {!ops.Document} document
+     * @param {!OpsDocument} document
      */
     this.execute = function (document) {
-        var odtDocument = /**@type{ops.OdtDocument}*/(document),
+        var odtDocument = /**@type{OdtDocument}*/(document),
             odfContainer = odtDocument.getOdfCanvas().odfContainer(),
             removedPropertiesArray = null;
 
@@ -68,7 +70,7 @@ ops.OpUpdateMetadata = function OpUpdateMetadata() {
 
         odfContainer.setMetadata(setProperties, removedPropertiesArray);
 
-        odtDocument.emit(ops.OdtDocument.signalMetadataUpdated, {
+        odtDocument.emit(OdtDocument.signalMetadataUpdated, {
             setProperties: setProperties !== null ? setProperties : {},
             removedProperties: removedPropertiesArray !== null ? removedPropertiesArray : []
         });
@@ -77,7 +79,7 @@ ops.OpUpdateMetadata = function OpUpdateMetadata() {
     };
 
     /**
-     * @return {!ops.OpUpdateMetadata.Spec}
+     * @return {!OpUpdateMetadata.Spec}
      */
     this.spec = function () {
         return {
@@ -88,19 +90,24 @@ ops.OpUpdateMetadata = function OpUpdateMetadata() {
             removedProperties: removedProperties
         };
     };
-};
-/**@typedef{{
-    optype:string,
-    memberid:string,
-    timestamp:number,
-    setProperties:Object,
-    removedProperties:?{attributes:string}
- }}*/
-ops.OpUpdateMetadata.Spec;
-/**@typedef{{
-    memberid:string,
-    timestamp:(number|undefined),
-    setProperties:Object,
-    removedProperties:?{attributes:string}
- }}*/
-ops.OpUpdateMetadata.InitSpec;
+}
+
+/**
+ * @record
+ * @extends {op.SpecBase}
+ */
+OpUpdateMetadata.InitSpec = function() {}
+/**@type{!Object}*/
+OpUpdateMetadata.InitSpec.prototype.setProperties;
+/**@type{?{attributes:string}}*/
+OpUpdateMetadata.InitSpec.prototype.removedProperties;
+
+/**
+ * @record
+ * @extends {op.TypedOperationSpec}
+ * @extends {OpUpdateMetadata.InitSpec}
+ */
+OpUpdateMetadata.Spec = function() {}
+
+/**@const*/
+exports.OpUpdateMetadata = OpUpdateMetadata;

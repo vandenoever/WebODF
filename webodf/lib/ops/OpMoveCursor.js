@@ -22,36 +22,39 @@
  * @source: https://github.com/kogmbh/WebODF/
  */
 
-/*global runtime, ops*/
+var op = require("./Operation");
+var OpsDocument = require("./Document").Document;
+var OdtDocument = require("./OdtDocument").OdtDocument;
+var OdtCursor = require("./OdtCursor").OdtCursor;
 
 /**
  * @constructor
- * @implements ops.Operation
+ * @implements op.Operation
  */
-ops.OpMoveCursor = function OpMoveCursor() {
+function OpMoveCursor() {
     "use strict";
 
     var memberid, timestamp, position, length, /**@type {!string}*/selectionType;
 
     /**
-     * @param {!ops.OpMoveCursor.InitSpec} data
+     * @param {!OpMoveCursor.InitSpec} data
      */
     this.init = function (data) {
         memberid = data.memberid;
         timestamp = data.timestamp;
         position = data.position;
         length = data.length || 0;
-        selectionType = data.selectionType || ops.OdtCursor.RangeSelection;
+        selectionType = data.selectionType || OdtCursor.RangeSelection;
     };
 
     this.isEdit = false;
     this.group = undefined;
 
     /**
-     * @param {!ops.Document} document
+     * @param {!OpsDocument} document
      */
     this.execute = function (document) {
-        var odtDocument = /**@type{ops.OdtDocument}*/(document),
+        var odtDocument = /**@type{OdtDocument}*/(document),
             cursor = odtDocument.getCursor(memberid),
             selectedRange;
 
@@ -62,12 +65,12 @@ ops.OpMoveCursor = function OpMoveCursor() {
         selectedRange = odtDocument.convertCursorToDomRange(position, length);
         cursor.setSelectedRange(selectedRange, length >= 0);
         cursor.setSelectionType(selectionType);
-        odtDocument.emit(ops.Document.signalCursorMoved, cursor);
+        odtDocument.emit(OpsDocument.signalCursorMoved, cursor);
         return true;
     };
 
     /**
-     * @return {!ops.OpMoveCursor.Spec}
+     * @return {!OpMoveCursor.Spec}
      */
     this.spec = function () {
         return {
@@ -79,21 +82,26 @@ ops.OpMoveCursor = function OpMoveCursor() {
             selectionType: selectionType
         };
     };
-};
-/**@typedef{{
-    optype:string,
-    memberid:string,
-    timestamp:number,
-    position:number,
-    length:number,
-    selectionType:string
-}}*/
-ops.OpMoveCursor.Spec;
-/**@typedef{{
-    memberid:string,
-    timestamp:(number|undefined),
-    position:number,
-    length:number,
-    selectionType:(string|undefined)
-}}*/
-ops.OpMoveCursor.InitSpec;
+}
+
+/**
+ * @record
+ * @extends {op.SpecBase}
+ */
+OpMoveCursor.InitSpec = function() {}
+/**@type{!number}*/
+OpMoveCursor.InitSpec.prototype.position;
+/**@type{!number}*/
+OpMoveCursor.InitSpec.prototype.length;
+/**@type{(!string|undefined)}*/
+OpMoveCursor.InitSpec.prototype.selectionType;
+
+/**
+ * @record
+ * @extends {op.TypedOperationSpec}
+ * @extends {OpMoveCursor.InitSpec}
+ */
+OpMoveCursor.Spec = function() {}
+
+/**@const*/
+exports.OpMoveCursor = OpMoveCursor;

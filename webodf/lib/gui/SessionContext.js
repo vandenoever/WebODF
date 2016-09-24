@@ -22,19 +22,18 @@
  * @source: https://github.com/kogmbh/WebODF/
  */
 
-/*global runtime, gui, odf */
-
+var odfUtils = require("../odf/OdfUtils");
+var Session = require("../ops/Session").Session;
 
 /**
  * @constructor
- * @param {!ops.Session} session
+ * @param {!Session} session
  * @param {!string} inputMemberId
  */
-gui.SessionContext = function (session, inputMemberId) {
+function SessionContext(session, inputMemberId) {
     "use strict";
 
-    var odtDocument = session.getOdtDocument(),
-        odfUtils = odf.OdfUtils;
+    var odtDocument = session.getOdtDocument();
 
     /**
      * @return {!boolean}
@@ -59,4 +58,6 @@ gui.SessionContext = function (session, inputMemberId) {
 
         return false;
     };
-};
+}
+/**@const*/
+exports.SessionContext = SessionContext;

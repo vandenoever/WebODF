@@ -22,37 +22,38 @@
  * @source: https://github.com/kogmbh/WebODF/
  */
 
-/*global runtime, core, ops, odf*/
-
-(function () {
-    "use strict";
+"use strict";
+var PositionIterator = require("../core/PositionIterator").PositionIterator;
+var PositionFilter = require("../core/PositionFilter").PositionFilter;
+var StepsCache = require("./StepsCache").StepsCache;
+var StepDirection = require("../core/enums").StepDirection;
+var odfUtils = require("../odf/OdfUtils");
+var domUtils = require("../core/DomUtils");
 
     /**
      *
      * @constructor
      * @param {!Element} rootNode
-     * @param {!core.PositionIterator} iterator
-     * @param {!core.PositionFilter} filter
+     * @param {!PositionIterator} iterator
+     * @param {!PositionFilter} filter
      * @param {!number} bucketSize  Minimum number of steps between cache points
      */
-    ops.OdtStepsTranslator = function OdtStepsTranslator(rootNode, iterator, filter, bucketSize) {
-        var /**@type{!ops.StepsCache}*/
+    function OdtStepsTranslator(rootNode, iterator, filter, bucketSize) {
+        var /**@type{!StepsCache}*/
             stepsCache,
-            odfUtils = odf.OdfUtils,
-            domUtils = core.DomUtils,
             /**@const*/
-            FILTER_ACCEPT = core.PositionFilter.FilterResult.FILTER_ACCEPT,
+            FILTER_ACCEPT = PositionFilter.FilterResult.FILTER_ACCEPT,
             /**@const*/
-            PREVIOUS = core.StepDirection.PREVIOUS,
+            PREVIOUS = StepDirection.PREVIOUS,
             /**@const*/
-            NEXT = core.StepDirection.NEXT;
+            NEXT = StepDirection.NEXT;
 
         /**
          * Update the steps cache based on the current iterator position. This can either add new
          * bookmarks or update existing references and repair damaged regions of the cache.
          *
          * @param {!number} steps
-         * @param {!core.PositionIterator} iterator
+         * @param {!PositionIterator} iterator
          * @param {!boolean} isStep
          * @return {undefined}
          */
@@ -74,7 +75,7 @@
          * Saved bookmarks always represent the first step inside the corresponding paragraph or node. Based on the
          * current TextPositionFilter impl, this means rounding up if the current iterator position is not on a step.
          * @param {!number} steps
-         * @param {!core.PositionIterator} iterator
+         * @param {!PositionIterator} iterator
          * @return {undefined}
          */
         function roundUpToStep(steps, iterator) {
@@ -128,8 +129,8 @@
 
         /**
          * Uses the provided delegate to choose between rounding up or rounding down to the nearest step.
-         * @param {!core.PositionIterator} iterator
-         * @param {function(!core.StepDirection, !Node, !number):boolean=} roundDirection
+         * @param {!PositionIterator} iterator
+         * @param {function(!StepDirection, !Node, !number):boolean=} roundDirection
          * @return {!boolean} Returns true if an accepted position is found, otherwise returns false.
          */
         function roundToPreferredStep(iterator, roundDirection) {
@@ -166,7 +167,7 @@
          * behaviour is to round down.
          * @param {!Node} node
          * @param {!number} offset
-         * @param {function(!core.StepDirection, !Node, !number):!boolean=} roundDirection
+         * @param {function(!StepDirection, !Node, !number):!boolean=} roundDirection
          * @return {!number}
          */
         this.convertDomPointToSteps = function (node, offset, roundDirection) {
@@ -259,8 +260,9 @@
         };
 
         function init() {
-            stepsCache = new ops.StepsCache(rootNode, bucketSize, roundUpToStep);
+            stepsCache = new StepsCache(rootNode, bucketSize, roundUpToStep);
         }
         init();
-    };
-}());
+    }
+/**@const*/
+exports.OdtStepsTranslator = OdtStepsTranslator;

@@ -22,21 +22,28 @@
  * @source: https://github.com/kogmbh/WebODF/
  */
 
-/*global ops, odf, core, runtime, Node */
+/*global Node*/
+
+var runtime = require("../runtime").runtime;
+var op = require("./Operation");
+var OdtCursor = require("./OdtCursor").OdtCursor;
+var OpsDocument = require("./Document").Document;
+var Namespaces = require("../odf/Namespaces").Namespaces;
+var OdtDocument = require("./OdtDocument").OdtDocument;
+var odfUtils = require("../odf/OdfUtils");
+var domUtils = require("../core/DomUtils");
 
 /**
  * @constructor
- * @implements ops.Operation
+ * @implements op.Operation
  */
-ops.OpApplyHyperlink = function OpApplyHyperlink() {
+function OpApplyHyperlink() {
     "use strict";
 
-    var memberid, timestamp, position, length, hyperlink,
-        domUtils = core.DomUtils,
-        odfUtils = odf.OdfUtils;
+    var memberid, timestamp, position, length, hyperlink;
 
     /**
-     * @param {!ops.OpApplyHyperlink.InitSpec} data
+     * @param {!OpApplyHyperlink.InitSpec} data
      */
     this.init = function (data) {
         memberid = data.memberid;
@@ -55,9 +62,9 @@ ops.OpApplyHyperlink = function OpApplyHyperlink() {
      * @return {!Element}
      */
     function createHyperlink(document, hyperlink) {
-        var node = document.createElementNS(odf.Namespaces.textns, 'text:a');
-        node.setAttributeNS(odf.Namespaces.xlinkns, 'xlink:type', 'simple');
-        node.setAttributeNS(odf.Namespaces.xlinkns, 'xlink:href', hyperlink);
+        var node = document.createElementNS(Namespaces.textns, 'text:a');
+        node.setAttributeNS(Namespaces.xlinkns, 'xlink:type', 'simple');
+        node.setAttributeNS(Namespaces.xlinkns, 'xlink:href', hyperlink);
         return node;
     }
 
@@ -77,10 +84,10 @@ ops.OpApplyHyperlink = function OpApplyHyperlink() {
 
     /**
      * TODO: support adding image link
-     * @param {!ops.Document} document
+     * @param {!OpsDocument} document
      */
     this.execute = function (document) {
-        var odtDocument = /**@type{ops.OdtDocument}*/(document),
+        var odtDocument = /**@type{OdtDocument}*/(document),
             ownerDocument = odtDocument.getDOMDocument(),
             range = odtDocument.convertCursorToDomRange(position, length),
             boundaryNodes = domUtils.splitBoundaries(range),
@@ -115,7 +122,7 @@ ops.OpApplyHyperlink = function OpApplyHyperlink() {
         odtDocument.getOdfCanvas().refreshSize();
         odtDocument.getOdfCanvas().rerenderAnnotations();
         modifiedParagraphs.forEach(function (paragraph) {
-            odtDocument.emit(ops.OdtDocument.signalParagraphChanged, {
+            odtDocument.emit(OdtDocument.signalParagraphChanged, {
                 paragraphElement: paragraph,
                 memberId: memberid,
                 timeStamp: timestamp
@@ -126,7 +133,7 @@ ops.OpApplyHyperlink = function OpApplyHyperlink() {
     };
 
     /**
-     * @return {!ops.OpApplyHyperlink.Spec}
+     * @return {!OpApplyHyperlink.Spec}
      */
     this.spec = function () {
         return {
@@ -138,21 +145,26 @@ ops.OpApplyHyperlink = function OpApplyHyperlink() {
             hyperlink: hyperlink
         };
     };
-};
-/**@typedef{{
-    optype:string,
-    memberid:string,
-    timestamp:number,
-    position:number,
-    length:number,
-    hyperlink:string
-}}*/
-ops.OpApplyHyperlink.Spec;
-/**@typedef{{
-    memberid:string,
-    timestamp:(number|undefined),
-    position:number,
-    length:number,
-    hyperlink:string
-}}*/
-ops.OpApplyHyperlink.InitSpec;
+}
+
+/**
+ * @record
+ * @extends {op.SpecBase}
+ */
+OpApplyHyperlink.InitSpec = function() {}
+/**@type{!number}*/
+OpApplyHyperlink.InitSpec.prototype.position;
+/**@type{!number}*/
+OpApplyHyperlink.InitSpec.prototype.length;
+/**@type{!string}*/
+OpApplyHyperlink.InitSpec.prototype.hyperlink;
+
+/**
+ * @record
+ * @extends {op.TypedOperationSpec}
+ * @extends {OpApplyHyperlink.InitSpec}
+ */
+OpApplyHyperlink.Spec = function() {}
+
+/**@const*/
+exports.OpApplyHyperlink = OpApplyHyperlink;

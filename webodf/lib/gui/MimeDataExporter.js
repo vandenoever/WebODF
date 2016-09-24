@@ -22,17 +22,18 @@
  * @source: https://github.com/kogmbh/WebODF/
  */
 
-/*global gui, runtime, odf*/
+var TextSerializer = require("../odf/TextSerializer").TextSerializer;
+var OdfNodeFilter = require("../odf/OdfNodeFilter").OdfNodeFilter;
 
 /**
  * MimeDataExporter exports a passed range as several types
  * into the passed DataTransfer object
  * @constructor
  */
-gui.MimeDataExporter = function MimeDataExporter() {
+function MimeDataExporter() {
     "use strict";
 
-    var /**@type{!odf.TextSerializer}*/
+    var /**@type{!TextSerializer}*/
         textSerializer;
 
     /**
@@ -63,9 +64,11 @@ gui.MimeDataExporter = function MimeDataExporter() {
     };
 
     function init() {
-        textSerializer = new odf.TextSerializer();
-        textSerializer.filter = new odf.OdfNodeFilter();
+        textSerializer = new TextSerializer();
+        textSerializer.filter = new OdfNodeFilter();
     }
 
     init();
-};
+}
+/**@const*/
+exports.MimeDataExporter = MimeDataExporter;

@@ -22,24 +22,27 @@
  * @source: https://github.com/kogmbh/WebODF/
  */
 
-/*global runtime, odf, ops */
+var Namespaces = require("../odf/Namespaces").Namespaces;
+var op = require("./Operation");
+var OpsDocument = require("./Document").Document;
+var OdtDocument = require("./OdtDocument").OdtDocument;
+var odfUtils = require("../odf/OdfUtils");
 
 /**
  * @constructor
- * @implements ops.Operation
+ * @implements op.Operation
  */
-ops.OpInsertImage = function OpInsertImage() {
+function OpInsertImage() {
     "use strict";
 
     var memberid, timestamp, position, filename, frameWidth, frameHeight, frameStyleName, frameName,
-        drawns = odf.Namespaces.drawns,
-        svgns = odf.Namespaces.svgns,
-        textns = odf.Namespaces.textns,
-        xlinkns = odf.Namespaces.xlinkns,
-        odfUtils = odf.OdfUtils;
+        drawns = Namespaces.drawns,
+        svgns = Namespaces.svgns,
+        textns = Namespaces.textns,
+        xlinkns = Namespaces.xlinkns;
 
     /**
-     * @param {!ops.OpInsertImage.InitSpec} data
+     * @param {!OpInsertImage.InitSpec} data
      */
     this.init = function (data) {
         memberid = data.memberid;
@@ -79,10 +82,10 @@ ops.OpInsertImage = function OpInsertImage() {
     }
 
     /**
-     * @param {!ops.Document} document
+     * @param {!OpsDocument} document
      */
     this.execute = function (document) {
-        var odtDocument = /**@type{ops.OdtDocument}*/(document),
+        var odtDocument = /**@type{OdtDocument}*/(document),
             odfCanvas = odtDocument.getOdfCanvas(),
             domPosition = odtDocument.getTextNodeAtStep(position, memberid),
             textNode, refNode, paragraphElement, frameElement;
@@ -97,7 +100,7 @@ ops.OpInsertImage = function OpInsertImage() {
             textNode.splitText(domPosition.offset) : textNode.nextSibling;
         frameElement = createFrameElement(odtDocument.getDOMDocument());
         textNode.parentNode.insertBefore(frameElement, refNode);
-        odtDocument.emit(ops.OdtDocument.signalStepsInserted, {position: position});
+        odtDocument.emit(OdtDocument.signalStepsInserted, {position: position});
 
         // clean up any empty text node which was created by odtDocument.getTextNodeAtStep
         if (textNode.length === 0) {
@@ -106,7 +109,7 @@ ops.OpInsertImage = function OpInsertImage() {
 
         odfCanvas.addCssForFrameWithImage(frameElement);
         odfCanvas.refreshCSS();
-        odtDocument.emit(ops.OdtDocument.signalParagraphChanged, {
+        odtDocument.emit(OdtDocument.signalParagraphChanged, {
             paragraphElement: paragraphElement,
             memberId: memberid,
             timeStamp: timestamp
@@ -116,7 +119,7 @@ ops.OpInsertImage = function OpInsertImage() {
     };
 
     /**
-     * @return {!ops.OpInsertImage.Spec}
+     * @return {!OpInsertImage.Spec}
      */
     this.spec = function () {
         return {
@@ -131,27 +134,32 @@ ops.OpInsertImage = function OpInsertImage() {
             frameName: frameName
         };
     };
-};
-/**@typedef{{
-    optype:string,
-    memberid:string,
-    timestamp:number,
-    filename:string,
-    position:number,
-    frameWidth:string,
-    frameHeight:string,
-    frameStyleName:string,
-    frameName:string
-}}*/
-ops.OpInsertImage.Spec;
-/**@typedef{{
-    memberid:string,
-    timestamp:(number|undefined),
-    filename:string,
-    position:number,
-    frameWidth:string,
-    frameHeight:string,
-    frameStyleName:string,
-    frameName:string
-}}*/
-ops.OpInsertImage.InitSpec;
+}
+
+/**
+ * @record
+ * @extends {op.SpecBase}
+ */
+OpInsertImage.InitSpec = function() {}
+/**@type{!string}*/
+OpInsertImage.InitSpec.prototype.filename;
+/**@type{!number}*/
+OpInsertImage.InitSpec.prototype.position;
+/**@type{!string}*/
+OpInsertImage.InitSpec.prototype.frameWidth;
+/**@type{!string}*/
+OpInsertImage.InitSpec.prototype.frameHeight;
+/**@type{!string}*/
+OpInsertImage.InitSpec.prototype.frameStyleName;
+/**@type{!string}*/
+OpInsertImage.InitSpec.prototype.frameName;
+
+/**
+ * @record
+ * @extends {op.TypedOperationSpec}
+ * @extends {OpInsertImage.InitSpec}
+ */
+OpInsertImage.Spec = function() {}
+
+/**@const*/
+exports.OpInsertImage = OpInsertImage;

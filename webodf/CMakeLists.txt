@@ -5,11 +5,11 @@ if(WRONGCMAKEDIR)
 endif(WRONGCMAKEDIR)
 
 # update the list of needed files
-execute_process(
-  COMMAND ${NODE} ${RUNTIMEJS} ${TOOLS_DIR}/updateJS.js ${CMAKE_BINARY_DIR}/jsfileslist.txt
-  WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
-)
-include(${CMAKE_BINARY_DIR}/jsfileslist.txt)
+#execute_process(
+#  COMMAND ${NODE} ${RUNTIMEJS} ${TOOLS_DIR}/updateJS.js ${CMAKE_BINARY_DIR}/jsfileslist.txt
+#  WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+#)
+#include(${CMAKE_BINARY_DIR}/jsfileslist.txt)
 
 configure_file(webodfversion.js.in ${CMAKE_CURRENT_BINARY_DIR}/webodfversion.js)
 
@@ -80,12 +80,12 @@ set(TESTJSFILES
     tests/tests.js
 )
 
-add_custom_target(manifest.json-target
-    COMMAND ${NODE}
-    ${RUNTIMEJS} ${TOOLS_DIR}/updateJS.js ${CMAKE_BINARY_DIR}/jsfileslist.txt
-    DEPENDS ${TOOLS_DIR}/updateJS.js
-    WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
-)
+#add_custom_target(manifest.json-target
+#    COMMAND ${NODE}
+#    ${RUNTIMEJS} ${TOOLS_DIR}/updateJS.js ${CMAKE_BINARY_DIR}/jsfileslist.txt
+#    DEPENDS ${TOOLS_DIR}/updateJS.js
+#    WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+#)
 
 add_custom_command(
     OUTPUT webodf.css.js

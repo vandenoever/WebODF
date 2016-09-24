@@ -22,28 +22,53 @@
  * @source: https://github.com/kogmbh/WebODF/
  */
 
-/*global Node, runtime, core, gui, ops, odf, NodeFilter*/
+/*global Node, NodeFilter*/
+var runtime = require("../runtime").runtime;
+var domUtils = require("../core/DomUtils");
+var Formatting = require("../odf/Formatting").Formatting;
+var Member = require("./Member").Member;
+var Canvas = require("./Canvas").Canvas;
+var OpsDocument = require("./Document").Document;
+var OdfCanvas = require("../odf/OdfCanvas").OdfCanvas;
+var PositionFilter = require("../core/PositionFilter").PositionFilter;
+var TextPositionFilter = require("./TextPositionFilter").TextPositionFilter;
+var task = require("../core/Task");
+var OdtStepsTranslator = require("./OdtStepsTranslator").OdtStepsTranslator;
+var Operation = require("./Operation").Operation;
+var Destroyable = require("../core/Destroyable").Destroyable;
+var StepIterator = require("../core/StepIterator").StepIterator;
+var stepUtils = require("../odf/StepUtils");
+var OdtCursor = require("./OdtCursor").OdtCursor;
+var odfUtils = require("../odf/OdfUtils");
+var EventNotifier = require("../core/EventNotifier").EventNotifier;
+var Namespaces = require("../odf/Namespaces").Namespaces;
+var StepDirection = require("../core/enums").StepDirection;
+var OdfTextBodyNodeFilter = require("../gui/OdfTextBodyNodeFilter").OdfTextBodyNodeFilter;
+var NodeFilterChain = require("../core/NodeFilterChain").NodeFilterChain;
+var PositionIterator = require("../core/PositionIterator").PositionIterator;
+var PositionFilterChain = require("../core/PositionFilterChain").PositionFilterChain;
+var BlacklistNamespaceNodeFilter = require("../gui/BlacklistNamespaceNodeFilter").BlacklistNamespaceNodeFilter;
 
     /**
      * A filter that allows a position if it has the same closest
      * whitelisted root as the specified 'anchor', which can be the cursor
      * of the given memberid, or a given node
      * @constructor
-     * @implements {core.PositionFilter}
+     * @implements {PositionFilter}
      * @param {!string|!Node} anchor
-     * @param {Object.<!ops.OdtCursor>} cursors
+     * @param {Object.<!OdtCursor>} cursors
      * @param {function(!Node):!Node} getRoot
      */
     function RootFilter(anchor, cursors, getRoot) {
         "use strict";
         var /**@const*/
-        FILTER_ACCEPT = core.PositionFilter.FilterResult.FILTER_ACCEPT,
+        FILTER_ACCEPT = PositionFilter.FilterResult.FILTER_ACCEPT,
         /**@const*/
-        FILTER_REJECT = core.PositionFilter.FilterResult.FILTER_REJECT;
+        FILTER_REJECT = PositionFilter.FilterResult.FILTER_REJECT;
 
         /**
-         * @param {!core.PositionIterator} iterator
-         * @return {!core.PositionFilter.FilterResult}
+         * @param {!PositionIterator} iterator
+         * @return {!PositionFilter.FilterResult}
          */
         this.acceptPosition = function (iterator) {
             var node = iterator.container(),
@@ -65,63 +90,59 @@
 /**
  * A document that keeps all data related to the mapped document.
  * @constructor
- * @implements {ops.Document}
- * @implements {core.Destroyable}
- * @param {!odf.OdfCanvas} odfCanvas
+ * @implements {OpsDocument}
+ * @implements {Destroyable}
+ * @param {!OdfCanvas} odfCanvas
  */
-ops.OdtDocument = function OdtDocument(odfCanvas) {
+function OdtDocument(odfCanvas) {
     "use strict";
 
     var self = this,
-        /**@type{!odf.StepUtils}*/
-        stepUtils,
-        odfUtils = odf.OdfUtils,
-        domUtils = core.DomUtils,
-        /**!Object.<!ops.OdtCursor>*/
+        /**!Object.<!OdtCursor>*/
         cursors = {},
-        /**!Object.<!ops.Member>*/
+        /**!Object.<!Member>*/
         members = {},
-        eventNotifier = new core.EventNotifier([
-            ops.Document.signalMemberAdded,
-            ops.Document.signalMemberUpdated,
-            ops.Document.signalMemberRemoved,
-            ops.Document.signalCursorAdded,
-            ops.Document.signalCursorRemoved,
-            ops.Document.signalCursorMoved,
-            ops.OdtDocument.signalParagraphChanged,
-            ops.OdtDocument.signalParagraphStyleModified,
-            ops.OdtDocument.signalCommonStyleCreated,
-            ops.OdtDocument.signalCommonStyleDeleted,
-            ops.OdtDocument.signalTableAdded,
-            ops.OdtDocument.signalOperationStart,
-            ops.OdtDocument.signalOperationEnd,
-            ops.OdtDocument.signalProcessingBatchStart,
-            ops.OdtDocument.signalProcessingBatchEnd,
-            ops.OdtDocument.signalUndoStackChanged,
-            ops.OdtDocument.signalStepsInserted,
-            ops.OdtDocument.signalStepsRemoved,
-            ops.OdtDocument.signalMetadataUpdated,
-            ops.OdtDocument.signalAnnotationAdded
+        eventNotifier = new EventNotifier([
+            OpsDocument.signalMemberAdded,
+            OpsDocument.signalMemberUpdated,
+            OpsDocument.signalMemberRemoved,
+            OpsDocument.signalCursorAdded,
+            OpsDocument.signalCursorRemoved,
+            OpsDocument.signalCursorMoved,
+            OdtDocument.signalParagraphChanged,
+            OdtDocument.signalParagraphStyleModified,
+            OdtDocument.signalCommonStyleCreated,
+            OdtDocument.signalCommonStyleDeleted,
+            OdtDocument.signalTableAdded,
+            OdtDocument.signalOperationStart,
+            OdtDocument.signalOperationEnd,
+            OdtDocument.signalProcessingBatchStart,
+            OdtDocument.signalProcessingBatchEnd,
+            OdtDocument.signalUndoStackChanged,
+            OdtDocument.signalStepsInserted,
+            OdtDocument.signalStepsRemoved,
+            OdtDocument.signalMetadataUpdated,
+            OdtDocument.signalAnnotationAdded
         ]),
         /**@const*/
-        NEXT = core.StepDirection.NEXT,
+        NEXT = StepDirection.NEXT,
         filter,
-        /**@type{!ops.OdtStepsTranslator}*/
+        /**@type{!OdtStepsTranslator}*/
         stepsTranslator,
         lastEditingOp,
         unsupportedMetadataRemoved = false,
         /**@const*/ SHOW_ALL = NodeFilter.SHOW_ALL,
-        blacklistedNodes = new gui.BlacklistNamespaceNodeFilter(["urn:webodf:names:cursor", "urn:webodf:names:editinfo"]),
-        odfTextBodyFilter = new gui.OdfTextBodyNodeFilter(),
-        defaultNodeFilter = new core.NodeFilterChain([blacklistedNodes, odfTextBodyFilter]);
+        blacklistedNodes = new BlacklistNamespaceNodeFilter(["urn:webodf:names:cursor", "urn:webodf:names:editinfo"]),
+        odfTextBodyFilter = new OdfTextBodyNodeFilter(),
+        defaultNodeFilter = new NodeFilterChain([blacklistedNodes, odfTextBodyFilter]);
 
     /**
      *
      * @param {!Node} rootNode
-     * @return {!core.PositionIterator}
+     * @return {!PositionIterator}
      */
     function createPositionIterator(rootNode) {
-        return new core.PositionIterator(rootNode, SHOW_ALL, defaultNodeFilter, false);
+        return new PositionIterator(rootNode, SHOW_ALL, defaultNodeFilter, false);
     }
     this.createPositionIterator = createPositionIterator;
 
@@ -165,8 +186,8 @@ ops.OdtDocument = function OdtDocument(odfCanvas) {
         var odfContainer = odfCanvas.odfContainer(),
             rootNode;
 
-        eventNotifier.unsubscribe(ops.OdtDocument.signalStepsInserted, stepsTranslator.handleStepsInserted);
-        eventNotifier.unsubscribe(ops.OdtDocument.signalStepsRemoved, stepsTranslator.handleStepsRemoved);
+        eventNotifier.unsubscribe(OdtDocument.signalStepsInserted, stepsTranslator.handleStepsInserted);
+        eventNotifier.unsubscribe(OdtDocument.signalStepsRemoved, stepsTranslator.handleStepsRemoved);
 
         // TODO Replace with a neater hack for reloading the Odt tree
         // Once this is fixed, SelectionView.addOverlays can be removed
@@ -174,9 +195,9 @@ ops.OdtDocument = function OdtDocument(odfCanvas) {
         odfCanvas.setOdfContainer(odfContainer, true);
         odfCanvas.refreshCSS();
         rootNode = getRootNode();
-        stepsTranslator = new ops.OdtStepsTranslator(rootNode, createPositionIterator(rootNode), filter, 500);
-        eventNotifier.subscribe(ops.OdtDocument.signalStepsInserted, stepsTranslator.handleStepsInserted);
-        eventNotifier.subscribe(ops.OdtDocument.signalStepsRemoved, stepsTranslator.handleStepsRemoved);
+        stepsTranslator = new OdtStepsTranslator(rootNode, createPositionIterator(rootNode), filter, 500);
+        eventNotifier.subscribe(OdtDocument.signalStepsInserted, stepsTranslator.handleStepsInserted);
+        eventNotifier.subscribe(OdtDocument.signalStepsRemoved, stepsTranslator.handleStepsRemoved);
     };
 
     /**
@@ -192,9 +213,9 @@ ops.OdtDocument = function OdtDocument(odfCanvas) {
      * @return {!boolean}
      */
     function isRoot(node) {
-        if ((node.namespaceURI === odf.Namespaces.officens
+        if ((node.namespaceURI === Namespaces.officens
              && node.localName === 'text'
-            ) || (node.namespaceURI === odf.Namespaces.officens
+            ) || (node.namespaceURI === Namespaces.officens
                   && node.localName === 'annotation')) {
             return true;
         }
@@ -218,13 +239,13 @@ ops.OdtDocument = function OdtDocument(odfCanvas) {
      *
      * @param {!Node} container
      * @param {!number} offset
-     * @param {!Array.<!core.PositionFilter>} filters Filter to apply to the iterator positions. If multiple
+     * @param {!Array.<!PositionFilter>} filters Filter to apply to the iterator positions. If multiple
      *  iterators are provided, they will be combined in order using a PositionFilterChain.
      * @param {!Node} subTree Subtree to search for step within. Generally a paragraph or document root. Choosing
      *  a smaller subtree allows iteration to end quickly if there are no walkable steps remaining in a particular
      *  direction. This can vastly improve performance.
      *
-     * @return {!core.StepIterator}
+     * @return {!StepIterator}
      */
     function createStepIterator(container, offset, filters, subTree) {
         var positionIterator = createPositionIterator(subTree),
@@ -234,11 +255,11 @@ ops.OdtDocument = function OdtDocument(odfCanvas) {
         if (filters.length === 1) {
             filterOrChain = filters[0];
         } else {
-            filterOrChain = new core.PositionFilterChain();
+            filterOrChain = new PositionFilterChain();
             filters.forEach(filterOrChain.addFilter);
         }
 
-        stepIterator = new core.StepIterator(filterOrChain, positionIterator);
+        stepIterator = new StepIterator(filterOrChain, positionIterator);
         stepIterator.setPosition(container, offset);
         return stepIterator;
     }
@@ -248,7 +269,7 @@ ops.OdtDocument = function OdtDocument(odfCanvas) {
      * Returns a PositionIterator instance at the
      * specified starting position
      * @param {!number} position
-     * @return {!core.PositionIterator}
+     * @return {!PositionIterator}
      */
     function getIteratorAtPosition(position) {
         var iterator = createPositionIterator(getRootNode()),
@@ -271,7 +292,7 @@ ops.OdtDocument = function OdtDocument(odfCanvas) {
 
     /**
      * Rounds to the first step within the paragraph
-     * @param {!core.StepDirection} step
+     * @param {!StepDirection} step
      * @return {!boolean}
      */
     function roundUp(step) {
@@ -283,8 +304,8 @@ ops.OdtDocument = function OdtDocument(odfCanvas) {
      * the default is to round down to the previous step.
      * @param {!Node} node
      * @param {!number} offset
-     * @param {core.StepDirection=} roundDirection Whether to round down to the previous step or round up
-     * to the next step. The default value if unspecified is core.StepDirection.PREVIOUS
+     * @param {StepDirection=} roundDirection Whether to round down to the previous step or round up
+     * to the next step. The default value if unspecified is StepDirection.PREVIOUS
      * @return {!number}
      */
     this.convertDomPointToCursorStep = function (node, offset, roundDirection) {
@@ -448,7 +469,7 @@ ops.OdtDocument = function OdtDocument(odfCanvas) {
      * 'edit', and in that case will update the
      * document's metadata, such as dc:creator,
      * meta:editing-cycles, and dc:creator.
-     * @param {!ops.Operation} op
+     * @param {!Operation} op
      */
     function handleOperationExecuted(op) {
         var opspec = op.spec(),
@@ -492,7 +513,7 @@ ops.OdtDocument = function OdtDocument(odfCanvas) {
             }
 
             lastEditingOp = op;
-            self.emit(ops.OdtDocument.signalMetadataUpdated, changedMetadata);
+            self.emit(OdtDocument.signalMetadataUpdated, changedMetadata);
         }
     }
 
@@ -507,7 +528,7 @@ ops.OdtDocument = function OdtDocument(odfCanvas) {
     function upgradeWhitespaceToElement(textNode, offset) {
         runtime.assert(textNode.data[offset] === ' ', "upgradeWhitespaceToElement: textNode.data[offset] should be a literal space");
 
-        var space = textNode.ownerDocument.createElementNS(odf.Namespaces.textns, 'text:s'),
+        var space = textNode.ownerDocument.createElementNS(Namespaces.textns, 'text:s'),
             container = textNode.parentNode,
             adjacentNode = textNode;
 
@@ -536,7 +557,7 @@ ops.OdtDocument = function OdtDocument(odfCanvas) {
      */
     function upgradeWhitespacesAtPosition(step) {
         var positionIterator = getIteratorAtPosition(step),
-            stepIterator = new core.StepIterator(filter, positionIterator),
+            stepIterator = new StepIterator(filter, positionIterator),
             contentBounds,
             /**@type{?Node}*/
             container,
@@ -586,7 +607,7 @@ ops.OdtDocument = function OdtDocument(odfCanvas) {
      * Downgrades white space elements to normal spaces at the step iterators current step, and one step
      * to the right.
      *
-     * @param {!core.StepIterator} stepIterator
+     * @param {!StepIterator} stepIterator
      * @return {undefined}
      */
     function downgradeWhitespaces(stepIterator) {
@@ -635,7 +656,7 @@ ops.OdtDocument = function OdtDocument(odfCanvas) {
      */
     this.downgradeWhitespacesAtPosition = function (step) {
         var positionIterator = getIteratorAtPosition(step),
-            stepIterator = new core.StepIterator(filter, positionIterator);
+            stepIterator = new StepIterator(filter, positionIterator);
 
         downgradeWhitespaces(stepIterator);
     };
@@ -717,7 +738,7 @@ ops.OdtDocument = function OdtDocument(odfCanvas) {
 
             if (cursorMoved) {
                 cursor.setSelectedRange(selectedRange, cursor.hasForwardSelection());
-                self.emit(ops.Document.signalCursorMoved, cursor);
+                self.emit(OpsDocument.signalCursorMoved, cursor);
             }
         });
     };
@@ -756,21 +777,21 @@ ops.OdtDocument = function OdtDocument(odfCanvas) {
         };
     };
     /**
-     * @return {!core.PositionFilter}
+     * @return {!PositionFilter}
      */
     this.getPositionFilter = function () {
         return filter;
     };
 
     /**
-     * @return {!odf.OdfCanvas}
+     * @return {!OdfCanvas}
      */
     this.getOdfCanvas = function () {
         return odfCanvas;
     };
 
     /**
-     * @return {!ops.Canvas}
+     * @return {!Canvas}
      */
     this.getCanvas = function () {
         return odfCanvas;
@@ -782,7 +803,7 @@ ops.OdtDocument = function OdtDocument(odfCanvas) {
     this.getRootNode = getRootNode;
 
     /**
-     * @param {!ops.Member} member
+     * @param {!Member} member
      * @return {undefined}
      */
     this.addMember = function (member) {
@@ -792,7 +813,7 @@ ops.OdtDocument = function OdtDocument(odfCanvas) {
 
     /**
      * @param {!string} memberId
-     * @return {?ops.Member}
+     * @return {?Member}
      */
     this.getMember = function (memberId) {
         return members.hasOwnProperty(memberId) ? members[memberId] : null;
@@ -808,7 +829,7 @@ ops.OdtDocument = function OdtDocument(odfCanvas) {
 
     /**
      * @param {!string} memberid
-     * @return {ops.OdtCursor}
+     * @return {OdtCursor}
      */
     this.getCursor = function (memberid) {
         return cursors[memberid];
@@ -831,7 +852,7 @@ ops.OdtDocument = function OdtDocument(odfCanvas) {
     /**
      * Adds the specified cursor to the ODT document. The cursor will be collapsed
      * to the first available cursor position in the document.
-     * @param {!ops.OdtCursor} cursor
+     * @param {!OdtCursor} cursor
      * @return {undefined}
      */
     this.addCursor = function (cursor) {
@@ -855,7 +876,7 @@ ops.OdtDocument = function OdtDocument(odfCanvas) {
         if (cursor) {
             cursor.removeFromDocument();
             delete cursors[memberid];
-            self.emit(ops.Document.signalCursorRemoved, memberid);
+            self.emit(OpsDocument.signalCursorRemoved, memberid);
             return true;
         }
         return false;
@@ -878,12 +899,12 @@ ops.OdtDocument = function OdtDocument(odfCanvas) {
             selectionRange = self.convertCursorToDomRange(position, length);
         if (cursor) {
             cursor.setSelectedRange(selectionRange, length >= 0);
-            cursor.setSelectionType(selectionType || ops.OdtCursor.RangeSelection);
+            cursor.setSelectionType(selectionType || OdtCursor.RangeSelection);
         }
     };
 
     /**
-     * @return {!odf.Formatting}
+     * @return {!Formatting}
      */
     this.getFormatting = function () {
         return odfCanvas.getFormatting();
@@ -947,30 +968,30 @@ ops.OdtDocument = function OdtDocument(odfCanvas) {
     function init() {
         var rootNode = getRootNode();
 
-        filter = new ops.TextPositionFilter();
-        stepUtils = new odf.StepUtils();
-        stepsTranslator = new ops.OdtStepsTranslator(rootNode, createPositionIterator(rootNode), filter, 500);
-        eventNotifier.subscribe(ops.OdtDocument.signalStepsInserted, stepsTranslator.handleStepsInserted);
-        eventNotifier.subscribe(ops.OdtDocument.signalStepsRemoved, stepsTranslator.handleStepsRemoved);
-        eventNotifier.subscribe(ops.OdtDocument.signalOperationEnd, handleOperationExecuted);
-        eventNotifier.subscribe(ops.OdtDocument.signalProcessingBatchEnd, core.Task.processTasks);
+        filter = new TextPositionFilter();
+        stepsTranslator = new OdtStepsTranslator(rootNode, createPositionIterator(rootNode), filter, 500);
+        eventNotifier.subscribe(OdtDocument.signalStepsInserted, stepsTranslator.handleStepsInserted);
+        eventNotifier.subscribe(OdtDocument.signalStepsRemoved, stepsTranslator.handleStepsRemoved);
+        eventNotifier.subscribe(OdtDocument.signalOperationEnd, handleOperationExecuted);
+        eventNotifier.subscribe(OdtDocument.signalProcessingBatchEnd, task.processTasks);
     }
     init();
-};
+}
 
-/**@const*/ops.OdtDocument.signalParagraphChanged = "paragraph/changed";
-/**@const*/ops.OdtDocument.signalTableAdded = "table/added";
-/**@const*/ops.OdtDocument.signalCommonStyleCreated = "style/created";
-/**@const*/ops.OdtDocument.signalCommonStyleDeleted = "style/deleted";
-/**@const*/ops.OdtDocument.signalParagraphStyleModified = "paragraphstyle/modified";
-/**@const*/ops.OdtDocument.signalOperationStart = "operation/start";
-/**@const*/ops.OdtDocument.signalOperationEnd = "operation/end";
-/**@const*/ops.OdtDocument.signalProcessingBatchStart = "router/batchstart";
-/**@const*/ops.OdtDocument.signalProcessingBatchEnd = "router/batchend";
-/**@const*/ops.OdtDocument.signalUndoStackChanged = "undo/changed";
-/**@const*/ops.OdtDocument.signalStepsInserted = "steps/inserted";
-/**@const*/ops.OdtDocument.signalStepsRemoved = "steps/removed";
-/**@const*/ops.OdtDocument.signalMetadataUpdated = "metadata/updated";
-/**@const*/ops.OdtDocument.signalAnnotationAdded = "annotation/added";
+/**@const*/OdtDocument.signalParagraphChanged = "paragraph/changed";
+/**@const*/OdtDocument.signalTableAdded = "table/added";
+/**@const*/OdtDocument.signalCommonStyleCreated = "style/created";
+/**@const*/OdtDocument.signalCommonStyleDeleted = "style/deleted";
+/**@const*/OdtDocument.signalParagraphStyleModified = "paragraphstyle/modified";
+/**@const*/OdtDocument.signalOperationStart = "operation/start";
+/**@const*/OdtDocument.signalOperationEnd = "operation/end";
+/**@const*/OdtDocument.signalProcessingBatchStart = "router/batchstart";
+/**@const*/OdtDocument.signalProcessingBatchEnd = "router/batchend";
+/**@const*/OdtDocument.signalUndoStackChanged = "undo/changed";
+/**@const*/OdtDocument.signalStepsInserted = "steps/inserted";
+/**@const*/OdtDocument.signalStepsRemoved = "steps/removed";
+/**@const*/OdtDocument.signalMetadataUpdated = "metadata/updated";
+/**@const*/OdtDocument.signalAnnotationAdded = "annotation/added";
 
-// vim:expandtab
+/**@const*/
+exports.OdtDocument = OdtDocument;

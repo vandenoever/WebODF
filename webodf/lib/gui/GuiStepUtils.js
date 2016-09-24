@@ -22,26 +22,29 @@
  * @source: https://github.com/kogmbh/WebODF/
  */
 
-/*global runtime, odf, gui, core, Node*/
+/*global Node*/
 
-/**
+"use strict";
+
+var StepDirection = require("../core/enums").StepDirection;
+var StepIterator = require("../core/StepIterator").StepIterator;
+var v = require("./VisualStepScanner");
+var stepUtils = require("../odf/StepUtils");
+var domUtils = require("../core/DomUtils");
+var odfUtils = require("../odf/OdfUtils");
+
+/*
  * Helper functions to retrieve information about an ODF document using a step iterator
- * @constructor
  */
-gui.GuiStepUtils = function GuiStepUtils() {
-    "use strict";
-    var odfUtils = odf.OdfUtils,
-        stepUtils = new odf.StepUtils(),
-        domUtils = core.DomUtils,
-        NEXT = core.StepDirection.NEXT,
-        LEFT_TO_RIGHT = gui.StepInfo.VisualDirection.LEFT_TO_RIGHT,
-        RIGHT_TO_LEFT = gui.StepInfo.VisualDirection.RIGHT_TO_LEFT;
+    var NEXT = StepDirection.NEXT,
+        LEFT_TO_RIGHT = v.StepInfo.VisualDirection.LEFT_TO_RIGHT,
+        RIGHT_TO_LEFT = v.StepInfo.VisualDirection.RIGHT_TO_LEFT;
 
     /**
      * Returns the client rectangle for the content bounds at the step iterator's current position.
      * Note, if the selected content is really collapsed whitespace, this function will return null.
      *
-     * @param {!core.StepIterator} stepIterator
+     * @param {!StepIterator} stepIterator
      * @return {?ClientRect}
      */
     function getContentRect(stepIterator) {
@@ -75,15 +78,14 @@ gui.GuiStepUtils = function GuiStepUtils() {
 
         return rect;
     }
-    this.getContentRect = getContentRect;
 
     /**
      * Advance the step iterator in the specified direction until an accepted step is identified
      * by a token scanner.
      *
-     * @param {!core.StepIterator} stepIterator
-     * @param {!core.StepDirection} direction
-     * @param {!Array.<!gui.VisualStepScanner>} scanners
+     * @param {!StepIterator} stepIterator
+     * @param {!StepDirection} direction
+     * @param {!Array.<!v.VisualStepScanner>} scanners
      * @return {!boolean} Return true if a step was found that satisfied one of the scanners
      */
     function moveToFilteredStep(stepIterator, direction, scanners) {
@@ -92,17 +94,17 @@ gui.GuiStepUtils = function GuiStepUtils() {
             rightRect,
             previousRect,
             nextRect,
-            /**@type{?core.StepIterator.StepSnapshot}*/
+            /**@type{?StepIterator.StepSnapshot}*/
             destinationToken,
             // Just in case no destination is found, the iterator will reset back to the initial position
             initialToken = stepIterator.snapshot(),
             wasTerminated = false,
-            /**@type{!gui.StepInfo}*/
+            /**@type{!v.StepInfo}*/
             stepInfo;
 
         /**
          * @param {!boolean} terminated
-         * @param {!gui.VisualStepScanner} scanner
+         * @param {!v.VisualStepScanner} scanner
          * @return {!boolean};
          */
         function process(terminated, scanner) {
@@ -122,7 +124,7 @@ gui.GuiStepUtils = function GuiStepUtils() {
         do {
             // TODO Optimize performance by re-using the left/right rect from the last step (depending on direction)
             leftRect = getContentRect(stepIterator);
-            stepInfo = /**@type{!gui.StepInfo}*/({
+            stepInfo = /**@type{!v.StepInfo}*/({
                 token: stepIterator.snapshot(),
                 container: stepIterator.container,
                 offset: stepIterator.offset,
@@ -163,5 +165,5 @@ gui.GuiStepUtils = function GuiStepUtils() {
         stepIterator.restore(destinationToken || initialToken);
         return Boolean(destinationToken);
     }
-    this.moveToFilteredStep = moveToFilteredStep;
-};
+exports.getContentRect = getContentRect;
+exports.moveToFilteredStep = moveToFilteredStep;

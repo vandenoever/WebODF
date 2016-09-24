@@ -22,14 +22,15 @@
  * @source: https://github.com/kogmbh/WebODF/
  */
 
-/*global core, gui*/
+var domUtils = require("../core/DomUtils");
+var Destroyable = require("../core/Destroyable").Destroyable;
 
 /**
  * @constructor
- * @implements {core.Destroyable}
+ * @implements {Destroyable}
  * @param {!Element} parentElement
  */
-gui.EditInfoHandle = function EditInfoHandle(parentElement) {
+function EditInfoHandle(parentElement) {
     "use strict";
 
     var /**@type{!Array.<{memberid:!string,time:!Date}>}*/
@@ -42,7 +43,7 @@ gui.EditInfoHandle = function EditInfoHandle(parentElement) {
 
     function renderEdits() {
         var i, infoDiv, colorSpan, authorSpan, timeSpan;
-        core.DomUtils.removeAllChildNodes(handle);
+        domUtils.removeAllChildNodes(handle);
         for (i = 0; i < edits.length; i += 1) {
             infoDiv = document.createElementNS(htmlns, 'div');
             infoDiv.className = "editInfo";
@@ -101,4 +102,6 @@ gui.EditInfoHandle = function EditInfoHandle(parentElement) {
     }
 
     init();
-};
+}
+/**@const*/
+exports.EditInfoHandle = EditInfoHandle;

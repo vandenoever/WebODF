@@ -22,12 +22,12 @@
  * @source: https://github.com/kogmbh/WebODF/
  */
 
-/*global ops, runtime*/
+var runtime = require("../runtime").runtime;
 
 /**
  * @constructor
  */
-ops.MemberProperties = function () {
+function MemberProperties() {
     "use strict";
     /**@type{string}*/
     this.fullName;
@@ -35,7 +35,7 @@ ops.MemberProperties = function () {
     this.color;
     /**@type{string}*/
     this.imageUrl;
-};
+}
 
 /**
  * Class to represent a member in WebODF.
@@ -48,13 +48,13 @@ ops.MemberProperties = function () {
  * representing CSS color value) can be passed.
  * @constructor
  * @param {!string} memberId The unique identifier of this member.
- * @param {!ops.MemberProperties} properties
+ * @param {!MemberProperties} properties
  */
-ops.Member = function Member(memberId, properties) {
+function Member(memberId, properties) {
     "use strict";
 
-    var /**@type{!ops.MemberProperties}*/
-        props = new ops.MemberProperties();
+    var /**@type{!MemberProperties}*/
+        props = new MemberProperties();
 
     /**
      * Returns the member ID of the member
@@ -66,7 +66,7 @@ ops.Member = function Member(memberId, properties) {
     /**
      * Returns the properties of the member
      * (including fullName, color, and imageUrl)
-     * @return {!ops.MemberProperties}
+     * @return {!MemberProperties}
      */
     function getProperties() {
         return props;
@@ -120,4 +120,8 @@ ops.Member = function Member(memberId, properties) {
         props = properties;
     }
     init();
-};
+}
+/**@const*/
+exports.MemberProperties = MemberProperties;
+/**@const*/
+exports.Member = Member;

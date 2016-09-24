@@ -22,20 +22,19 @@
  * @source: https://github.com/kogmbh/WebODF/
  */
 
-/*global runtime, ops */
-
 /*
  * create specific operation instances.
  */
 
+var OperationTransformMatrix = require("./OperationTransformMatrix").OperationTransformMatrix;
 
 /**
  * @constructor
  */
-ops.OperationTransformer = function OperationTransformer() {
+function OperationTransformer() {
     "use strict";
 
-    var operationTransformMatrix = new ops.OperationTransformMatrix();
+    var operationTransformMatrix = new OperationTransformMatrix();
 
     /**
      * @param {!{optype:string}} opSpecA op with lower priority in case of tie breaking
@@ -103,7 +102,7 @@ ops.OperationTransformer = function OperationTransformer() {
     }
 
     /**
-     * @return {!ops.OperationTransformMatrix}
+     * @return {!OperationTransformMatrix}
      */
     this.getOperationTransformMatrix = function () {
         return operationTransformMatrix;
@@ -143,4 +142,6 @@ ops.OperationTransformer = function OperationTransformer() {
             opSpecsB: /**@type{!Array.<!Object>}*/(transformedOpspecsB)
         };
     };
-};
+}
+/**@const*/
+exports.OperationTransformer = OperationTransformer;

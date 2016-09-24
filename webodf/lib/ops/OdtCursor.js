@@ -22,7 +22,10 @@
  * @source: https://github.com/kogmbh/WebODF/
  */
 
-/*global core, ops, gui, runtime*/
+var runtime = require("../runtime").runtime;
+var EventNotifier = require("../core/EventNotifier").EventNotifier;
+var Cursor = require("../core/Cursor").Cursor;
+var OpsDocument = require("./Document").Document;
 
 /**
  * @class
@@ -47,16 +50,16 @@
  *
  * @constructor
  * @param {!string} memberId The memberid this cursor is assigned to
- * @param {!ops.Document} document The document in which the cursor is placed
+ * @param {!OpsDocument} document The document in which the cursor is placed
  */
-ops.OdtCursor = function OdtCursor(memberId, document) {
+function OdtCursor(memberId, document) {
     "use strict";
     var self = this,
         validSelectionTypes = {},
         selectionType,
-        /**@type{!core.Cursor}*/
+        /**@type{!Cursor}*/
         cursor,
-        events = new core.EventNotifier([ops.OdtCursor.signalCursorUpdated]);
+        events = new EventNotifier([OdtCursor.signalCursorUpdated]);
 
     /**
      * Remove the cursor from the document
@@ -124,7 +127,7 @@ ops.OdtCursor = function OdtCursor(memberId, document) {
      */
     this.setSelectedRange = function (range, isForwardSelection) {
         cursor.setSelectedRange(range, isForwardSelection);
-        events.emit(ops.OdtCursor.signalCursorUpdated, self);
+        events.emit(OdtCursor.signalCursorUpdated, self);
     };
     /**
      * Returns if the selection of this cursor has the
@@ -136,7 +139,7 @@ ops.OdtCursor = function OdtCursor(memberId, document) {
     };
     /**
      * Obtain the document to which the cursor corresponds.
-     * @return {!ops.Document}
+     * @return {!OpsDocument}
      */
     this.getDocument = function () {
         return document;
@@ -168,26 +171,28 @@ ops.OdtCursor = function OdtCursor(memberId, document) {
      * @return {undefined}
      */
     this.resetSelectionType = function () {
-        self.setSelectionType(ops.OdtCursor.RangeSelection);
+        self.setSelectionType(OdtCursor.RangeSelection);
     };
 
     function init() {
-        cursor = new core.Cursor(document.getDOMDocument(), memberId);
+        cursor = new Cursor(document.getDOMDocument(), memberId);
 
-        validSelectionTypes[ops.OdtCursor.RangeSelection] = true;
-        validSelectionTypes[ops.OdtCursor.RegionSelection] = true;
+        validSelectionTypes[OdtCursor.RangeSelection] = true;
+        validSelectionTypes[OdtCursor.RegionSelection] = true;
         self.resetSelectionType();
     }
 
     init();
-};
+}
 
 /**@const
    @type {!string} */
-ops.OdtCursor.RangeSelection = 'Range';
+OdtCursor.RangeSelection = 'Range';
 /**@const
    @type {!string} */
-ops.OdtCursor.RegionSelection = 'Region';
+OdtCursor.RegionSelection = 'Region';
 /**@const
  @type {!string} */
-ops.OdtCursor.signalCursorUpdated = "cursorUpdated";
+OdtCursor.signalCursorUpdated = "cursorUpdated";
+/**@const*/
+exports.OdtCursor = OdtCursor;

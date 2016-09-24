@@ -22,13 +22,17 @@
  * @source: https://github.com/kogmbh/WebODF/
  */
 
-/*global gui*/
 /*jslint emptyblock: true, unparam: true*/
+
+/**
+ * @typedef {(ClientRect|{left: !number, right: !number, top: !number, bottom: !number})}
+ */
+var SimpleClientRect;
 
 /**
  * @interface
  */
-gui.Viewport = function Viewport() { "use strict"; };
+function Viewport() { "use strict"; }
 
 /**
  * Scroll the specified client rectangle into the viewport. No scrolling
@@ -39,9 +43,11 @@ gui.Viewport = function Viewport() { "use strict"; };
  * rect will be shown in the view as possible whilst ensuring the top is still
  * on screen. Similar logic applies if the clientRect width is too large.
  *
- * @param {?core.SimpleClientRect} clientRect
+ * @param {?SimpleClientRect} clientRect
  * @param {!boolean=} alignWithTop Align the clientRect to the top of the viewport. If unspecified or false, the
  *  view will scroll only as much as required to bring the clientRect into view.
  * @return {undefined}
  */
-gui.Viewport.prototype.scrollIntoView = function(clientRect, alignWithTop) { "use strict"; };
+Viewport.prototype.scrollIntoView = function(clientRect, alignWithTop) { "use strict"; }
+/**@const*/
+exports.Viewport = Viewport;

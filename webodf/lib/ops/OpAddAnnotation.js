@@ -22,13 +22,18 @@
  * @source: https://github.com/kogmbh/WebODF/
  */
 
-/*global ops, core, odf, runtime*/
+var op = require("./Operation");
+var OdtCursor = require("./OdtCursor").OdtCursor;
+var AnnotationElement = require("../odf/OdfContainer").AnnotationElement;
+var OpsDocument = require("./Document").Document;
+var OdtDocument = require("./OdtDocument").OdtDocument;
+var Namespaces = require("../odf/Namespaces").Namespaces;
 
 /**
  * @constructor
- * @implements ops.Operation
+ * @implements op.Operation
  */
-ops.OpAddAnnotation = function OpAddAnnotation() {
+function OpAddAnnotation() {
     "use strict";
 
     var memberid, timestamp,
@@ -42,7 +47,7 @@ ops.OpAddAnnotation = function OpAddAnnotation() {
         doc;
 
     /**
-     * @param {!ops.OpAddAnnotation.InitSpec} data
+     * @param {!OpAddAnnotation.InitSpec} data
      */
     this.init = function (data) {
         memberid = data.memberid;
@@ -58,9 +63,9 @@ ops.OpAddAnnotation = function OpAddAnnotation() {
     /**
      * Creates an office:annotation node with a dc:creator, dc:date, and a paragraph wrapped within
      * a list, inside it; and with the given annotation name
-     * @param {!ops.OdtDocument} odtDocument
+     * @param {!OdtDocument} odtDocument
      * @param {!Date} date
-     * @return {!odf.AnnotationElement}
+     * @return {!AnnotationElement}
      */
     function createAnnotationNode(odtDocument, date) {
         var annotationNode, creatorNode, dateNode,
@@ -68,21 +73,21 @@ ops.OpAddAnnotation = function OpAddAnnotation() {
 
         // Create an office:annotation node with the calculated name, and an attribute with the memberid
         // for SessionView styling
-        annotationNode = /**@type{!odf.AnnotationElement}*/(doc.createElementNS(odf.Namespaces.officens, 'office:annotation'));
-        annotationNode.setAttributeNS(odf.Namespaces.officens, 'office:name', name);
+        annotationNode = /**@type{!AnnotationElement}*/(doc.createElementNS(Namespaces.officens, 'office:annotation'));
+        annotationNode.setAttributeNS(Namespaces.officens, 'office:name', name);
 
-        creatorNode = doc.createElementNS(odf.Namespaces.dcns, 'dc:creator');
+        creatorNode = doc.createElementNS(Namespaces.dcns, 'dc:creator');
         creatorNode.setAttributeNS('urn:webodf:names:editinfo', 'editinfo:memberid', memberid);
         creatorNode.textContent = odtDocument.getMember(memberid).getProperties().fullName;
 
         // Date.toISOString return the current Dublin Core representation
-        dateNode = doc.createElementNS(odf.Namespaces.dcns, 'dc:date');
+        dateNode = doc.createElementNS(Namespaces.dcns, 'dc:date');
         dateNode.appendChild(doc.createTextNode(date.toISOString()));
 
         // Add a text:list > text:list-item > text:p hierarchy as a child of the annotation node
-        listNode = doc.createElementNS(odf.Namespaces.textns, 'text:list');
-        listItemNode = doc.createElementNS(odf.Namespaces.textns, 'text:list-item');
-        paragraphNode = doc.createElementNS(odf.Namespaces.textns, 'text:p');
+        listNode = doc.createElementNS(Namespaces.textns, 'text:list');
+        listItemNode = doc.createElementNS(Namespaces.textns, 'text:list-item');
+        paragraphNode = doc.createElementNS(Namespaces.textns, 'text:p');
         listItemNode.appendChild(paragraphNode);
         listNode.appendChild(listItemNode);
 
@@ -101,15 +106,15 @@ ops.OpAddAnnotation = function OpAddAnnotation() {
         var annotationEnd;
 
         // Create an office:annotation-end node with the calculated name
-        annotationEnd = doc.createElementNS(odf.Namespaces.officens, 'office:annotation-end');
-        annotationEnd.setAttributeNS(odf.Namespaces.officens, 'office:name', name);
+        annotationEnd = doc.createElementNS(Namespaces.officens, 'office:annotation-end');
+        annotationEnd.setAttributeNS(Namespaces.officens, 'office:name', name);
 
         return annotationEnd;
     }
 
     /**
      * Inserts the element at a given position
-     * @param {!ops.OdtDocument} odtDocument
+     * @param {!OdtDocument} odtDocument
      * @param {!Element} node
      * @param {!number} insertPosition
      * @return {undefined}
@@ -136,10 +141,10 @@ ops.OpAddAnnotation = function OpAddAnnotation() {
     }
 
     /**
-     * @param {!ops.Document} document
+     * @param {!OpsDocument} document
      */
     this.execute = function (document) {
-        var odtDocument = /**@type{ops.OdtDocument}*/(document),
+        var odtDocument = /**@type{OdtDocument}*/(document),
             annotation, annotationEnd,
             cursor = odtDocument.getCursor(memberid),
             selectedRange,
@@ -158,28 +163,28 @@ ops.OpAddAnnotation = function OpAddAnnotation() {
             insertNodeAtPosition(odtDocument, annotationEnd, position + length);
         }
         insertNodeAtPosition(odtDocument, annotation, position);
-        odtDocument.emit(ops.OdtDocument.signalStepsInserted, {position: position});
+        odtDocument.emit(OdtDocument.signalStepsInserted, {position: position});
 
         // Move the cursor inside the new annotation,
         // by selecting the paragraph's range.
         if (cursor) {
             selectedRange = doc.createRange();
-            paragraphElement = /**@type{!Element}*/(annotation.getElementsByTagNameNS(odf.Namespaces.textns, "p")[0]);
+            paragraphElement = /**@type{!Element}*/(annotation.getElementsByTagNameNS(Namespaces.textns, "p")[0]);
             selectedRange.selectNodeContents(paragraphElement);
             cursor.setSelectedRange(selectedRange, false);
-            cursor.setSelectionType(ops.OdtCursor.RangeSelection);
-            odtDocument.emit(ops.Document.signalCursorMoved, cursor);
+            cursor.setSelectionType(OdtCursor.RangeSelection);
+            odtDocument.emit(OpsDocument.signalCursorMoved, cursor);
         }
         // Track this annotation
         odtDocument.getOdfCanvas().addAnnotation(annotation);
         odtDocument.fixCursorPositions();
-        odtDocument.emit(ops.OdtDocument.signalAnnotationAdded, { memberId: memberid, annotation: annotation });
+        odtDocument.emit(OdtDocument.signalAnnotationAdded, { memberId: memberid, annotation: annotation });
 
         return true;
     };
 
     /**
-     * @return {!ops.OpAddAnnotation.Spec}
+     * @return {!OpAddAnnotation.Spec}
      */
     this.spec = function () {
         return {
@@ -191,21 +196,26 @@ ops.OpAddAnnotation = function OpAddAnnotation() {
             name: name
         };
     };
-};
-/**@typedef{{
-    optype:string,
-    memberid:string,
-    timestamp:number,
-    position:number,
-    length:(!number|undefined),
-    name:string
-}}*/
-ops.OpAddAnnotation.Spec;
-/**@typedef{{
-    memberid:string,
-    timestamp:(number|undefined),
-    position:number,
-    length:(!number|undefined),
-    name:string
-}}*/
-ops.OpAddAnnotation.InitSpec;
+}
+
+/**
+ * @record
+ * @extends {op.SpecBase}
+ */
+OpAddAnnotation.InitSpec = function() {}
+/**@type{!number}*/
+OpAddAnnotation.InitSpec.prototype.position;
+/**@type{!number|undefined}*/
+OpAddAnnotation.InitSpec.prototype.length;
+/**@type{!string}*/
+OpAddAnnotation.InitSpec.prototype.name;
+
+/**
+ * @record
+ * @extends {op.TypedOperationSpec}
+ * @extends {OpAddAnnotation.InitSpec}
+ */
+OpAddAnnotation.Spec = function() {}
+
+/**@const*/
+exports.OpAddAnnotation = OpAddAnnotation;

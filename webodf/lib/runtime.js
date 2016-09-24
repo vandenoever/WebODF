@@ -890,8 +890,10 @@ function BrowserRuntime() {
 function NodeJSRuntime() {
     "use strict";
     var self = this,
-        fs = require('fs'),
-        pathmod = require('path'),
+        /* workaround so Closure Compiler does not detect require() calls*/
+        workaround_require = require,
+        fs = workaround_require('fs'),
+        pathmod = workaround_require('path'),
         /**@type{!string}*/
         currentDirectory = "",
         /**@type{!DOMParser}*/
@@ -1152,7 +1154,7 @@ function NodeJSRuntime() {
     };
     function init() {
         var /**@type{function(new:DOMParser)}*/
-            DOMParser = require('xmldom').DOMParser;
+            DOMParser = workaround_require('xmldom').DOMParser;
         parser = new DOMParser();
         domImplementation = self.parseXML("<a/>").implementation;
     }
@@ -1487,32 +1489,6 @@ Runtime.create = function create() {
  */
 var runtime = Runtime.create();
 
-/**
- * @namespace The core package.
- */
-var core = {};
-/**
- * @namespace The gui package.
- */
-var gui = {};
-/**
- * @namespace The xmldom package.
- */
-var xmldom = {};
-/**
- * @namespace The ODF package.
- */
-var odf = {};
-/**
- * @namespace The editing operations
- */
-var ops = {};
-
-/**
- * @namespace The webodf namespace
- */
-var webodf = {};
-
 (function () {
     "use strict";
     /**
@@ -1525,11 +1501,7 @@ var webodf = {};
         );
         return version;
     }
-    /**
-     * @const
-     * @type {!string}
-     */
-    webodf.Version = getWebODFVersion();
+    runtime.getWebODFVersion = getWebODFVersion;
 }());
 
 /*jslint sloppy: true*/
@@ -1693,11 +1665,6 @@ var webodf = {};
     var /**@type{!Object.<string,!{dir:string, deps:!Array.<string>}>}*/
         dependencies,
         packages = {
-            core: core,
-            gui: gui,
-            xmldom: xmldom,
-            odf: odf,
-            ops: ops
         };
     /**
      * Check if a class has been defined.
@@ -1865,3 +1832,4 @@ var webodf = {};
         run(args.slice(1));
     }
 }(String(typeof arguments) !== "undefined" && arguments));
+exports.runtime = runtime;

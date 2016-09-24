@@ -22,10 +22,18 @@
  * @source: https://github.com/kogmbh/WebODF/
  */
 
-/*global runtime, gui, core, ops, Node, odf*/
+/*global Node*/
 
-(function () {
-    "use strict";
+"use strict";
+var EventManager = require("./EventManager").EventManager;
+var ScheduledTask = require("../core/ScheduledTask").ScheduledTask;
+var OdfNodeFilter = require("../odf/OdfNodeFilter").OdfNodeFilter;
+var TextSerializer = require("../odf/TextSerializer").TextSerializer;
+var EventNotifier = require("../core/EventNotifier").EventNotifier;
+var Destroyable = require("../core/Destroyable").Destroyable;
+var task = require("../core/Task");
+var async = require("../core/Async");
+var OdtCursor = require("../ops/OdtCursor").OdtCursor;
 
     /**
      * When composition session is ended on Safari under MacOS by pressing
@@ -37,8 +45,8 @@
      * text as if it occurred via a normal composition event
      *
      * @constructor
-     * @implements {core.Destroyable}
-     * @param {!gui.EventManager} eventManager
+     * @implements {Destroyable}
+     * @param {!EventManager} eventManager
      */
     function DetectSafariCompositionError(eventManager) {
         var lastCompositionValue,
@@ -93,28 +101,28 @@
      * - On Chrome, using Option+char will include the following keypress in the composition event
      *
      * @constructor
-     * @implements {core.Destroyable}
+     * @implements {Destroyable}
      * @param {!string} inputMemberId
-     * @param {!gui.EventManager} eventManager
+     * @param {!EventManager} eventManager
      */
-    gui.InputMethodEditor = function InputMethodEditor(inputMemberId, eventManager) {
+    function InputMethodEditor(inputMemberId, eventManager) {
         var cursorns = "urn:webodf:names:cursor",
-            /**@type{ops.OdtCursor}*/
+            /**@type{OdtCursor}*/
             localCursor = null,
             eventTrap = eventManager.getEventTrap(),
             /**@type{!Document}*/
             doc = /**@type{!Document}*/(eventTrap.ownerDocument),
             /**@type{!Element}*/
             compositionElement,
-            /**@type{!core.ScheduledTask}*/
+            /**@type{!ScheduledTask}*/
             processUpdates,
             pendingEvent = false,
             /**@type{string}*/
             pendingData = "",
-            events = new core.EventNotifier([gui.InputMethodEditor.signalCompositionStart,
-                                                gui.InputMethodEditor.signalCompositionEnd]),
+            events = new EventNotifier([InputMethodEditor.signalCompositionStart,
+                                                InputMethodEditor.signalCompositionEnd]),
             lastCompositionData,
-            /**@type{!odf.TextSerializer}*/
+            /**@type{!TextSerializer}*/
             textSerializer,
             filters = [],
             cleanup,
@@ -153,7 +161,7 @@
             if (pendingEvent) {
                 pendingEvent = false;
                 setCursorComposing(false);
-                events.emit(gui.InputMethodEditor.signalCompositionEnd, {data: pendingData});
+                events.emit(InputMethodEditor.signalCompositionEnd, {data: pendingData});
                 pendingData = "";
             }
         }
@@ -221,7 +229,7 @@
             processUpdates.cancel();
             setCursorComposing(true);
             if (!pendingEvent) {
-                events.emit(gui.InputMethodEditor.signalCompositionStart, {data: ""});
+                events.emit(InputMethodEditor.signalCompositionStart, {data: ""});
             }
         }
 
@@ -257,14 +265,14 @@
 
         /**
          * Handle a cursor registration event
-         * @param {!ops.OdtCursor} cursor
+         * @param {!OdtCursor} cursor
          * @return {undefined}
          */
         this.registerCursor = function (cursor) {
             if (cursor.getMemberId() === inputMemberId) {
                 localCursor = cursor;
                 localCursor.getNode().appendChild(compositionElement);
-                cursor.subscribe(ops.OdtCursor.signalCursorUpdated, handleCursorUpdated);
+                cursor.subscribe(OdtCursor.signalCursorUpdated, handleCursorUpdated);
                 eventManager.subscribe('input', synchronizeCompositionText);
                 eventManager.subscribe('compositionupdate', synchronizeCompositionText);
             }
@@ -278,7 +286,7 @@
         this.removeCursor = function (memberid) {
             if (localCursor && memberid ===  inputMemberId) {
                 localCursor.getNode().removeChild(compositionElement);
-                localCursor.unsubscribe(ops.OdtCursor.signalCursorUpdated, handleCursorUpdated);
+                localCursor.unsubscribe(OdtCursor.signalCursorUpdated, handleCursorUpdated);
                 eventManager.unsubscribe('input', synchronizeCompositionText);
                 eventManager.unsubscribe('compositionupdate', synchronizeCompositionText);
                 localCursor = null;
@@ -295,12 +303,12 @@
             eventManager.unsubscribe('keypress', flushEvent);
             eventManager.unsubscribe('focus', synchronizeWindowSelection);
 
-            core.Async.destroyAll(cleanup, callback);
+            async.destroyAll(cleanup, callback);
         };
 
         function init() {
-            textSerializer = new odf.TextSerializer();
-            textSerializer.filter = new odf.OdfNodeFilter();
+            textSerializer = new TextSerializer();
+            textSerializer.filter = new OdfNodeFilter();
 
             eventManager.subscribe('compositionstart', compositionStart);
             eventManager.subscribe('compositionend', compositionEnd);
@@ -322,22 +330,23 @@
             compositionElement = doc.createElement('span');
             compositionElement.setAttribute('id', 'composer');
 
-            processUpdates = core.Task.createTimeoutTask(synchronizeWindowSelection, 1);
+            processUpdates = task.createTimeoutTask(synchronizeWindowSelection, 1);
             cleanup.push(processUpdates.destroy);
         }
 
         init();
-    };
+    }
 
     /**
      * @const
      * @type {!string}
      */
-    gui.InputMethodEditor.signalCompositionStart = "input/compositionstart";
+    InputMethodEditor.signalCompositionStart = "input/compositionstart";
 
     /**
      * @const
      * @type {!string}
      */
-    gui.InputMethodEditor.signalCompositionEnd = "input/compositionend";
-}());
+    InputMethodEditor.signalCompositionEnd = "input/compositionend";
+/**@const*/
+exports.InputMethodEditor = InputMethodEditor;

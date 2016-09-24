@@ -22,20 +22,34 @@
  * @source: https://github.com/kogmbh/WebODF/
  */
 
-/*global Node, NodeFilter, gui, odf, ops, runtime, core*/
+/*global Node, NodeFilter*/
+
+var OdfNodeFilter = require("../odf/OdfNodeFilter").OdfNodeFilter;
+var Destroyable = require("../core/Destroyable").Destroyable;
+var SelectionView = require("./SelectionView").SelectionView;
+var OdtCursor = require("../ops/OdtCursor").OdtCursor;
+var OpsDocument = require("../ops/Document").Document;
+var ZoomHelper = require("./ZoomHelper").ZoomHelper;
+var ShadowCursor = require("./ShadowCursor").ShadowCursor;
+var ScheduledTask = require("../core/ScheduledTask").ScheduledTask;
+var PositionFilter = require("../core/PositionFilter").PositionFilter;
+var task = require("../core/Task");
+var async = require("../core/Async");
+var domUtils = require("../core/DomUtils");
+var odfUtils = require("../odf/OdfUtils");
 
 /**
  *  A GUI class that attaches to a cursor and renders it's selection
  *  as an SVG polygon.
  * @constructor
- * @implements {core.Destroyable}
- * @implements {gui.SelectionView}
- * @param {!ops.OdtCursor} cursor
+ * @implements {Destroyable}
+ * @implements {SelectionView}
+ * @param {!OdtCursor} cursor
  */
-gui.SvgSelectionView = function SvgSelectionView(cursor) {
+function SvgSelectionView(cursor) {
     "use strict";
 
-    var /**@type{!ops.Document}*/
+    var /**@type{!OpsDocument}*/
         document = cursor.getDocument(),
         documentRoot, // initialized by addOverlay
         /**@type{!HTMLElement}*/
@@ -46,9 +60,7 @@ gui.SvgSelectionView = function SvgSelectionView(cursor) {
         polygon = doc.createElementNS(svgns, 'polygon'),
         handle1 = doc.createElementNS(svgns, 'circle'),
         handle2 = doc.createElementNS(svgns, 'circle'),
-        odfUtils = odf.OdfUtils,
-        domUtils = core.DomUtils,
-        /**@type{!gui.ZoomHelper}*/
+        /**@type{!ZoomHelper}*/
         zoomHelper = document.getCanvas().getZoomHelper(),
         /**@type{boolean}*/
         isVisible = true,
@@ -59,7 +71,7 @@ gui.SvgSelectionView = function SvgSelectionView(cursor) {
         FILTER_REJECT = NodeFilter.FILTER_REJECT,
         /**@const*/
         HANDLE_RADIUS = 8,
-        /**@type{!core.ScheduledTask}*/
+        /**@type{!ScheduledTask}*/
         renderTask;
 
     /**
@@ -290,9 +302,9 @@ gui.SvgSelectionView = function SvgSelectionView(cursor) {
             grownRect = null,
             currentRect,
             range = doc.createRange(),
-            /**@type{!core.PositionFilter}*/
+            /**@type{!PositionFilter}*/
             rootFilter,
-            odfNodeFilter = new odf.OdfNodeFilter(),
+            odfNodeFilter = new OdfNodeFilter(),
             treeWalker;
 
         /**
@@ -573,7 +585,7 @@ gui.SvgSelectionView = function SvgSelectionView(cursor) {
         var range = cursor.getSelectedRange(),
             shouldShow;
         shouldShow = isVisible
-                        && cursor.getSelectionType() === ops.OdtCursor.RangeSelection
+                        && cursor.getSelectionType() === OdtCursor.RangeSelection
                         && !range.collapsed;
         if (shouldShow) {
             addOverlay();
@@ -612,7 +624,7 @@ gui.SvgSelectionView = function SvgSelectionView(cursor) {
     };
 
     /**
-     * @param {!gui.ShadowCursor|ops.OdtCursor} movedCursor
+     * @param {!ShadowCursor|OdtCursor} movedCursor
      * @return {undefined}
      */
     function handleCursorMove(movedCursor) {
@@ -640,8 +652,8 @@ gui.SvgSelectionView = function SvgSelectionView(cursor) {
     function destroy(callback) {
         sizer.removeChild(overlay);
         sizer.classList.remove('webodf-virtualSelections');
-        cursor.getDocument().unsubscribe(ops.Document.signalCursorMoved, handleCursorMove);
-        zoomHelper.unsubscribe(gui.ZoomHelper.signalZoomChanged, scaleHandles);
+        cursor.getDocument().unsubscribe(OpsDocument.signalCursorMoved, handleCursorMove);
+        zoomHelper.unsubscribe(ZoomHelper.signalZoomChanged, scaleHandles);
         callback();
     }
 
@@ -650,21 +662,23 @@ gui.SvgSelectionView = function SvgSelectionView(cursor) {
      * @param {function(!Error=)} callback
      */
     this.destroy = function (callback) {
-        core.Async.destroyAll([renderTask.destroy, destroy], callback);
+        async.destroyAll([renderTask.destroy, destroy], callback);
     };
 
     function init() {
         var editinfons = 'urn:webodf:names:editinfo',
             memberid = cursor.getMemberId();
 
-        renderTask = core.Task.createRedrawTask(rerender);
+        renderTask = task.createRedrawTask(rerender);
         addOverlay();
         overlay.setAttributeNS(editinfons, 'editinfo:memberid', memberid);
         sizer.classList.add('webodf-virtualSelections');
-        cursor.getDocument().subscribe(ops.Document.signalCursorMoved, handleCursorMove);
-        zoomHelper.subscribe(gui.ZoomHelper.signalZoomChanged, scaleHandles);
+        cursor.getDocument().subscribe(OpsDocument.signalCursorMoved, handleCursorMove);
+        zoomHelper.subscribe(ZoomHelper.signalZoomChanged, scaleHandles);
         scaleHandles(zoomHelper.getZoomLevel());
     }
 
     init();
-};
+}
+/**@const*/
+exports.SvgSelectionView = SvgSelectionView;

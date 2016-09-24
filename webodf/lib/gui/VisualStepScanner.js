@@ -22,60 +22,62 @@
  * @source: https://github.com/kogmbh/WebODF/
  */
 
-/*global gui*/
 /*jslint emptyblock:true, unparam:true*/
+
+var StepIterator = require("../core/StepIterator").StepIterator;
+var StepDirection = require("../core/enums").StepDirection;
 
 /**
  * @constructor
  * @struct
  */
-gui.StepInfo = function() { "use strict"; };
+function StepInfo() { "use strict"; }
 
 /**
  * Visual step iteration direction, taking into account
  * whether the text block is right-to-left or left to right.
  *
  * For left-to-right languages, this maps onto
- * core.StepDirection as:
+ * StepDirection as:
  *  LEFT_TO_RIGHT = NEXT
  *  RIGHT_TO_LEFT = PREV
  *
  * @enum {!number}
  */
-gui.StepInfo.VisualDirection = {
+StepInfo.VisualDirection = {
     LEFT_TO_RIGHT: 0,
     RIGHT_TO_LEFT: 1
 };
 
 /**
- * @type {!core.StepIterator.StepSnapshot}
+ * @type {!StepIterator.StepSnapshot}
  */
-gui.StepInfo.prototype.token;
+StepInfo.prototype.token;
 
 /**
  * @return {!Element|!Text}
  */
-gui.StepInfo.prototype.container = function() { "use strict"; };
+StepInfo.prototype.container = function() { "use strict"; };
 
 /**
  * @return {!number}
  */
-gui.StepInfo.prototype.offset = function() { "use strict"; };
+StepInfo.prototype.offset = function() { "use strict"; };
 
 /**
  * The direction of iteration from previous to next rect.
  *
- * @type {!core.StepDirection}
+ * @type {!StepDirection}
  */
-gui.StepInfo.prototype.direction;
+StepInfo.prototype.direction;
 
 /**
  * The visual direction of iteration accounting for right-to-left
  * languages.
  *
- * @type {!gui.StepInfo.VisualDirection}
+ * @type {!StepInfo.VisualDirection}
  */
-gui.StepInfo.prototype.visualDirection;
+StepInfo.prototype.visualDirection;
 
 /**
  * Scanners are stateful objects that are used to locate a step matching certain
@@ -84,18 +86,22 @@ gui.StepInfo.prototype.visualDirection;
  * As these are stateful objects, a new instance should be created for every use.
  * @interface
  */
-gui.VisualStepScanner = function() { "use strict"; };
+function VisualStepScanner() { "use strict"; }
 
 /**
  * Token for the last step accepted by this scanner
- * @type {?core.StepIterator.StepSnapshot|undefined}
+ * @type {?StepIterator.StepSnapshot|undefined}
  */
-gui.VisualStepScanner.prototype.token;
+VisualStepScanner.prototype.token;
 
 /**
- * @param {!gui.StepInfo} stepInfo
+ * @param {!StepInfo} stepInfo
  * @param {?ClientRect} previousRect
  * @param {?ClientRect} nextRect
  * @return {!boolean} Return true in terminate iteration
  */
-gui.VisualStepScanner.prototype.process = function(stepInfo, previousRect, nextRect) { "use strict"; };
+VisualStepScanner.prototype.process = function(stepInfo, previousRect, nextRect) { "use strict"; };
+/**@const*/
+exports.StepInfo = StepInfo;
+/**@const*/
+exports.VisualStepScanner = VisualStepScanner;

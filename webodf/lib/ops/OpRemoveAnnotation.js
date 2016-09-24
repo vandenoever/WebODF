@@ -22,23 +22,27 @@
  * @source: https://github.com/kogmbh/WebODF/
  */
 
-/*global ops, runtime, odf, core*/
+var op = require("./Operation");
+var OpsDocument = require("./Document").Document;
+var OdtDocument = require("./OdtDocument").OdtDocument;
+var domUtils = require("../core/DomUtils");
+var AnnotationElement = require("../odf/OdfContainer").AnnotationElement;
+var Namespaces = require("../odf/Namespaces").Namespaces;
 
 /**
  * @constructor
- * @implements ops.Operation
+ * @implements op.Operation
  */
-ops.OpRemoveAnnotation = function OpRemoveAnnotation() {
+function OpRemoveAnnotation() {
     "use strict";
     var memberid, timestamp,
         /**@type{number}*/
         position,
         /**@type{number}*/
-        length,
-        domUtils = core.DomUtils;
+        length;
 
     /**
-     * @param {!ops.OpRemoveAnnotation.InitSpec} data
+     * @param {!OpRemoveAnnotation.InitSpec} data
      */
     this.init = function (data) {
         memberid = data.memberid;
@@ -51,16 +55,16 @@ ops.OpRemoveAnnotation = function OpRemoveAnnotation() {
     this.group = undefined;
 
     /**
-     * @param {!ops.Document} document
+     * @param {!OpsDocument} document
      */
     this.execute = function (document) {
-        var odtDocument = /**@type{ops.OdtDocument}*/(document),
+        var odtDocument = /**@type{OdtDocument}*/(document),
             iterator = odtDocument.getIteratorAtPosition(position),
             container = iterator.container(),
             annotationNode,
             annotationEnd;
 
-        while (!(container.namespaceURI === odf.Namespaces.officens
+        while (!(container.namespaceURI === Namespaces.officens
             && container.localName === 'annotation')) {
             container = container.parentNode;
         }
@@ -68,7 +72,7 @@ ops.OpRemoveAnnotation = function OpRemoveAnnotation() {
             return false;
         }
 
-        annotationNode = /**@type{!odf.AnnotationElement}*/(container);
+        annotationNode = /**@type{!AnnotationElement}*/(container);
         annotationEnd = annotationNode.annotationEndElement;
 
         // Untrack and unwrap annotation
@@ -90,7 +94,7 @@ ops.OpRemoveAnnotation = function OpRemoveAnnotation() {
             annotationEnd.parentNode.removeChild(annotationEnd);
         }
         // The specified position is the first walkable step in the annotation. The position is always just before the first point of change
-        odtDocument.emit(ops.OdtDocument.signalStepsRemoved, {position: position > 0 ? position - 1 : position});
+        odtDocument.emit(OdtDocument.signalStepsRemoved, {position: position > 0 ? position - 1 : position});
 
         odtDocument.getOdfCanvas().rerenderAnnotations();
         odtDocument.fixCursorPositions();
@@ -98,7 +102,7 @@ ops.OpRemoveAnnotation = function OpRemoveAnnotation() {
     };
 
     /**
-     * @return {!ops.OpRemoveAnnotation.Spec}
+     * @return {!OpRemoveAnnotation.Spec}
      */
     this.spec = function () {
         return {
@@ -109,19 +113,24 @@ ops.OpRemoveAnnotation = function OpRemoveAnnotation() {
             length: length
         };
     };
-};
-/**@typedef{{
-    optype:string,
-    memberid:string,
-    timestamp:number,
-    position:number,
-    length:number
-}}*/
-ops.OpRemoveAnnotation.Spec;
-/**@typedef{{
-    memberid:string,
-    timestamp:(number|undefined),
-    position:number,
-    length:number
-}}*/
-ops.OpRemoveAnnotation.InitSpec;
+}
+
+/**
+ * @record
+ * @extends {op.SpecBase}
+ */
+OpRemoveAnnotation.InitSpec = function() {}
+/**@type{!number}*/
+OpRemoveAnnotation.InitSpec.prototype.position;
+/**@type{!number}*/
+OpRemoveAnnotation.InitSpec.prototype.length;
+
+/**
+ * @record
+ * @extends {op.TypedOperationSpec}
+ * @extends {OpRemoveAnnotation.InitSpec}
+ */
+OpRemoveAnnotation.Spec = function() {}
+
+/**@const*/
+exports.OpRemoveAnnotation = OpRemoveAnnotation;

@@ -22,24 +22,27 @@
  * @source: https://github.com/kogmbh/WebODF/
  */
 
-/*global runtime, core, DOMParser, externs*/
+/*global DOMParser, externs*/
 /*jslint bitwise: true*/
+
+var runtime = require("../runtime").runtime;
+var Base64 = require("./Base64").Base64;
 
 /**
  * @constructor
  * @param {!string} url path to zip file, should be readable by the runtime
- * @param {?function(?string, !core.Zip):undefined} entriesReadCallback callback
+ * @param {?function(?string, !Zip):undefined} entriesReadCallback callback
  *        indicating the zip
  *        has loaded this list of entries, the arguments are a string that
  *        indicates error if present and the created object
  */
-core.Zip = function Zip(url, entriesReadCallback) {
+function Zip(url, entriesReadCallback) {
     "use strict";
-    var /**@type{!core.Zip}*/
+    var /**@type{!Zip}*/
         self = this,
         /**@type{!JSZip}*/
         zip,
-        base64 = new core.Base64();
+        base64 = new Base64();
 
     /**
      * @param {!string} filename
@@ -238,4 +241,6 @@ core.Zip = function Zip(url, entriesReadCallback) {
             }
         }
     });
-};
+}
+/**@const*/
+exports.Zip = Zip;

@@ -22,13 +22,16 @@
  * @source: https://github.com/kogmbh/WebODF/
  */
 
-/*global ops, odf, runtime*/
+var op = require("./Operation");
+var OpsDocument = require("./Document").Document;
+var OdtDocument = require("./OdtDocument").OdtDocument;
+var odfUtils = require("../odf/OdfUtils");
 
 /**
  * @constructor
- * @implements ops.Operation
+ * @implements op.Operation
  */
-ops.OpInsertTable = function OpInsertTable() {
+function OpInsertTable() {
     "use strict";
 
     var memberid, timestamp, initialRows, initialColumns, position, tableName, tableStyleName,
@@ -38,11 +41,10 @@ ops.OpInsertTable = function OpInsertTable() {
         /**@const*/
         tablens = "urn:oasis:names:tc:opendocument:xmlns:table:1.0",
         /**@const*/
-        textns = "urn:oasis:names:tc:opendocument:xmlns:text:1.0",
-        odfUtils = odf.OdfUtils;
+        textns = "urn:oasis:names:tc:opendocument:xmlns:text:1.0";
 
     /**
-     * @param {!ops.OpInsertTable.InitSpec} data
+     * @param {!OpInsertTable.InitSpec} data
      */
     this.init = function (data) {
         memberid = data.memberid;
@@ -141,10 +143,10 @@ ops.OpInsertTable = function OpInsertTable() {
     }
 
     /**
-     * @param {!ops.Document} document
+     * @param {!OpsDocument} document
      */
     this.execute = function (document) {
-        var odtDocument = /**@type{ops.OdtDocument}*/(document),
+        var odtDocument = /**@type{OdtDocument}*/(document),
             domPosition = odtDocument.getTextNodeAtStep(position),
             rootNode = odtDocument.getRootNode(),
             previousSibling,
@@ -157,10 +159,10 @@ ops.OpInsertTable = function OpInsertTable() {
             previousSibling = odfUtils.getParagraphElement(domPosition.textNode);
             rootNode.insertBefore(tableNode, previousSibling.nextSibling);
             // The parent table counts for 1 position, and 1 paragraph is added per cell
-            odtDocument.emit(ops.OdtDocument.signalStepsInserted, {position: position});
+            odtDocument.emit(OdtDocument.signalStepsInserted, {position: position});
 
             odtDocument.getOdfCanvas().refreshSize();
-            odtDocument.emit(ops.OdtDocument.signalTableAdded, {
+            odtDocument.emit(OdtDocument.signalTableAdded, {
                 tableElement: tableNode,
                 memberId: memberid,
                 timeStamp: timestamp
@@ -173,7 +175,7 @@ ops.OpInsertTable = function OpInsertTable() {
     };
 
     /**
-     * @return {!ops.OpInsertTable.Spec}
+     * @return {!OpInsertTable.Spec}
      */
     this.spec = function () {
         return {
@@ -189,29 +191,34 @@ ops.OpInsertTable = function OpInsertTable() {
             tableCellStyleMatrix: tableCellStyleMatrix
         };
     };
-};
-/**@typedef{{
-    optype:string,
-    memberid:string,
-    timestamp:number,
-    position:number,
-    initialRows:number,
-    initialColumns:number,
-    tableName:string,
-    tableStyleName:string,
-    tableColumnStyleName:string,
-    tableCellStyleMatrix:!Array.<!Array.<string>>
-}}*/
-ops.OpInsertTable.Spec;
-/**@typedef{{
-    memberid:string,
-    timestamp:(number|undefined),
-    position:number,
-    initialRows:number,
-    initialColumns:number,
-    tableName:string,
-    tableStyleName:string,
-    tableColumnStyleName:string,
-    tableCellStyleMatrix:!Array.<!Array.<string>>
-}}*/
-ops.OpInsertTable.InitSpec;
+}
+
+/**
+ * @record
+ * @extends {op.SpecBase}
+ */
+OpInsertTable.InitSpec = function() {}
+/**@type{!number}*/
+OpInsertTable.InitSpec.prototype.position;
+/**@type{!number}*/
+OpInsertTable.InitSpec.prototype.initialRows;
+/**@type{!number}*/
+OpInsertTable.InitSpec.prototype.initialColumns;
+/**@type{!string}*/
+OpInsertTable.InitSpec.prototype.tableName;
+/**@type{!string}*/
+OpInsertTable.InitSpec.prototype.tableStyleName;
+/**@type{!string}*/
+OpInsertTable.InitSpec.prototype.tableColumnStyleName;
+/**@type{!Array.<!Array.<!string>>}*/
+OpInsertTable.InitSpec.prototype.tableCellStyleMatrix;
+
+/**
+ * @record
+ * @extends {op.TypedOperationSpec}
+ * @extends {OpInsertTable.InitSpec}
+ */
+OpInsertTable.Spec = function() {}
+
+/**@const*/
+exports.OpInsertTable = OpInsertTable;

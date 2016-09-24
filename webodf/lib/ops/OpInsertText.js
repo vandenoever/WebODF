@@ -22,7 +22,11 @@
  * @source: https://github.com/kogmbh/WebODF/
  */
 
-/*global ops, odf, runtime*/
+var runtime = require("../runtime").runtime;
+var op = require("./Operation");
+var OpsDocument = require("./Document").Document;
+var OdtDocument = require("./OdtDocument").OdtDocument;
+var odfUtils = require("../odf/OdfUtils");
 
 /**
  * This operation inserts the given text
@@ -33,9 +37,9 @@
  * Otherwise, the cursor remains at the
  * same position as before.
  * @constructor
- * @implements ops.Operation
+ * @implements op.Operation
  */
-ops.OpInsertText = function OpInsertText() {
+function OpInsertText() {
     "use strict";
 
     var tab = "\t",
@@ -46,11 +50,10 @@ ops.OpInsertText = function OpInsertText() {
         /**@type{boolean}*/
         moveCursor,
         /**@type{string}*/
-        text,
-        odfUtils = odf.OdfUtils;
+        text;
 
     /**
-     * @param {!ops.OpInsertText.InitSpec} data
+     * @param {!OpInsertText.InitSpec} data
      */
     this.init = function (data) {
         memberid = data.memberid;
@@ -100,10 +103,10 @@ ops.OpInsertText = function OpInsertText() {
     }
 
     /**
-     * @param {!ops.Document} document
+     * @param {!OpsDocument} document
      */
     this.execute = function (document) {
-        var odtDocument = /**@type{ops.OdtDocument}*/(document),
+        var odtDocument = /**@type{OdtDocument}*/(document),
             domPosition,
             previousNode,
             /**@type{!Element}*/
@@ -186,7 +189,7 @@ ops.OpInsertText = function OpInsertText() {
                 previousNode.parentNode.removeChild(previousNode);
             }
 
-            odtDocument.emit(ops.OdtDocument.signalStepsInserted, {position: position});
+            odtDocument.emit(OdtDocument.signalStepsInserted, {position: position});
 
             if (cursor && moveCursor) {
                 // Explicitly place the cursor in the desired position after insertion
@@ -196,14 +199,14 @@ ops.OpInsertText = function OpInsertText() {
                 // the textnode + cursor reordering logic from OdtDocument's
                 // getTextNodeAtStep.
                 odtDocument.moveCursor(memberid, position + text.length, 0);
-                odtDocument.emit(ops.Document.signalCursorMoved, cursor);
+                odtDocument.emit(OpsDocument.signalCursorMoved, cursor);
             }
 
             odtDocument.downgradeWhitespacesAtPosition(position);
             odtDocument.downgradeWhitespacesAtPosition(position + text.length);
 
             odtDocument.getOdfCanvas().refreshSize();
-            odtDocument.emit(ops.OdtDocument.signalParagraphChanged, {
+            odtDocument.emit(OdtDocument.signalParagraphChanged, {
                 paragraphElement: paragraphElement,
                 memberId: memberid,
                 timeStamp: timestamp
@@ -216,7 +219,7 @@ ops.OpInsertText = function OpInsertText() {
     };
 
     /**
-     * @return {!ops.OpInsertText.Spec}
+     * @return {!OpInsertText.Spec}
      */
     this.spec = function () {
         return {
@@ -228,21 +231,26 @@ ops.OpInsertText = function OpInsertText() {
             moveCursor: moveCursor
         };
     };
-};
-/**@typedef{{
-    optype:string,
-    memberid:string,
-    timestamp:number,
-    position:number,
-    text:string,
-    moveCursor:boolean
-}}*/
-ops.OpInsertText.Spec;
-/**@typedef{{
-    memberid:string,
-    timestamp:(number|undefined),
-    position:number,
-    text:string,
-    moveCursor:(string|boolean|undefined)
-}}*/
-ops.OpInsertText.InitSpec;
+}
+
+/**
+ * @record
+ * @extends {op.SpecBase}
+ */
+OpInsertText.InitSpec = function() {}
+/**@type{!number}*/
+OpInsertText.InitSpec.prototype.position;
+/**@type{!string}*/
+OpInsertText.InitSpec.prototype.text;
+/**@type{(!string|!boolean|undefined)}*/
+OpInsertText.InitSpec.prototype.moveCursor;
+
+/**
+ * @record
+ * @extends {op.TypedOperationSpec}
+ * @extends {OpInsertText.InitSpec}
+ */
+OpInsertText.Spec = function() {}
+
+/**@const*/
+exports.OpInsertText = OpInsertText;

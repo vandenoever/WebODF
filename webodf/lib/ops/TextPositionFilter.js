@@ -22,19 +22,22 @@
  * @source: https://github.com/kogmbh/WebODF/
  */
 
-/*global Node, runtime, core, odf, ops*/
+/*global Node*/
+var PositionFilter = require("../core/PositionFilter").PositionFilter;
+var PositionIterator = require("../core/PositionIterator").PositionIterator;
+var odfUtils = require("../odf/OdfUtils");
+var runtime = require("../runtime").runtime;
 
 /**
  * @constructor
- * @implements {core.PositionFilter}
+ * @implements {PositionFilter}
  */
-ops.TextPositionFilter = function TextPositionFilter() {
+function TextPositionFilter() {
     "use strict";
-    var odfUtils = odf.OdfUtils,
-        ELEMENT_NODE = Node.ELEMENT_NODE,
+    var ELEMENT_NODE = Node.ELEMENT_NODE,
         TEXT_NODE = Node.TEXT_NODE,
-        /**@const*/FILTER_ACCEPT = core.PositionFilter.FilterResult.FILTER_ACCEPT,
-        /**@const*/FILTER_REJECT = core.PositionFilter.FilterResult.FILTER_REJECT;
+        /**@const*/FILTER_ACCEPT = PositionFilter.FilterResult.FILTER_ACCEPT,
+        /**@const*/FILTER_REJECT = PositionFilter.FilterResult.FILTER_REJECT;
 
     /**
      * Find the previous sibling of the specified node that passes the node filter.
@@ -54,7 +57,7 @@ ops.TextPositionFilter = function TextPositionFilter() {
      * @param {?Node} leftNode
      * @param {?Node} rightNode
      * @param {!function(?Node):!number} nodeFilter
-     * @return {!core.PositionFilter.FilterResult}
+     * @return {!PositionFilter.FilterResult}
      */
     function checkLeftRight(container, leftNode, rightNode, nodeFilter) {
         var r, firstPos, rightOfChar;
@@ -108,8 +111,8 @@ ops.TextPositionFilter = function TextPositionFilter() {
     }
 
     /**
-     * @param {!core.PositionIterator} iterator
-     * @return {!core.PositionFilter.FilterResult}
+     * @param {!PositionIterator} iterator
+     * @return {!PositionFilter.FilterResult}
      */
     this.acceptPosition = function (iterator) {
         var container = iterator.container(),
@@ -189,4 +192,6 @@ ops.TextPositionFilter = function TextPositionFilter() {
         }
         return r;
     };
-};
+}
+/**@const*/
+exports.TextPositionFilter = TextPositionFilter;

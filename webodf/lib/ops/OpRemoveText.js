@@ -22,25 +22,29 @@
  * @source: https://github.com/kogmbh/WebODF/
  */
 
-/*global ops, runtime, odf, core*/
+var runtime = require("../runtime").runtime;
+var op = require("./Operation");
+var OpsDocument = require("./Document").Document;
+var OdtDocument = require("./OdtDocument").OdtDocument;
+var CollapsingRules = require("../odf/CollapsingRules").CollapsingRules;
+var domUtils = require("../core/DomUtils");
+var odfUtils = require("../odf/OdfUtils");
 
 /**
  * @constructor
- * @implements ops.Operation
+ * @implements op.Operation
  */
-ops.OpRemoveText = function OpRemoveText() {
+function OpRemoveText() {
     "use strict";
 
     var memberid, timestamp,
         /**@type {number}*/
         position,
         /**@type {number}*/
-        length,
-        odfUtils = odf.OdfUtils,
-        domUtils = core.DomUtils;
+        length;
 
     /**
-     * @param {!ops.OpRemoveText.InitSpec} data
+     * @param {!OpRemoveText.InitSpec} data
      */
     this.init = function (data) {
         runtime.assert(data.length >= 0, "OpRemoveText only supports positive lengths");
@@ -54,15 +58,15 @@ ops.OpRemoveText = function OpRemoveText() {
     this.group = undefined;
 
     /**
-     * @param {!ops.Document} document
+     * @param {!OpsDocument} document
      */
     this.execute = function (document) {
-        var odtDocument = /**@type{ops.OdtDocument}*/(document),
+        var odtDocument = /**@type{OdtDocument}*/(document),
             range,
             textNodes,
             paragraph,
             cursor = odtDocument.getCursor(memberid),
-            collapseRules = new odf.CollapsingRules(odtDocument.getRootNode());
+            collapseRules = new CollapsingRules(odtDocument.getRootNode());
 
         odtDocument.upgradeWhitespacesAtPosition(position);
         odtDocument.upgradeWhitespacesAtPosition(position + length);
@@ -91,11 +95,11 @@ ops.OpRemoveText = function OpRemoveText() {
             }
         });
 
-        odtDocument.emit(ops.OdtDocument.signalStepsRemoved, {position: position});
+        odtDocument.emit(OdtDocument.signalStepsRemoved, {position: position});
         odtDocument.downgradeWhitespacesAtPosition(position);
         odtDocument.fixCursorPositions();
         odtDocument.getOdfCanvas().refreshSize();
-        odtDocument.emit(ops.OdtDocument.signalParagraphChanged, {
+        odtDocument.emit(OdtDocument.signalParagraphChanged, {
             paragraphElement: paragraph,
             memberId: memberid,
             timeStamp: timestamp
@@ -103,7 +107,7 @@ ops.OpRemoveText = function OpRemoveText() {
 
         if (cursor) {
             cursor.resetSelectionType();
-            odtDocument.emit(ops.Document.signalCursorMoved, cursor);
+            odtDocument.emit(OpsDocument.signalCursorMoved, cursor);
         }
 
         odtDocument.getOdfCanvas().rerenderAnnotations();
@@ -111,7 +115,7 @@ ops.OpRemoveText = function OpRemoveText() {
     };
 
     /**
-     * @return {!ops.OpRemoveText.Spec}
+     * @return {!OpRemoveText.Spec}
      */
     this.spec = function () {
         return {
@@ -122,19 +126,24 @@ ops.OpRemoveText = function OpRemoveText() {
             length: length
         };
     };
-};
-/**@typedef{{
-    optype:string,
-    memberid:string,
-    timestamp:number,
-    position:number,
-    length:number
-}}*/
-ops.OpRemoveText.Spec;
-/**@typedef{{
-    memberid:string,
-    timestamp:(number|undefined),
-    position:number,
-    length:number
-}}*/
-ops.OpRemoveText.InitSpec;
+}
+
+/**
+ * @record
+ * @extends {op.SpecBase}
+ */
+OpRemoveText.InitSpec = function() {}
+/**@type{!number}*/
+OpRemoveText.InitSpec.prototype.position;
+/**@type{!number}*/
+OpRemoveText.InitSpec.prototype.length;
+
+/**
+ * @record
+ * @extends {op.TypedOperationSpec}
+ * @extends {OpRemoveText.InitSpec}
+ */
+OpRemoveText.Spec = function() {}
+
+/**@const*/
+exports.OpRemoveText = OpRemoveText;

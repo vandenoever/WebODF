@@ -22,17 +22,15 @@
  * @source: https://github.com/kogmbh/WebODF/
  */
 
-/*global odf*/
-
-(function () {
-    "use strict";
+"use strict";
+var Namespaces = require("./Namespaces").Namespaces;
 
     var /**@const
            @type{!string}*/
-        stylens = odf.Namespaces.stylens,
+        stylens = Namespaces.stylens,
         /**@const
            @type{!string}*/
-        textns = odf.Namespaces.textns,
+        textns = Namespaces.textns,
         /**
          * This dictionary maps between ODF style family names and the
          * tag prefixes they use. This is currently a duplicate of the same
@@ -63,13 +61,13 @@
      * @constructor
      * @param {!Element} element
      */
-    odf.StyleTreeNode = function StyleTreeNode(element) {
-        /**@type{!Object.<string,!odf.StyleTreeNode>}*/
+    function StyleTreeNode(element) {
+        /**@type{!Object.<string,!StyleTreeNode>}*/
         this.derivedStyles = {};
 
         /**@type{!Element}*/
         this.element = element;
-    };
+    }
 
     /**
      * StyleTree creates a nested dictionary of the styles in an ODF document
@@ -79,7 +77,7 @@
      * @param {!Element} styles
      * @param {!Element} autoStyles
      */
-    odf.StyleTree = function StyleTree(styles, autoStyles) {
+    function StyleTree(styles, autoStyles) {
 
         var tree = {};
 
@@ -138,9 +136,9 @@
         }
 
         /**
-         * @param {!Object.<string,!odf.StyleTreeNode>} stylesTree
+         * @param {!Object.<string,!StyleTreeNode>} stylesTree
          * @param {string} name
-         * @return {odf.StyleTreeNode}
+         * @return {StyleTreeNode}
          */
         function findStyleTreeNode(stylesTree, name) {
             if (stylesTree.hasOwnProperty(name)) {
@@ -164,15 +162,15 @@
          * and inserts it into the given StyleTree
          * @param {string} styleName
          * @param {!Object.<string,!Element>} stylesMap
-         * @param {!Object.<string,!odf.StyleTreeNode>} stylesTree
-         * @return {?odf.StyleTreeNode}
+         * @param {!Object.<string,!StyleTreeNode>} stylesTree
+         * @return {?StyleTreeNode}
          */
         function createStyleTreeNode(styleName, stylesMap, stylesTree) {
             var style, parentname, parentstyle;
             if (!stylesMap.hasOwnProperty(styleName)) {
                 return null;
             }
-            style = new odf.StyleTreeNode(stylesMap[styleName]);
+            style = new StyleTreeNode(stylesMap[styleName]);
             parentname = style.element.getAttributeNS(stylens, 'parent-style-name');
             parentstyle = null;
             if (parentname) {
@@ -191,7 +189,7 @@
 
         /**
          * @param {!Object.<string,!Element>} stylesMap
-         * @param {!Object.<string,!odf.StyleTreeNode>} stylesTree
+         * @param {!Object.<string,!StyleTreeNode>} stylesTree
          * @return {undefined}
          */
         function addStyleMapToStyleTree(stylesMap, stylesTree) {
@@ -203,7 +201,7 @@
         }
 
         /**
-         * @return {!odf.StyleTree.Tree}
+         * @return {!StyleTree.Tree}
          */
         this.getStyleTree = function () {
             return tree;
@@ -225,10 +223,12 @@
         }
 
         init();
-    };
-}());
-
+    }
 /**
- * @typedef{!Object.<string,!Object.<string,!odf.StyleTreeNode>>}
+ * @typedef{!Object.<string,!Object.<string,!StyleTreeNode>>}
  */
-odf.StyleTree.Tree;
+StyleTree.Tree;
+/**@const*/
+module.exports.StyleTree = StyleTree;
+/**@const*/
+module.exports.StyleTreeNode = StyleTreeNode;

@@ -22,35 +22,46 @@
  * @source: https://github.com/kogmbh/WebODF/
  */
 
-/*global runtime, gui, ops, odf, core*/
+var OdtCursor = require("../ops/OdtCursor").OdtCursor;
+var SessionContext = require("./SessionContext").SessionContext;
+var SessionConstraints = require("./SessionConstraints").SessionConstraints;
+var Session = require("../ops/Session").Session;
+var ScheduledTask = require("../core/ScheduledTask").ScheduledTask;
+var CommonConstraints = require("./CommonConstraints").CommonConstraints;
+var OpSplitParagraph = require("../ops/OpSplitParagraph").OpSplitParagraph;
+var OpInsertText = require("../ops/OpInsertText").OpInsertText;
+var Destroyable = require("../core/Destroyable").Destroyable;
+var odfUtils = require("../odf/OdfUtils");
+var OpsDocument = require("../ops/Document").Document;
+var StepDirection = require("../core/enums").StepDirection;
+var Namespaces = require("../odf/Namespaces").Namespaces;
 
 /**
  * Provides a method to paste text at the current cursor
  * position, and processes the input string to understand
  * special structuring such as paragraph splits.
- * @implements {core.Destroyable}
- * @param {!ops.Session} session
- * @param {!gui.SessionConstraints} sessionConstraints
- * @param {!gui.SessionContext} sessionContext
+ * @implements {Destroyable}
+ * @param {!Session} session
+ * @param {!SessionConstraints} sessionConstraints
+ * @param {!SessionContext} sessionContext
  * @param {!string} inputMemberId
  * @constructor
  */
-gui.PasteController = function PasteController(session, sessionConstraints, sessionContext, inputMemberId) {
+function PasteController(session, sessionConstraints, sessionContext, inputMemberId) {
     "use strict";
 
     var odtDocument = session.getOdtDocument(),
         isEnabled = false,
         /**@const*/
-        textns = odf.Namespaces.textns,
+        textns = Namespaces.textns,
         /**@const*/
-        NEXT = core.StepDirection.NEXT,
-        odfUtils = odf.OdfUtils;
+        NEXT = StepDirection.NEXT;
 
     /**
      * @return {undefined}
      */
     function updateEnabledState() {
-        if (sessionConstraints.getState(gui.CommonConstraints.EDIT.REVIEW_MODE) === true) {
+        if (sessionConstraints.getState(CommonConstraints.EDIT.REVIEW_MODE) === true) {
             isEnabled = /**@type{!boolean}*/(sessionContext.isLocalCursorWithinOwnAnnotation());
         } else {
             isEnabled = true;
@@ -58,7 +69,7 @@ gui.PasteController = function PasteController(session, sessionConstraints, sess
     }
 
     /**
-     * @param {!ops.OdtCursor} cursor
+     * @param {!OdtCursor} cursor
      * @return {undefined}
      */
     function onCursorEvent(cursor) {
@@ -95,8 +106,8 @@ gui.PasteController = function PasteController(session, sessionConstraints, sess
 
         paragraphs = data.replace(/\r/g, "").split("\n");
         paragraphs.forEach(function (text) {
-            var insertTextOp = new ops.OpInsertText(),
-                splitParagraphOp = new ops.OpSplitParagraph();
+            var insertTextOp = new OpInsertText(),
+                splitParagraphOp = new OpSplitParagraph();
 
             insertTextOp.init({
                 memberid: inputMemberId,
@@ -134,15 +145,17 @@ gui.PasteController = function PasteController(session, sessionConstraints, sess
      * @return {undefined}
      */
     this.destroy = function (callback) {
-        odtDocument.unsubscribe(ops.Document.signalCursorMoved, onCursorEvent);
-        sessionConstraints.unsubscribe(gui.CommonConstraints.EDIT.REVIEW_MODE, updateEnabledState);
+        odtDocument.unsubscribe(OpsDocument.signalCursorMoved, onCursorEvent);
+        sessionConstraints.unsubscribe(CommonConstraints.EDIT.REVIEW_MODE, updateEnabledState);
         callback();
     };
 
     function init() {
-        odtDocument.subscribe(ops.Document.signalCursorMoved, onCursorEvent);
-        sessionConstraints.subscribe(gui.CommonConstraints.EDIT.REVIEW_MODE, updateEnabledState);
+        odtDocument.subscribe(OpsDocument.signalCursorMoved, onCursorEvent);
+        sessionConstraints.subscribe(CommonConstraints.EDIT.REVIEW_MODE, updateEnabledState);
         updateEnabledState();
     }
     init();
-};
+}
+/**@const*/
+exports.PasteController = PasteController;

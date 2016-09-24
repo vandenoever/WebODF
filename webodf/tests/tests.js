@@ -22,7 +22,7 @@
  * @source: https://github.com/kogmbh/WebODF/
  */
 
-/*global runtime, Runtime, core, gui, xmldom, RuntimeTests, odf, ops, webodf_css: true*/
+/*global runtime, Runtime, core, gui, xmldom, RuntimeTests, odf, ops*/
 
 runtime.loadClass("core.UnitTester");
 runtime.loadClass("core.Base64Tests");

@@ -22,9 +22,9 @@
  * @source: https://github.com/kogmbh/WebODF/
  */
 
-/*global core*/
-
 /**
  * @typedef {(ClientRect|{left: !number, right: !number, top: !number, bottom: !number})}
  */
-core.SimpleClientRect = null;
+var SimpleClientRect;
+/**@const*/
+exports.SimpleClientRect = SimpleClientRect;

@@ -22,18 +22,18 @@
  * @source: https://github.com/kogmbh/WebODF/
  */
 
-/*global gui*/
+var Destroyable = require("../core/Destroyable").Destroyable;
 
 /**
  * The avatar is a passive element that can be displayed above an element.
  * It will always keep a relative distance to that element, so automatically
  * move around with the parent element.
  * @constructor
- * @implements {core.Destroyable}
+ * @implements {Destroyable}
  * @param {!Element} parentElement
  * @param {boolean} avatarInitiallyVisible Sets the initial visibility of the avatar
  */
-gui.Avatar = function Avatar(parentElement, avatarInitiallyVisible) {
+function Avatar(parentElement, avatarInitiallyVisible) {
     "use strict";
     var self = this,
         /**@type{!HTMLDivElement}*/
@@ -116,4 +116,6 @@ gui.Avatar = function Avatar(parentElement, avatarInitiallyVisible) {
     }
 
     init();
-};
+}
+/**@const*/
+exports.Avatar = Avatar;

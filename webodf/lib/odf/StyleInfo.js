@@ -22,47 +22,50 @@
  * @source: https://github.com/kogmbh/WebODF/
  */
 
-/*global Node, odf, runtime, xmldom*/
+/*global Node*/
+
+var xpath = require("../xmldom/XPath");
+var Namespaces = require("../odf/Namespaces").Namespaces;
 
 /**
  * @constructor
  */
-odf.StyleInfo = function StyleInfo() {
+function StyleInfo() {
     "use strict";
     // helper constants
     var /**@const
            @type{!string}*/
-        chartns = odf.Namespaces.chartns,
+        chartns = Namespaces.chartns,
         /**@const
            @type{!string}*/
-        dbns = odf.Namespaces.dbns,
+        dbns = Namespaces.dbns,
         /**@const
            @type{!string}*/
-        dr3dns = odf.Namespaces.dr3dns,
+        dr3dns = Namespaces.dr3dns,
         /**@const
            @type{!string}*/
-        drawns = odf.Namespaces.drawns,
+        drawns = Namespaces.drawns,
         /**@const
            @type{!string}*/
-        formns = odf.Namespaces.formns,
+        formns = Namespaces.formns,
         /**@const
            @type{!string}*/
-        numberns = odf.Namespaces.numberns,
+        numberns = Namespaces.numberns,
         /**@const
            @type{!string}*/
-        officens = odf.Namespaces.officens,
+        officens = Namespaces.officens,
         /**@const
            @type{!string}*/
-        presentationns = odf.Namespaces.presentationns,
+        presentationns = Namespaces.presentationns,
         /**@const
            @type{!string}*/
-        stylens = odf.Namespaces.stylens,
+        stylens = Namespaces.stylens,
         /**@const
            @type{!string}*/
-        tablens = odf.Namespaces.tablens,
+        tablens = Namespaces.tablens,
         /**@const
            @type{!string}*/
-        textns = odf.Namespaces.textns,
+        textns = Namespaces.textns,
         /**@const
            @type{!Object.<string,string>}*/
         nsprefixes = {
@@ -328,8 +331,7 @@ odf.StyleInfo = function StyleInfo() {
          * }
          * @type {!Object.<!string,!Object.<!string,!Array.<!{keyname:!string,ns:!string,localname:!string}>>>}
          */
-        elements,
-        xpath = xmldom.XPath;
+        elements;
 
     /**
      * Return if a particular element is the parent style for any other style of
@@ -920,4 +922,6 @@ odf.StyleInfo = function StyleInfo() {
 
     // init
     elements = inverse();
-};
+}
+/**@const*/
+exports.StyleInfo = StyleInfo;

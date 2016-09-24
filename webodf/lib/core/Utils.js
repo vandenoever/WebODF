@@ -22,14 +22,9 @@
  * @source: https://github.com/kogmbh/WebODF/
  */
 
-/*global core*/
-
 /**
  * A collection of useful utility functions
- * @constructor
  */
-core.Utils = function Utils() {
-    "use strict";
 
     /**
      * Simple string hash
@@ -47,9 +42,7 @@ core.Utils = function Utils() {
         }
         return hash;
     }
-    this.hashString = hashString;
 
-    var mergeObjects;
     /**
      * @param {*} destination
      * @param {*} source
@@ -98,12 +91,11 @@ core.Utils = function Utils() {
      * @param {!Object.<string,*>} source
      * @return {!Object.<string,*>}
      */
-    mergeObjects = function (destination, source) {
+    function mergeObjects(destination, source) {
         Object.keys(source).forEach(function (p) {
             destination[p] = mergeItems(destination[p], source[p]);
         });
         return destination;
-    };
-    this.mergeObjects = mergeObjects;
-};
-
+    }
+exports.hashString = hashString;
+exports.mergeObjects = mergeObjects;

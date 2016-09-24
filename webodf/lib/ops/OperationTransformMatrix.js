@@ -22,12 +22,30 @@
  * @source: https://github.com/kogmbh/WebODF/
  */
 
-/*global runtime, ops */
+var runtime = require("../runtime").runtime;
+var OpAddAnnotation = require("../ops/OpAddAnnotation").OpAddAnnotation;
+var OpAddStyle = require("../ops/OpAddStyle").OpAddStyle;
+var OpApplyDirectStyling = require("./OpApplyDirectStyling").OpApplyDirectStyling;
+var OpInsertText = require("./OpInsertText").OpInsertText;
+var OpMergeParagraph = require("./OpMergeParagraph").OpMergeParagraph;
+var OpUpdateMetadata = require("./OpUpdateMetadata").OpUpdateMetadata;
+var OpMoveCursor = require("./OpMoveCursor").OpMoveCursor;
+var OpRemoveAnnotation = require("./OpRemoveAnnotation").OpRemoveAnnotation;
+var OpRemoveCursor = require("./OpRemoveCursor").OpRemoveCursor;
+var OpRemoveStyle = require("./OpRemoveStyle").OpRemoveStyle;
+var OpUpdateParagraphStyle = require("./OpUpdateParagraphStyle").OpUpdateParagraphStyle;
+var OpSetParagraphStyle = require("./OpSetParagraphStyle").OpSetParagraphStyle;
+var OpRemoveText = require("./OpRemoveText").OpRemoveText;
+var OpSplitParagraph = require("./OpSplitParagraph").OpSplitParagraph;
+var Formatting = require("../odf/Formatting");
+
+/**@typedef{!Object.<!string,(!string|!Object.<!string,!string>)>}*/
+Formatting.StyleData;
 
 /**
  * @constructor
  */
-ops.OperationTransformMatrix = function OperationTransformMatrix() {
+function OperationTransformMatrix() {
     "use strict";
 
     /* Utility methods */
@@ -35,7 +53,7 @@ ops.OperationTransformMatrix = function OperationTransformMatrix() {
     /**
      * Inverts the range spanned up by the spec's parameter position and length,
      * so that position is at the other end of the range and length relative to that.
-     * @param {!ops.OpMoveCursor.Spec} moveCursorSpec
+     * @param {!OpMoveCursor.Spec} moveCursorSpec
      * @return {undefined}
      */
     function invertMoveCursorSpecRange(moveCursorSpec) {
@@ -46,7 +64,7 @@ ops.OperationTransformMatrix = function OperationTransformMatrix() {
     /**
      * Inverts the range spanned up by position and length if the length is negative.
      * Returns true if an inversion was done, false otherwise.
-     * @param {!ops.OpMoveCursor.Spec} moveCursorSpec
+     * @param {!OpMoveCursor.Spec} moveCursorSpec
      * @return {!boolean}
      */
     function invertMoveCursorSpecRangeOnNegativeLength(moveCursorSpec) {
@@ -60,7 +78,7 @@ ops.OperationTransformMatrix = function OperationTransformMatrix() {
 
     /**
      * Returns a list with all attributes in setProperties that refer to styleName
-     * @param {?odf.Formatting.StyleData} setProperties
+     * @param {?Formatting.StyleData} setProperties
      * @param {!string} styleName
      * @return {!Array.<!string>}
      */
@@ -80,7 +98,7 @@ ops.OperationTransformMatrix = function OperationTransformMatrix() {
         return attributes;
     }
     /**
-     * @param {?odf.Formatting.StyleData} setProperties
+     * @param {?Formatting.StyleData} setProperties
      * @param {!string} deletedStyleName
      * @return {undefined}
      */
@@ -195,7 +213,7 @@ ops.OperationTransformMatrix = function OperationTransformMatrix() {
 
     /**
      * Estimates if there are any properties set in the given properties object.
-     * @param {!odf.Formatting.StyleData} properties
+     * @param {!Formatting.StyleData} properties
      * @return {!boolean}
      */
     function hasProperties(properties) {
@@ -231,17 +249,17 @@ ops.OperationTransformMatrix = function OperationTransformMatrix() {
     }
 
     /**
-     * @param {?odf.Formatting.StyleData} minorSet
+     * @param {?Formatting.StyleData} minorSet
      * @param {?Object.<string,{attributes:string}>} minorRem
-     * @param {?odf.Formatting.StyleData} majorSet
+     * @param {?Formatting.StyleData} majorSet
      * @param {?Object.<string,{attributes:string}>} majorRem
      * @param {!string} propertiesName
      * @return {?{majorChanged:boolean,minorChanged:boolean}}
      */
     function dropOverruledAndUnneededProperties(minorSet, minorRem, majorSet, majorRem, propertiesName) {
-        var minorSP = /**@type{?odf.Formatting.StyleData}*/(minorSet ? minorSet[propertiesName] : null),
+        var minorSP = /**@type{?Formatting.StyleData}*/(minorSet ? minorSet[propertiesName] : null),
             minorRP = minorRem ? minorRem[propertiesName] : null,
-            majorSP = /**@type{?odf.Formatting.StyleData}*/(majorSet ? majorSet[propertiesName] : null),
+            majorSP = /**@type{?Formatting.StyleData}*/(majorSet ? majorSet[propertiesName] : null),
             majorRP = majorRem ? majorRem[propertiesName] : null,
             result;
 
@@ -274,8 +292,8 @@ ops.OperationTransformMatrix = function OperationTransformMatrix() {
     /* Transformation methods */
 
     /**
-     * @param {!ops.OpAddAnnotation.Spec} addAnnotationSpecA
-     * @param {!ops.OpAddAnnotation.Spec} addAnnotationSpecB
+     * @param {!OpAddAnnotation.Spec} addAnnotationSpecA
+     * @param {!OpAddAnnotation.Spec} addAnnotationSpecB
      * @param {!boolean} hasAPriority
      * @return {?{opSpecsA:!Array.<!Object>, opSpecsB:!Array.<!Object>}}
      */
@@ -305,8 +323,8 @@ ops.OperationTransformMatrix = function OperationTransformMatrix() {
     }
 
     /**
-     * @param {!ops.OpAddAnnotation.Spec} addAnnotationSpec
-     * @param {!ops.OpApplyDirectStyling.Spec} applyDirectStylingSpec
+     * @param {!OpAddAnnotation.Spec} addAnnotationSpec
+     * @param {!OpApplyDirectStyling.Spec} applyDirectStylingSpec
      * @return {?{opSpecsA:!Array.<!Object>, opSpecsB:!Array.<!Object>}}
      */
     function transformAddAnnotationApplyDirectStyling(addAnnotationSpec, applyDirectStylingSpec) {
@@ -323,8 +341,8 @@ ops.OperationTransformMatrix = function OperationTransformMatrix() {
     }
 
     /**
-     * @param {!ops.OpAddAnnotation.Spec} addAnnotationSpec
-     * @param {!ops.OpInsertText.Spec} insertTextSpec
+     * @param {!OpAddAnnotation.Spec} addAnnotationSpec
+     * @param {!OpInsertText.Spec} insertTextSpec
      * @return {?{opSpecsA:!Array.<!Object>, opSpecsB:!Array.<!Object>}}
      */
     function transformAddAnnotationInsertText(addAnnotationSpec, insertTextSpec) {
@@ -347,8 +365,8 @@ ops.OperationTransformMatrix = function OperationTransformMatrix() {
     }
 
     /**
-     * @param {!ops.OpAddAnnotation.Spec} addAnnotationSpec
-     * @param {!ops.OpMergeParagraph.Spec} mergeParagraphSpec
+     * @param {!OpAddAnnotation.Spec} addAnnotationSpec
+     * @param {!OpMergeParagraph.Spec} mergeParagraphSpec
      * @return {?{opSpecsA:!Array.<!Object>, opSpecsB:!Array.<!Object>}}
      */
     function transformAddAnnotationMergeParagraph(addAnnotationSpec, mergeParagraphSpec) {
@@ -376,8 +394,8 @@ ops.OperationTransformMatrix = function OperationTransformMatrix() {
     }
 
     /**
-     * @param {!ops.OpAddAnnotation.Spec} addAnnotationSpec
-     * @param {!ops.OpMoveCursor.Spec} moveCursorSpec
+     * @param {!OpAddAnnotation.Spec} addAnnotationSpec
+     * @param {!OpMoveCursor.Spec} moveCursorSpec
      * @return {?{opSpecsA:!Array.<!Object>, opSpecsB:!Array.<!Object>}}
      */
     function transformAddAnnotationMoveCursor(addAnnotationSpec, moveCursorSpec) {
@@ -403,8 +421,8 @@ ops.OperationTransformMatrix = function OperationTransformMatrix() {
     }
 
     /**
-     * @param {!ops.OpAddAnnotation.Spec} addAnnotationSpec
-     * @param {!ops.OpRemoveAnnotation.Spec} removeAnnotationSpec
+     * @param {!OpAddAnnotation.Spec} addAnnotationSpec
+     * @param {!OpRemoveAnnotation.Spec} removeAnnotationSpec
      * @return {?{opSpecsA:!Array.<!Object>, opSpecsB:!Array.<!Object>}}
      */
     function transformAddAnnotationRemoveAnnotation(addAnnotationSpec, removeAnnotationSpec) {
@@ -427,8 +445,8 @@ ops.OperationTransformMatrix = function OperationTransformMatrix() {
     }
 
     /**
-     * @param {!ops.OpAddAnnotation.Spec} addAnnotationSpec
-     * @param {!ops.OpRemoveText.Spec} removeTextSpec
+     * @param {!OpAddAnnotation.Spec} addAnnotationSpec
+     * @param {!OpRemoveText.Spec} removeTextSpec
      * @return {?{opSpecsA:!Array.<!Object>, opSpecsB:!Array.<!Object>}}
      */
     function transformAddAnnotationRemoveText(addAnnotationSpec, removeTextSpec) {
@@ -482,8 +500,8 @@ ops.OperationTransformMatrix = function OperationTransformMatrix() {
     }
 
     /**
-     * @param {!ops.OpAddAnnotation.Spec} addAnnotationSpec
-     * @param {!ops.OpSetParagraphStyle.Spec} setParagraphStyleSpec
+     * @param {!OpAddAnnotation.Spec} addAnnotationSpec
+     * @param {!OpSetParagraphStyle.Spec} setParagraphStyleSpec
      * @return {?{opSpecsA:!Array.<!Object>, opSpecsB:!Array.<!Object>}}
      */
     function transformAddAnnotationSetParagraphStyle(addAnnotationSpec, setParagraphStyleSpec) {
@@ -498,8 +516,8 @@ ops.OperationTransformMatrix = function OperationTransformMatrix() {
     }
 
     /**
-     * @param {!ops.OpAddAnnotation.Spec} addAnnotationSpec
-     * @param {!ops.OpSplitParagraph.Spec} splitParagraphSpec
+     * @param {!OpAddAnnotation.Spec} addAnnotationSpec
+     * @param {!OpSplitParagraph.Spec} splitParagraphSpec
      * @return {?{opSpecsA:!Array.<!Object>, opSpecsB:!Array.<!Object>}}
      */
     function transformAddAnnotationSplitParagraph(addAnnotationSpec, splitParagraphSpec) {
@@ -526,8 +544,8 @@ ops.OperationTransformMatrix = function OperationTransformMatrix() {
     }
 
     /**
-     * @param {!ops.OpAddStyle.Spec} addStyleSpec
-     * @param {!ops.OpRemoveStyle.Spec} removeStyleSpec
+     * @param {!OpAddStyle.Spec} addStyleSpec
+     * @param {!OpRemoveStyle.Spec} removeStyleSpec
      * @return {?{opSpecsA:!Array.<!Object>, opSpecsB:!Array.<!Object>}}
      */
     function transformAddStyleRemoveStyle(addStyleSpec, removeStyleSpec) {
@@ -561,8 +579,8 @@ ops.OperationTransformMatrix = function OperationTransformMatrix() {
     }
 
     /**
-     * @param {!ops.OpApplyDirectStyling.Spec} applyDirectStylingSpecA
-     * @param {!ops.OpApplyDirectStyling.Spec} applyDirectStylingSpecB
+     * @param {!OpApplyDirectStyling.Spec} applyDirectStylingSpecA
+     * @param {!OpApplyDirectStyling.Spec} applyDirectStylingSpecB
      * @param {!boolean} hasAPriority
      * @return {?{opSpecsA:!Array.<!Object>, opSpecsB:!Array.<!Object>}}
      */
@@ -672,8 +690,8 @@ ops.OperationTransformMatrix = function OperationTransformMatrix() {
     }
 
     /**
-     * @param {!ops.OpApplyDirectStyling.Spec} applyDirectStylingSpec
-     * @param {!ops.OpInsertText.Spec} insertTextSpec
+     * @param {!OpApplyDirectStyling.Spec} applyDirectStylingSpec
+     * @param {!OpInsertText.Spec} insertTextSpec
      * @return {?{opSpecsA:!Array.<!Object>, opSpecsB:!Array.<!Object>}}
      */
     function transformApplyDirectStylingInsertText(applyDirectStylingSpec, insertTextSpec) {
@@ -691,8 +709,8 @@ ops.OperationTransformMatrix = function OperationTransformMatrix() {
     }
 
     /**
-     * @param {!ops.OpApplyDirectStyling.Spec} applyDirectStylingSpec
-     * @param {!ops.OpMergeParagraph.Spec} mergeParagraphSpec
+     * @param {!OpApplyDirectStyling.Spec} applyDirectStylingSpec
+     * @param {!OpMergeParagraph.Spec} mergeParagraphSpec
      * @return {?{opSpecsA:!Array.<!Object>, opSpecsB:!Array.<!Object>}}
      */
     function transformApplyDirectStylingMergeParagraph(applyDirectStylingSpec, mergeParagraphSpec) {
@@ -716,8 +734,8 @@ ops.OperationTransformMatrix = function OperationTransformMatrix() {
     }
 
     /**
-     * @param {!ops.OpApplyDirectStyling.Spec} applyDirectStylingSpec
-     * @param {!ops.OpRemoveAnnotation.Spec} removeAnnotationSpec
+     * @param {!OpApplyDirectStyling.Spec} applyDirectStylingSpec
+     * @param {!OpRemoveAnnotation.Spec} removeAnnotationSpec
      * @return {?{opSpecsA:!Array.<!Object>, opSpecsB:!Array.<!Object>}}
      */
     function transformApplyDirectStylingRemoveAnnotation(applyDirectStylingSpec, removeAnnotationSpec) {
@@ -749,8 +767,8 @@ ops.OperationTransformMatrix = function OperationTransformMatrix() {
     }
 
     /**
-     * @param {!ops.OpApplyDirectStyling.Spec} applyDirectStylingSpec
-     * @param {!ops.OpRemoveText.Spec} removeTextSpec
+     * @param {!OpApplyDirectStyling.Spec} applyDirectStylingSpec
+     * @param {!OpRemoveText.Spec} removeTextSpec
      * @return {?{opSpecsA:!Array.<!Object>, opSpecsB:!Array.<!Object>}}
      */
     function transformApplyDirectStylingRemoveText(applyDirectStylingSpec, removeTextSpec) {
@@ -797,8 +815,8 @@ ops.OperationTransformMatrix = function OperationTransformMatrix() {
     }
 
     /**
-     * @param {!ops.OpApplyDirectStyling.Spec} applyDirectStylingSpec
-     * @param {!ops.OpSplitParagraph.Spec} splitParagraphSpec
+     * @param {!OpApplyDirectStyling.Spec} applyDirectStylingSpec
+     * @param {!OpSplitParagraph.Spec} splitParagraphSpec
      * @return {?{opSpecsA:!Array.<!Object>, opSpecsB:!Array.<!Object>}}
      */
     function transformApplyDirectStylingSplitParagraph(applyDirectStylingSpec, splitParagraphSpec) {
@@ -816,8 +834,8 @@ ops.OperationTransformMatrix = function OperationTransformMatrix() {
     }
 
     /**
-     * @param {!ops.OpInsertText.Spec} insertTextSpecA
-     * @param {!ops.OpInsertText.Spec} insertTextSpecB
+     * @param {!OpInsertText.Spec} insertTextSpecA
+     * @param {!OpInsertText.Spec} insertTextSpecB
      * @param {!boolean} hasAPriority
      * @return {?{opSpecsA:!Array.<!Object>, opSpecsB:!Array.<!Object>}}
      */
@@ -841,8 +859,8 @@ ops.OperationTransformMatrix = function OperationTransformMatrix() {
     }
 
     /**
-     * @param {!ops.OpInsertText.Spec} insertTextSpec
-     * @param {!ops.OpMergeParagraph.Spec} mergeParagraphSpec
+     * @param {!OpInsertText.Spec} insertTextSpec
+     * @param {!OpMergeParagraph.Spec} mergeParagraphSpec
      * @return {?{opSpecsA:!Array.<!Object>, opSpecsB:!Array.<!Object>}}
      */
     function transformInsertTextMergeParagraph(insertTextSpec, mergeParagraphSpec) {
@@ -864,8 +882,8 @@ ops.OperationTransformMatrix = function OperationTransformMatrix() {
     }
 
     /**
-     * @param {!ops.OpInsertText.Spec} insertTextSpec
-     * @param {!ops.OpMoveCursor.Spec} moveCursorSpec
+     * @param {!OpInsertText.Spec} insertTextSpec
+     * @param {!OpMoveCursor.Spec} moveCursorSpec
      * @return {?{opSpecsA:!Array.<!Object>, opSpecsB:!Array.<!Object>}}
      */
     function transformInsertTextMoveCursor(insertTextSpec, moveCursorSpec) {
@@ -889,8 +907,8 @@ ops.OperationTransformMatrix = function OperationTransformMatrix() {
     }
 
     /**
-     * @param {!ops.OpInsertText.Spec} insertTextSpec
-     * @param {!ops.OpRemoveAnnotation.Spec} removeAnnotationSpec
+     * @param {!OpInsertText.Spec} insertTextSpec
+     * @param {!OpRemoveAnnotation.Spec} removeAnnotationSpec
      * @return {?{opSpecsA:!Array.<!Object>, opSpecsB:!Array.<!Object>}}
      */
     function transformInsertTextRemoveAnnotation(insertTextSpec, removeAnnotationSpec) {
@@ -919,8 +937,8 @@ ops.OperationTransformMatrix = function OperationTransformMatrix() {
     }
 
     /**
-     * @param {!ops.OpInsertText.Spec} insertTextSpec
-     * @param {!ops.OpRemoveText.Spec} removeTextSpec
+     * @param {!OpInsertText.Spec} insertTextSpec
+     * @param {!OpRemoveText.Spec} removeTextSpec
      * @return {?{opSpecsA:!Array.<!Object>, opSpecsB:!Array.<!Object>}}
      */
     function transformInsertTextRemoveText(insertTextSpec, removeTextSpec) {
@@ -960,8 +978,8 @@ ops.OperationTransformMatrix = function OperationTransformMatrix() {
     }
 
     /**
-     * @param {!ops.OpInsertText.Spec} insertTextSpec
-     * @param {!ops.OpSetParagraphStyle.Spec} setParagraphStyleSpec
+     * @param {!OpInsertText.Spec} insertTextSpec
+     * @param {!OpSetParagraphStyle.Spec} setParagraphStyleSpec
      * @return {?{opSpecsA:!Array.<!Object>, opSpecsB:!Array.<!Object>}}
      */
     function transformInsertTextSetParagraphStyle(insertTextSpec, setParagraphStyleSpec) {
@@ -976,8 +994,8 @@ ops.OperationTransformMatrix = function OperationTransformMatrix() {
     }
 
     /**
-     * @param {!ops.OpInsertText.Spec} insertTextSpec
-     * @param {!ops.OpSplitParagraph.Spec} splitParagraphSpec
+     * @param {!OpInsertText.Spec} insertTextSpec
+     * @param {!OpSplitParagraph.Spec} splitParagraphSpec
      * @return {?{opSpecsA:!Array.<!Object>, opSpecsB:!Array.<!Object>}}
      */
     function transformInsertTextSplitParagraph(insertTextSpec, splitParagraphSpec) {
@@ -998,8 +1016,8 @@ ops.OperationTransformMatrix = function OperationTransformMatrix() {
     }
 
     /**
-     * @param {!ops.OpMergeParagraph.Spec} mergeParagraphSpecA
-     * @param {!ops.OpMergeParagraph.Spec} mergeParagraphSpecB
+     * @param {!OpMergeParagraph.Spec} mergeParagraphSpecA
+     * @param {!OpMergeParagraph.Spec} mergeParagraphSpecB
      * @param {!boolean} hasAPriority
      * @return {?{opSpecsA:!Array.<!Object>, opSpecsB:!Array.<!Object>}}
      */
@@ -1018,7 +1036,7 @@ ops.OperationTransformMatrix = function OperationTransformMatrix() {
             specsForA = [];
             // If the moveCursor flag is set, the cursor will still need to be adjusted to the right location
             if (mergeParagraphSpecA.moveCursor) {
-                moveCursorA = /**@type{!ops.OpMoveCursor.Spec}*/({
+                moveCursorA = /**@type{!OpMoveCursor.Spec}*/({
                     optype: "MoveCursor",
                     memberid: mergeParagraphSpecA.memberid,
                     timestamp: mergeParagraphSpecA.timestamp,
@@ -1027,7 +1045,7 @@ ops.OperationTransformMatrix = function OperationTransformMatrix() {
                 specsForB.push(moveCursorA);
             }
             if (mergeParagraphSpecB.moveCursor) {
-                moveCursorB = /**@type{!ops.OpMoveCursor.Spec}*/({
+                moveCursorB = /**@type{!OpMoveCursor.Spec}*/({
                     optype: "MoveCursor",
                     memberid: mergeParagraphSpecB.memberid,
                     timestamp: mergeParagraphSpecB.timestamp,
@@ -1038,7 +1056,7 @@ ops.OperationTransformMatrix = function OperationTransformMatrix() {
 
             // Determine which merge style wins
             priorityOp = hasAPriority ? mergeParagraphSpecA : mergeParagraphSpecB;
-            styleParagraphFixup = /**@type{!ops.OpSetParagraphStyle.Spec}*/({
+            styleParagraphFixup = /**@type{!OpSetParagraphStyle.Spec}*/({
                 optype: "SetParagraphStyle",
                 memberid: priorityOp.memberid,
                 timestamp: priorityOp.timestamp,
@@ -1077,8 +1095,8 @@ ops.OperationTransformMatrix = function OperationTransformMatrix() {
     }
 
     /**
-     * @param {!ops.OpMergeParagraph.Spec} mergeParagraphSpec
-     * @param {!ops.OpMoveCursor.Spec} moveCursorSpec
+     * @param {!OpMergeParagraph.Spec} mergeParagraphSpec
+     * @param {!OpMoveCursor.Spec} moveCursorSpec
      * @return {?{opSpecsA:!Array.<!Object>, opSpecsB:!Array.<!Object>}}
      */
     function transformMergeParagraphMoveCursor(mergeParagraphSpec, moveCursorSpec) {
@@ -1111,8 +1129,8 @@ ops.OperationTransformMatrix = function OperationTransformMatrix() {
     }
 
     /**
-     * @param {!ops.OpMergeParagraph.Spec} mergeParagraphSpec
-     * @param {!ops.OpRemoveAnnotation.Spec} removeAnnotationSpec
+     * @param {!OpMergeParagraph.Spec} mergeParagraphSpec
+     * @param {!OpRemoveAnnotation.Spec} removeAnnotationSpec
      * @return {?{opSpecsA:!Array.<!Object>, opSpecsB:!Array.<!Object>}}
      */
     function transformMergeParagraphRemoveAnnotation(mergeParagraphSpec, removeAnnotationSpec) {
@@ -1144,8 +1162,8 @@ ops.OperationTransformMatrix = function OperationTransformMatrix() {
     }
 
     /**
-     * @param {!ops.OpMergeParagraph.Spec} mergeParagraphSpec
-     * @param {!ops.OpRemoveText.Spec} removeTextSpec
+     * @param {!OpMergeParagraph.Spec} mergeParagraphSpec
+     * @param {!OpRemoveText.Spec} removeTextSpec
      * @return {?{opSpecsA:!Array.<!Object>, opSpecsB:!Array.<!Object>}}
      */
     function transformMergeParagraphRemoveText(mergeParagraphSpec, removeTextSpec) {
@@ -1168,8 +1186,8 @@ ops.OperationTransformMatrix = function OperationTransformMatrix() {
     }
 
     /**
-     * @param {!ops.OpMergeParagraph.Spec} mergeParagraphSpec
-     * @param {!ops.OpSetParagraphStyle.Spec} setParagraphStyleSpec
+     * @param {!OpMergeParagraph.Spec} mergeParagraphSpec
+     * @param {!OpSetParagraphStyle.Spec} setParagraphStyleSpec
      * @return {?{opSpecsA:!Array.<!Object>, opSpecsB:!Array.<!Object>}}
      */
     function transformMergeParagraphSetParagraphStyle(mergeParagraphSpec, setParagraphStyleSpec) {
@@ -1194,8 +1212,8 @@ ops.OperationTransformMatrix = function OperationTransformMatrix() {
     }
 
     /**
-     * @param {!ops.OpMergeParagraph.Spec} mergeParagraphSpec
-     * @param {!ops.OpSplitParagraph.Spec} splitParagraphSpec
+     * @param {!OpMergeParagraph.Spec} mergeParagraphSpec
+     * @param {!OpSplitParagraph.Spec} splitParagraphSpec
      * @return {?{opSpecsA:!Array.<!Object>, opSpecsB:!Array.<!Object>}}
      */
     function transformMergeParagraphSplitParagraph(mergeParagraphSpec, splitParagraphSpec) {
@@ -1213,7 +1231,7 @@ ops.OperationTransformMatrix = function OperationTransformMatrix() {
             && splitParagraphSpec.position < mergeParagraphSpec.sourceStartPosition) {
             // split occurs within the paragraphs being merged
             splitParagraphSpec.paragraphStyleName = mergeParagraphSpec.paragraphStyleName;
-            styleSplitParagraph = /**@type{!ops.OpSetParagraphStyle.Spec}*/({
+            styleSplitParagraph = /**@type{!OpSetParagraphStyle.Spec}*/({
                 optype: "SetParagraphStyle",
                 memberid: mergeParagraphSpec.memberid,
                 timestamp: mergeParagraphSpec.timestamp,
@@ -1229,7 +1247,7 @@ ops.OperationTransformMatrix = function OperationTransformMatrix() {
                 // When the merge is relocated to attach to the front of the newly inserted paragraph below, the cursor
                 // will end up at the start of the new paragraph. Workaround this by manually setting the cursor back
                 // to the appropriate location after the merge completes
-                moveCursorOp = /**@type{!ops.OpMoveCursor.Spec}*/({
+                moveCursorOp = /**@type{!OpMoveCursor.Spec}*/({
                     optype: "MoveCursor",
                     memberid: mergeParagraphSpec.memberid,
                     timestamp: mergeParagraphSpec.timestamp,
@@ -1259,8 +1277,8 @@ ops.OperationTransformMatrix = function OperationTransformMatrix() {
     }
 
     /**
-     * @param {!ops.OpUpdateParagraphStyle.Spec} updateParagraphStyleSpecA
-     * @param {!ops.OpUpdateParagraphStyle.Spec} updateParagraphStyleSpecB
+     * @param {!OpUpdateParagraphStyle.Spec} updateParagraphStyleSpecA
+     * @param {!OpUpdateParagraphStyle.Spec} updateParagraphStyleSpecB
      * @param {!boolean} hasAPriority
      * @return {?{opSpecsA:!Array.<!Object>, opSpecsB:!Array.<!Object>}}
      */
@@ -1315,8 +1333,8 @@ ops.OperationTransformMatrix = function OperationTransformMatrix() {
     }
 
     /**
-     * @param {!ops.OpUpdateMetadata.Spec} updateMetadataSpecA
-     * @param {!ops.OpUpdateMetadata.Spec} updateMetadataSpecB
+     * @param {!OpUpdateMetadata.Spec} updateMetadataSpecA
+     * @param {!OpUpdateMetadata.Spec} updateMetadataSpecB
      * @param {!boolean} hasAPriority
      * @return {?{opSpecsA:!Array.<!Object>, opSpecsB:!Array.<!Object>}}
      */
@@ -1362,8 +1380,8 @@ ops.OperationTransformMatrix = function OperationTransformMatrix() {
     }
 
     /**
-     * @param {!ops.OpSetParagraphStyle.Spec} setParagraphStyleSpecA
-     * @param {!ops.OpSetParagraphStyle.Spec} setParagraphStyleSpecB
+     * @param {!OpSetParagraphStyle.Spec} setParagraphStyleSpecA
+     * @param {!OpSetParagraphStyle.Spec} setParagraphStyleSpecB
      * @param {!boolean} hasAPriority
      * @return {?{opSpecsA:!Array.<!Object>, opSpecsB:!Array.<!Object>}}
      */
@@ -1383,8 +1401,8 @@ ops.OperationTransformMatrix = function OperationTransformMatrix() {
     }
 
     /**
-     * @param {!ops.OpSetParagraphStyle.Spec} setParagraphStyleSpec
-     * @param {!ops.OpSplitParagraph.Spec} splitParagraphSpec
+     * @param {!OpSetParagraphStyle.Spec} setParagraphStyleSpec
+     * @param {!OpSplitParagraph.Spec} splitParagraphSpec
      * @return {?{opSpecsA:!Array.<!Object>, opSpecsB:!Array.<!Object>}}
      */
     function transformSetParagraphStyleSplitParagraph(setParagraphStyleSpec, splitParagraphSpec) {
@@ -1413,8 +1431,8 @@ ops.OperationTransformMatrix = function OperationTransformMatrix() {
     }
 
     /**
-     * @param {!ops.OpSplitParagraph.Spec} splitParagraphSpecA
-     * @param {!ops.OpSplitParagraph.Spec} splitParagraphSpecB
+     * @param {!OpSplitParagraph.Spec} splitParagraphSpecA
+     * @param {!OpSplitParagraph.Spec} splitParagraphSpecB
      * @param {!boolean} hasAPriority
      * @return {?{opSpecsA:!Array.<!Object>, opSpecsB:!Array.<!Object>}}
      */
@@ -1461,8 +1479,8 @@ ops.OperationTransformMatrix = function OperationTransformMatrix() {
     }
 
     /**
-     * @param {!ops.OpMoveCursor.Spec} moveCursorSpec
-     * @param {!ops.OpRemoveAnnotation.Spec} removeAnnotationSpec
+     * @param {!OpMoveCursor.Spec} moveCursorSpec
+     * @param {!OpRemoveAnnotation.Spec} removeAnnotationSpec
      * @return {?{opSpecsA:!Array.<!Object>, opSpecsB:!Array.<!Object>}}
      */
     function transformMoveCursorRemoveAnnotation(moveCursorSpec, removeAnnotationSpec) {
@@ -1492,8 +1510,8 @@ ops.OperationTransformMatrix = function OperationTransformMatrix() {
     }
 
     /**
-     * @param {!ops.OpMoveCursor.Spec} moveCursorSpec
-     * @param {!ops.OpRemoveCursor.Spec} removeCursorSpec
+     * @param {!OpMoveCursor.Spec} moveCursorSpec
+     * @param {!OpRemoveCursor.Spec} removeCursorSpec
      * @return {?{opSpecsA:!Array.<!Object>, opSpecsB:!Array.<!Object>}}
      */
     function transformMoveCursorRemoveCursor(moveCursorSpec, removeCursorSpec) {
@@ -1506,8 +1524,8 @@ ops.OperationTransformMatrix = function OperationTransformMatrix() {
     }
 
     /**
-     * @param {!ops.OpMoveCursor.Spec} moveCursorSpec
-     * @param {!ops.OpRemoveText.Spec} removeTextSpec
+     * @param {!OpMoveCursor.Spec} moveCursorSpec
+     * @param {!OpRemoveText.Spec} removeTextSpec
      * @return {?{opSpecsA:!Array.<!Object>, opSpecsB:!Array.<!Object>}}
      */
     function transformMoveCursorRemoveText(moveCursorSpec, removeTextSpec) {
@@ -1555,8 +1573,8 @@ ops.OperationTransformMatrix = function OperationTransformMatrix() {
     }
 
     /**
-     * @param {!ops.OpMoveCursor.Spec} moveCursorSpec
-     * @param {!ops.OpSplitParagraph.Spec} splitParagraphSpec
+     * @param {!OpMoveCursor.Spec} moveCursorSpec
+     * @param {!OpSplitParagraph.Spec} splitParagraphSpec
      * @return {?{opSpecsA:!Array.<!Object>, opSpecsB:!Array.<!Object>}}
      */
     function transformMoveCursorSplitParagraph(moveCursorSpec, splitParagraphSpec) {
@@ -1580,8 +1598,8 @@ ops.OperationTransformMatrix = function OperationTransformMatrix() {
     }
 
     /**
-     * @param {!ops.OpRemoveAnnotation.Spec} removeAnnotationSpecA
-     * @param {!ops.OpRemoveAnnotation.Spec} removeAnnotationSpecB
+     * @param {!OpRemoveAnnotation.Spec} removeAnnotationSpecA
+     * @param {!OpRemoveAnnotation.Spec} removeAnnotationSpecB
      * @return {?{opSpecsA:!Array.<!Object>, opSpecsB:!Array.<!Object>}}
      */
     function transformRemoveAnnotationRemoveAnnotation(removeAnnotationSpecA, removeAnnotationSpecB) {
@@ -1607,8 +1625,8 @@ ops.OperationTransformMatrix = function OperationTransformMatrix() {
     }
 
     /**
-     * @param {!ops.OpRemoveAnnotation.Spec} removeAnnotationSpec
-     * @param {!ops.OpRemoveText.Spec} removeTextSpec
+     * @param {!OpRemoveAnnotation.Spec} removeAnnotationSpec
+     * @param {!OpRemoveText.Spec} removeTextSpec
      * @return {?{opSpecsA:!Array.<!Object>, opSpecsB:!Array.<!Object>}}
      */
     function transformRemoveAnnotationRemoveText(removeAnnotationSpec, removeTextSpec) {
@@ -1639,8 +1657,8 @@ ops.OperationTransformMatrix = function OperationTransformMatrix() {
     }
 
     /**
-     * @param {!ops.OpRemoveAnnotation.Spec} removeAnnotationSpec
-     * @param {!ops.OpSetParagraphStyle.Spec} setParagraphStyleSpec
+     * @param {!OpRemoveAnnotation.Spec} removeAnnotationSpec
+     * @param {!OpSetParagraphStyle.Spec} setParagraphStyleSpec
      * @return {?{opSpecsA:!Array.<!Object>, opSpecsB:!Array.<!Object>}}
      */
     function transformRemoveAnnotationSetParagraphStyle(removeAnnotationSpec, setParagraphStyleSpec) {
@@ -1665,8 +1683,8 @@ ops.OperationTransformMatrix = function OperationTransformMatrix() {
     }
 
     /**
-     * @param {!ops.OpRemoveAnnotation.Spec} removeAnnotationSpec
-     * @param {!ops.OpSplitParagraph.Spec} splitParagraphSpec
+     * @param {!OpRemoveAnnotation.Spec} removeAnnotationSpec
+     * @param {!OpSplitParagraph.Spec} splitParagraphSpec
      * @return {?{opSpecsA:!Array.<!Object>, opSpecsB:!Array.<!Object>}}
      */
     function transformRemoveAnnotationSplitParagraph(removeAnnotationSpec, splitParagraphSpec) {
@@ -1697,8 +1715,8 @@ ops.OperationTransformMatrix = function OperationTransformMatrix() {
     }
 
     /**
-     * @param {!ops.OpRemoveCursor.Spec} removeCursorSpecA
-     * @param {!ops.OpRemoveCursor.Spec} removeCursorSpecB
+     * @param {!OpRemoveCursor.Spec} removeCursorSpecA
+     * @param {!OpRemoveCursor.Spec} removeCursorSpecB
      * @return {?{opSpecsA:!Array.<!Object>, opSpecsB:!Array.<!Object>}}
      */
     function transformRemoveCursorRemoveCursor(removeCursorSpecA, removeCursorSpecB) {
@@ -1712,8 +1730,8 @@ ops.OperationTransformMatrix = function OperationTransformMatrix() {
     }
 
     /**
-     * @param {!ops.OpRemoveStyle.Spec} removeStyleSpecA
-     * @param {!ops.OpRemoveStyle.Spec} removeStyleSpecB
+     * @param {!OpRemoveStyle.Spec} removeStyleSpecA
+     * @param {!OpRemoveStyle.Spec} removeStyleSpecB
      * @return {?{opSpecsA:!Array.<!Object>, opSpecsB:!Array.<!Object>}}
      */
     function transformRemoveStyleRemoveStyle(removeStyleSpecA, removeStyleSpecB) {
@@ -1727,8 +1745,8 @@ ops.OperationTransformMatrix = function OperationTransformMatrix() {
     }
 
     /**
-     * @param {!ops.OpRemoveStyle.Spec} removeStyleSpec
-     * @param {!ops.OpSetParagraphStyle.Spec} setParagraphStyleSpec
+     * @param {!OpRemoveStyle.Spec} removeStyleSpec
+     * @param {!OpSetParagraphStyle.Spec} setParagraphStyleSpec
      * @return {?{opSpecsA:!Array.<!Object>, opSpecsB:!Array.<!Object>}}
      */
     function transformRemoveStyleSetParagraphStyle(removeStyleSpec, setParagraphStyleSpec) {
@@ -1760,8 +1778,8 @@ ops.OperationTransformMatrix = function OperationTransformMatrix() {
     }
 
     /**
-     * @param {!ops.OpRemoveStyle.Spec} removeStyleSpec
-     * @param {!ops.OpUpdateParagraphStyle.Spec} updateParagraphStyleSpec
+     * @param {!OpRemoveStyle.Spec} removeStyleSpec
+     * @param {!OpUpdateParagraphStyle.Spec} updateParagraphStyleSpec
      * @return {?{opSpecsA:!Array.<!Object>, opSpecsB:!Array.<!Object>}}
      */
     function transformRemoveStyleUpdateParagraphStyle(removeStyleSpec, updateParagraphStyleSpec) {
@@ -1803,8 +1821,8 @@ ops.OperationTransformMatrix = function OperationTransformMatrix() {
     }
 
     /**
-     * @param {!ops.OpRemoveText.Spec} removeTextSpecA
-     * @param {!ops.OpRemoveText.Spec} removeTextSpecB
+     * @param {!OpRemoveText.Spec} removeTextSpecA
+     * @param {!OpRemoveText.Spec} removeTextSpecB
      * @return {?{opSpecsA:!Array.<!Object>, opSpecsB:!Array.<!Object>}}
      */
     function transformRemoveTextRemoveText(removeTextSpecA, removeTextSpecB) {
@@ -1871,8 +1889,8 @@ ops.OperationTransformMatrix = function OperationTransformMatrix() {
     }
 
     /**
-     * @param {!ops.OpRemoveText.Spec} removeTextSpec
-     * @param {!ops.OpSetParagraphStyle.Spec} setParagraphStyleSpec
+     * @param {!OpRemoveText.Spec} removeTextSpec
+     * @param {!OpSetParagraphStyle.Spec} setParagraphStyleSpec
      * @return {?{opSpecsA:!Array.<!Object>, opSpecsB:!Array.<!Object>}}
      */
     function transformRemoveTextSetParagraphStyle(removeTextSpec, setParagraphStyleSpec) {
@@ -1888,8 +1906,8 @@ ops.OperationTransformMatrix = function OperationTransformMatrix() {
     }
 
     /**
-     * @param {!ops.OpRemoveText.Spec} removeTextSpec
-     * @param {!ops.OpSplitParagraph.Spec} splitParagraphSpec
+     * @param {!OpRemoveText.Spec} removeTextSpec
+     * @param {!OpSplitParagraph.Spec} splitParagraphSpec
      * @return {?{opSpecsA:!Array.<!Object>, opSpecsB:!Array.<!Object>}}
      */
     function transformRemoveTextSplitParagraph(removeTextSpec, splitParagraphSpec) {
@@ -2261,4 +2279,6 @@ runtime.log("null");
 }
         return result;
     };
-};
+}
+/**@const*/
+exports.OperationTransformMatrix = OperationTransformMatrix;

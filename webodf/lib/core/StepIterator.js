@@ -22,8 +22,9 @@
  * @source: https://github.com/kogmbh/WebODF/
  */
 
-/*global runtime, core*/
-
+var PositionFilter = require("./PositionFilter").PositionFilter;
+var PositionIterator = require("./PositionIterator").PositionIterator;
+var StepDirection = require("./enums").StepDirection;
 
 /**
  * Creates a helper class for navigating by steps. Instances of this class are intended to be VERY
@@ -31,16 +32,16 @@
  * modified during the lifetime of the object.
  *
  * @constructor
- * @param {!core.PositionFilter} filter Filter to apply to the iterator positions
- * @param {!core.PositionIterator} iterator Substree to search for step within. Generally a paragraph or document root
+ * @param {!PositionFilter} filter Filter to apply to the iterator positions
+ * @param {!PositionIterator} iterator Substree to search for step within. Generally a paragraph or document root
  */
-core.StepIterator = function StepIterator(filter, iterator) {
+function StepIterator(filter, iterator) {
     "use strict";
 
     var /**@const*/
-        FILTER_ACCEPT = core.PositionFilter.FilterResult.FILTER_ACCEPT,
+        FILTER_ACCEPT = PositionFilter.FilterResult.FILTER_ACCEPT,
         /**@const*/
-        NEXT = core.StepDirection.NEXT,
+        NEXT = StepDirection.NEXT,
         cachedContainer,
         cachedOffset,
         cachedFilterResult;
@@ -137,7 +138,7 @@ core.StepIterator = function StepIterator(filter, iterator) {
     /**
      * Advance the iterator by one step in the specified direction.
      *
-     * @param {!core.StepDirection} direction
+     * @param {!StepDirection} direction
      * @return {!boolean}
      */
     this.advanceStep = function(direction) {
@@ -211,23 +212,23 @@ core.StepIterator = function StepIterator(filter, iterator) {
      * Note, the returned type should be treated as an opaque token, as the data structure
      * is allowed to change at any moment.
      *
-     * @return {!core.StepIterator.StepSnapshot}
+     * @return {!StepIterator.StepSnapshot}
      */
     this.snapshot = function() {
-        return new core.StepIterator.StepSnapshot(container(), offset());
+        return new StepIterator.StepSnapshot(container(), offset());
     };
 
     /**
      * Restore the step iterator back to a specific position. The input to this is
      * expected to be the direct result of a snapshot call.
      *
-     * @param {!core.StepIterator.StepSnapshot} snapshot
+     * @param {!StepIterator.StepSnapshot} snapshot
      * @return {undefined}
      */
     this.restore = function(snapshot) {
         setPosition(snapshot.container, snapshot.offset);
     };
-};
+}
 
 
 /**
@@ -241,7 +242,7 @@ core.StepIterator = function StepIterator(filter, iterator) {
  * @param {!Text|!Element} container
  * @param {!number} offset
  */
-core.StepIterator.StepSnapshot = function (container, offset) {
+StepIterator.StepSnapshot = function (container, offset) {
     "use strict";
 
     /**
@@ -256,3 +257,5 @@ core.StepIterator.StepSnapshot = function (container, offset) {
      */
     this.offset = offset;
 };
+/**@const*/
+exports.StepIterator = StepIterator;

@@ -22,22 +22,23 @@
  * @source: https://github.com/kogmbh/WebODF/
  */
 
-/*global ops*/
+var Document = require("./Document").Document;
+
 /*jslint emptyblock: true, unparam: true*/
 
 /**
  * An operation that can be performed on a document.
  * @interface
  */
-ops.Operation = function Operation() {
+function Operation() {
     "use strict";
-};
+}
 
 /**
  * @param {?} data
  * @return {undefined}
  */
-ops.Operation.prototype.init = function (data) {"use strict"; };
+Operation.prototype.init = function (data) {"use strict"; };
 
 /**
  * This is meant to indicate whether
@@ -46,20 +47,42 @@ ops.Operation.prototype.init = function (data) {"use strict"; };
  * it into the saved ODF.
  * @type {!boolean}
  */
-ops.Operation.prototype.isEdit;
+Operation.prototype.isEdit;
 
 /**
  * @type {string}
  */
-ops.Operation.prototype.group;
+Operation.prototype.group;
 
 /**
- * @param {!ops.Document} document
+ * @param {!Document} document
  * @return {!boolean} true if the operation was executed
  */
-ops.Operation.prototype.execute = function (document) {"use strict"; };
+Operation.prototype.execute = function (document) {"use strict"; };
+
+/**@record*/
+function SpecBase() {}
+/**@type{!string}*/
+SpecBase.prototype.memberid;
+/**@type{!number|undefined}*/
+SpecBase.prototype.timestamp;
 
 /**
- * @return {!{optype:string,memberid:string,timestamp:number}}
+ * @record
+ * @extends SpecBase
  */
-ops.Operation.prototype.spec = function () {"use strict"; };
+function TypedOperationSpec() {}
+/**@type{string}*/
+TypedOperationSpec.prototype.optype;
+
+/**
+ * @return {!TypedOperationSpec}
+ */
+Operation.prototype.spec = function () {"use strict"; };
+
+/**@const*/
+exports.Operation = Operation;
+/**@const*/
+exports.SpecBase = SpecBase;
+/**@const*/
+exports.TypedOperationSpec = TypedOperationSpec;

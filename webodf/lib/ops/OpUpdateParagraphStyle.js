@@ -22,17 +22,24 @@
  * @source: https://github.com/kogmbh/WebODF/
  */
 
-/*global runtime, odf, ops*/
+var op = require("./Operation");
+var OpsDocument = require("./Document").Document;
+var OdtDocument = require("./OdtDocument").OdtDocument;
+var Formatting = require("../odf/Formatting").Formatting;
+var Namespaces = require("../odf/Namespaces").Namespaces;
+
+/**@typedef{!Object.<!string,(!string|!Object.<!string,!string>)>}*/
+Formatting.StyleData;
 
 /**
  * @constructor
- * @implements ops.Operation
+ * @implements op.Operation
  */
-ops.OpUpdateParagraphStyle = function OpUpdateParagraphStyle() {
+function OpUpdateParagraphStyle() {
     "use strict";
 
     var memberid, timestamp, styleName,
-        /**@type{!odf.Formatting.StyleData}*/
+        /**@type{!Formatting.StyleData}*/
         setProperties,
         /**@type{{attributes:string}}*/
         removedProperties,
@@ -41,7 +48,7 @@ ops.OpUpdateParagraphStyle = function OpUpdateParagraphStyle() {
         /**@const*/
         textPropertiesName = 'style:text-properties',
         /**@const*/
-        stylens = odf.Namespaces.stylens;
+        stylens = Namespaces.stylens;
 
     /**
      * Removes attributes of a node by the names listed in removedAttributeNames.
@@ -56,12 +63,12 @@ ops.OpUpdateParagraphStyle = function OpUpdateParagraphStyle() {
         for (i = 0; i < attributeNameList.length; i += 1) {
             attributeNameParts = attributeNameList[i].split(":");
             // TODO: ensure all used prefixes have a namespaces listed
-            node.removeAttributeNS(/**@type{string}*/(odf.Namespaces.lookupNamespaceURI(attributeNameParts[0])), attributeNameParts[1]);
+            node.removeAttributeNS(/**@type{string}*/(Namespaces.lookupNamespaceURI(attributeNameParts[0])), attributeNameParts[1]);
         }
     }
 
     /**
-     * @param {!ops.OpUpdateParagraphStyle.InitSpec} data
+     * @param {!OpUpdateParagraphStyle.InitSpec} data
      */
     this.init = function (data) {
         memberid = data.memberid;
@@ -75,10 +82,10 @@ ops.OpUpdateParagraphStyle = function OpUpdateParagraphStyle() {
     this.group = undefined;
 
     /**
-     * @param {!ops.Document} document
+     * @param {!OpsDocument} document
      */
     this.execute = function (document) {
-        var odtDocument = /**@type{ops.OdtDocument}*/(document),
+        var odtDocument = /**@type{OdtDocument}*/(document),
             formatting = odtDocument.getFormatting(),
             styleNode, object,
             paragraphPropertiesNode, textPropertiesNode;
@@ -122,7 +129,7 @@ ops.OpUpdateParagraphStyle = function OpUpdateParagraphStyle() {
             }
 
             odtDocument.getOdfCanvas().refreshCSS();
-            odtDocument.emit(ops.OdtDocument.signalParagraphStyleModified, styleName);
+            odtDocument.emit(OdtDocument.signalParagraphStyleModified, styleName);
             odtDocument.getOdfCanvas().rerenderAnnotations();
             return true;
         }
@@ -130,7 +137,7 @@ ops.OpUpdateParagraphStyle = function OpUpdateParagraphStyle() {
     };
 
     /**
-     * @return {!ops.OpUpdateParagraphStyle.Spec}
+     * @return {!OpUpdateParagraphStyle.Spec}
      */
     this.spec = function () {
         return {
@@ -142,21 +149,26 @@ ops.OpUpdateParagraphStyle = function OpUpdateParagraphStyle() {
             removedProperties: removedProperties
         };
     };
-};
-/**@typedef{{
-    optype:string,
-    memberid:string,
-    timestamp:number,
-    styleName:string,
-    setProperties:!odf.Formatting.StyleData,
-    removedProperties:{attributes:string}
-}}*/
-ops.OpUpdateParagraphStyle.Spec;
-/**@typedef{{
-    memberid:string,
-    timestamp:(number|undefined),
-    styleName:string,
-    setProperties:!odf.Formatting.StyleData,
-    removedProperties:{attributes:string}
-}}*/
-ops.OpUpdateParagraphStyle.InitSpec;
+}
+
+/**
+ * @record
+ * @extends {op.SpecBase}
+ */
+OpUpdateParagraphStyle.InitSpec = function() {}
+/**@type{!string}*/
+OpUpdateParagraphStyle.InitSpec.prototype.styleName;
+/**@type{!Formatting.StyleData}*/
+OpUpdateParagraphStyle.InitSpec.prototype.setProperties;
+/**@type{!{attributes:string}}*/
+OpUpdateParagraphStyle.InitSpec.prototype.removedProperties;
+
+/**
+ * @record
+ * @extends {op.TypedOperationSpec}
+ * @extends {OpUpdateParagraphStyle.InitSpec}
+ */
+OpUpdateParagraphStyle.Spec = function() {}
+
+/**@const*/
+exports.OpUpdateParagraphStyle = OpUpdateParagraphStyle;

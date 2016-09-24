@@ -22,18 +22,18 @@
  * @source: https://github.com/kogmbh/WebODF/
  */
 
-/*global runtime, odf*/
+var styleParseUtils = require("./StyleParseUtils");
+var Namespaces = require("./Namespaces").Namespaces;
 
 /**
  * @constructor
  * @param {!Element} element
- * @param {!odf.StyleParseUtils} styleParseUtils
- * @param {!odf.TextProperties|undefined} parent
+ * @param {!TextProperties|undefined} parent
  */
-odf.TextProperties = function (element, styleParseUtils, parent) {
+function TextProperties(element, parent) {
     "use strict";
     var self = this,
-        fons = odf.Namespaces.fons,
+        fons = Namespaces.fons,
         getter;
     getter = {
         fontSize: function () {
@@ -50,23 +50,25 @@ odf.TextProperties = function (element, styleParseUtils, parent) {
         return /**@type{!number|undefined}*/(self.data.value("fontSize"));
     };
     /**
-     * @type {!odf.LazyStyleProperties|undefined}
+     * @type {!styleParseUtils.LazyStyleProperties|undefined}
      */
     this.data;
     function init() {
         var p = parent === undefined ? undefined : parent.data;
-        self.data = new odf.LazyStyleProperties(p, getter);
+        self.data = new styleParseUtils.LazyStyleProperties(p, getter);
     }
     init();
-};
+}
+/**@const*/
+exports.TextProperties = TextProperties;
 /**
  * @constructor
  */
-odf.ComputedTextProperties = function () {
+function ComputedTextProperties() {
     "use strict";
     var /**@type{!Object.<!string,*>}*/
         data = {},
-        /**@type{!Array.<!odf.TextProperties>}*/
+        /**@type{!Array.<!TextProperties>}*/
         styleChain = [];
     /**
      * @param {!string} name
@@ -85,7 +87,7 @@ odf.ComputedTextProperties = function () {
         return v;
     }
     /**
-     * @param {!Array.<!odf.TextProperties>} newStyleChain
+     * @param {!Array.<!TextProperties>} newStyleChain
      * @return {undefined}
      */
     this.setStyleChain = function setStyleChain(newStyleChain) {
@@ -98,4 +100,6 @@ odf.ComputedTextProperties = function () {
     this.fontSize = function () {
         return /**@type{!number}*/(value("fontSize")) || 12;
     };
-};
+}
+/**@const*/
+exports.ComputedTextProperties = ComputedTextProperties;

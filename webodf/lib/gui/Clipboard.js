@@ -22,15 +22,16 @@
  * @source: https://github.com/kogmbh/WebODF/
  */
 
-/*global gui, runtime*/
+var runtime = require("../runtime").runtime;
+var MimeDataExporter = require("./MimeDataExporter").MimeDataExporter;
 
 /**
  * Clipboard wrapper to attempt some semblance of cross-browser clipboard support
  *
- * @param {!gui.MimeDataExporter} mimeDataExporter
+ * @param {!MimeDataExporter} mimeDataExporter
  * @constructor
  */
-gui.Clipboard = function Clipboard(mimeDataExporter) {
+function Clipboard(mimeDataExporter) {
     "use strict";
 
     /**
@@ -61,4 +62,6 @@ gui.Clipboard = function Clipboard(mimeDataExporter) {
 
         return result;
     };
-};
+}
+/**@const*/
+exports.Clipboard = Clipboard;

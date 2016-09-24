@@ -22,7 +22,8 @@
  * @source: https://github.com/kogmbh/WebODF/
  */
 
-/*global gui, odf*/
+var odfUtils = require("../odf/OdfUtils");
+var StepInfo = require("./VisualStepScanner").StepInfo;
 
 /**
  * Allows only steps within the same paragraph as the first step the scanner is asked to process.
@@ -31,18 +32,17 @@
  *
  * @constructor
  */
-gui.ParagraphBoundaryScanner = function () {
+function ParagraphBoundaryScanner() {
     "use strict";
     var self = this,
         isInitialised = false,
         /**@type{?Element}*/
-        lastParagraph,
-        odfUtils = odf.OdfUtils;
+        lastParagraph;
 
     this.token = undefined;
 
     /**
-     * @param {!gui.StepInfo} stepInfo
+     * @param {!StepInfo} stepInfo
      * @return {!boolean}
      */
     this.process = function(stepInfo) {
@@ -59,4 +59,6 @@ gui.ParagraphBoundaryScanner = function () {
         self.token = stepInfo.token;
         return false;
     };
-};
+}
+/**@const*/
+exports.ParagraphBoundaryScanner = ParagraphBoundaryScanner;

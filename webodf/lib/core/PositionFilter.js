@@ -22,23 +22,26 @@
  * @source: https://github.com/kogmbh/WebODF/
  */
 
-/*global runtime, core*/
 /*jslint emptyblock: true, unparam: true*/
+
+var PositionIterator = require("./PositionIterator").PositionIterator;
 
 /**
  * @interface
  */
-core.PositionFilter = function PositionFilter() {"use strict"; };
+function PositionFilter() {"use strict"; };
 /**
  * @enum {number}
  */
-core.PositionFilter.FilterResult = {
+PositionFilter.FilterResult = {
     FILTER_ACCEPT: 1,
     FILTER_REJECT: 2,
     FILTER_SKIP:   3
 };
 /**
- * @param {!core.PositionIterator} point
- * @return {!core.PositionFilter.FilterResult}
+ * @param {!PositionIterator} point
+ * @return {!PositionFilter.FilterResult}
  */
-core.PositionFilter.prototype.acceptPosition = function (point) {"use strict"; };
+PositionFilter.prototype.acceptPosition = function (point) {"use strict"; };
+/**@const*/
+exports.PositionFilter = PositionFilter;
